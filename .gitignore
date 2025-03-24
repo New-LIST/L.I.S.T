@@ -1,0 +1,43 @@
+# === FRONTEND (Vite + Node.js) ===
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.log
+*.local
+
+# === BACKEND (.NET) ===
+bin/
+obj/
+*.user
+*.suo
+*.csproj.user
+*.db
+*.db-shm
+*.db-wal
+*.http
+
+**/Properties/launchSettings.json
+
+# === ENVIRONMENT VARIABLES ===
+.env
+.env.*
+
+# === IDE / SYSTEM FILES ===
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# === Visual Studio
+.vs/
+.vs/*
+
+# === OS trash files ===
+*.swp
+*.tmp
+
+# === Lokalne configs
+backend/List.Server/appsettings.Development.json
