@@ -4,8 +4,12 @@ import './index.css'
 import App from './App.tsx'
 import * as React from "react";
 
+import { NotificationProvider } from './context/NotificationContext'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+  </StrictMode>
 )
