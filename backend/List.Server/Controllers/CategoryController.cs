@@ -29,15 +29,28 @@ namespace List.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
-            var rootCategories = await _context.Categories
-                .Where(c => c.ParentId == null)
-                .Include(c => c.Children)
+            var allCategories = await _context.Categories
+                .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            var result = rootCategories.Select(MapCategory).ToList();
-            return Ok(result);
+            var lookup = allCategories.ToLookup(c => c.ParentId);
+
+            List<CategoryDto> BuildTree(int? parentId)
+            {
+                return lookup[parentId]
+                    .Select(c => new CategoryDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Children = BuildTree(c.Id)
+                    })
+                    .ToList();
+            }
+
+            var rootCategories = BuildTree(null);
+            return Ok(rootCategories);
         }
 
         [HttpPost]
@@ -57,6 +70,34 @@ namespace List.Server.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            category.Name = dto.Name;
+            category.ParentId = dto.ParentId;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE /api/category/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
