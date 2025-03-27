@@ -1,10 +1,14 @@
 import './App.css'
 import { useNotification } from './context/NotificationContext'
 import { Button, Stack } from '@mui/material'
+import Categories from './pages/Categories';
+
 function App() {
     const { showNotification } = useNotification()
 
-    return (
+    return (<><Categories />
+
+
         <div style={{ padding: '2rem' }}>
             <h1>Hey L.I.S.T</h1>
             <Stack spacing={2} direction="column" maxWidth="300px">
@@ -38,6 +42,7 @@ function App() {
                 </Button>
             </Stack>
         </div>
+        </>
     )
 }
 
