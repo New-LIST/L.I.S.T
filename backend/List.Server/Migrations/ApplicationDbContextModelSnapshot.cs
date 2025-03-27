@@ -21,7 +21,7 @@ namespace List.Server.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("List.Server.Models.Category", b =>
+            modelBuilder.Entity("List.Server.Data.Models.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,17 +43,17 @@ namespace List.Server.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("List.Server.Models.Category", b =>
+            modelBuilder.Entity("List.Server.Data.Models.Category", b =>
                 {
-                    b.HasOne("List.Server.Models.Category", "Parent")
+                    b.HasOne("List.Server.Data.Models.Category", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("List.Server.Models.Category", b =>
+            modelBuilder.Entity("List.Server.Data.Models.Category", b =>
                 {
                     b.Navigation("Children");
                 });

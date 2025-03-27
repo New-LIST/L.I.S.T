@@ -18,12 +18,34 @@ const Categories = () => {
   const [editMode, setEditMode] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
 
+  const collectSubtreeIds = (category: Category): Set<number> => {
+    const ids = new Set<number>();
+    const collect = (c: Category) => {
+      ids.add(c.id);
+      c.children?.forEach(collect);
+    };
+    collect(category);
+    return ids;
+  };
+  
 
-  const flattenCategories = (categories: Category[], level = 0): { id: number; name: string }[] => {
-    return categories.flatMap((category) => [
-      { id: category.id, name: `${'— '.repeat(level)}${category.name}` },
-      ...flattenCategories(category.children || [], level + 1)
-    ]);
+  const flattenCategories = (
+    categories: Category[],
+    level = 0,
+    excludeBranchIds: Set<number> = new Set()
+  ): { id: number; name: string }[] => {
+    return categories.flatMap((category) => {
+      if (excludeBranchIds.has(category.id)) return [];
+
+      return [
+        { id: category.id, name: `${"— ".repeat(level)}${category.name}` },
+        ...flattenCategories(
+          category.children || [],
+          level + 1,
+          excludeBranchIds
+        ),
+      ];
+    });
   };
 
   
@@ -125,7 +147,7 @@ const Categories = () => {
             fullWidth
           >
             <MenuItem value="">Žiadna (hlavná kategória)</MenuItem>
-            {flattenCategories(categories).map((cat) => (
+            {flattenCategories(categories, 0, editCategory ? collectSubtreeIds(editCategory) : new Set<number>()).map((cat) => (
               <MenuItem key={cat.id} value={cat.id}>
                 {cat.name}
               </MenuItem>
