@@ -54,17 +54,30 @@ namespace List.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Category>> CreateCategory([FromBody] Category category)
+        public async Task<ActionResult<Category>> CreateCategory([FromBody] CategoryDto dto)
         {
             // Optional: validate parent existence
-            if (category.ParentId != null)
+            if (dto.ParentId != null)
             {
-                var parentExists = await _context.Categories.AnyAsync(c => c.Id == category.ParentId);
+                var parentExists = await _context.Categories.AnyAsync(c => c.Id == dto.ParentId);
                 if (!parentExists)
                 {
                     return BadRequest("Parent category does not exist.");
                 }
             }
+
+            var duplicateExists = await _context.Categories.AnyAsync(c =>
+                c.Name.ToLower() == dto.Name.ToLower() &&
+                ((c.ParentId == null && dto.ParentId == null) || c.ParentId == dto.ParentId));
+
+            if (duplicateExists)
+                return BadRequest("V rámci tejto nadkategórie už existuje rovnaká kategória.");
+
+            var category = new Category
+            {
+                Name = dto.Name,
+                ParentId = dto.ParentId
+            };
 
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
@@ -78,6 +91,14 @@ namespace List.Server.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
                 return NotFound();
+
+            var duplicateExists = await _context.Categories.AnyAsync(c =>
+                c.Id != id &&
+                c.Name.ToLower() == dto.Name.ToLower() &&
+                ((c.ParentId == null && dto.ParentId == null) || c.ParentId == dto.ParentId));
+
+            if (duplicateExists)
+                return BadRequest("V rámci tejto nadkategórie už existuje rovnaká kategória.");
 
             category.Name = dto.Name;
             category.ParentId = dto.ParentId;
