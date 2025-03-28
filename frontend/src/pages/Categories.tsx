@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import {
-        Container, Typography, Card, CardContent, CircularProgress,
-        Button
-       } from '@mui/material';
+import {Container, Typography, Card, CardContent, CircularProgress, Button} from '@mui/material';
 import api from '../services/api';  
 import CategoryTree from '../components/CategoryTree';
 import { Category } from '../types/Category';
 import CategoryDialog from '../components/CategoryDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { useNotification } from "../context/NotificationContext";
 
 
 const Categories = () => {
@@ -20,6 +18,7 @@ const Categories = () => {
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+  const { showNotification } = useNotification();
 
   const collectSubtreeIds = (category: Category): Set<number> => {
     const ids = new Set<number>();
@@ -63,8 +62,12 @@ const Categories = () => {
       .then(() => {
         resetForm(); 
         fetchCategories();
+        showNotification(editMode ? "Kategória bola upravená" : "Kategória bola pridaná", "success");
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        showNotification("Nepodarilo sa uložiť kategóriu", "error");
+      });
   };
 
   const handleEdit = (category: Category) => {
@@ -83,8 +86,14 @@ const Categories = () => {
   const confirmDelete = () => {
   if (categoryToDelete !== null) {
     api.delete(`/category/${categoryToDelete}`)
-      .then(fetchCategories)
-      .catch(err => console.error(err))
+      .then(() => {
+        fetchCategories();
+        showNotification("Kategória bola vymazaná", "success");
+      })
+      .catch((err) => {
+        console.error(err);
+        showNotification("Nepodarilo sa vymazať kategóriu", "error");
+      })
       .finally(() => {
         setConfirmOpen(false);
         setCategoryToDelete(null);
