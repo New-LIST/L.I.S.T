@@ -29,34 +29,96 @@ namespace List.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
-            var rootCategories = await _context.Categories
-                .Where(c => c.ParentId == null)
-                .Include(c => c.Children)
+            var allCategories = await _context.Categories
+                .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            var result = rootCategories.Select(MapCategory).ToList();
-            return Ok(result);
+            var lookup = allCategories.ToLookup(c => c.ParentId);
+
+            List<CategoryDto> BuildTree(int? parentId)
+            {
+                return lookup[parentId]
+                    .Select(c => new CategoryDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Children = BuildTree(c.Id)
+                    })
+                    .ToList();
+            }
+
+            var rootCategories = BuildTree(null);
+            return Ok(rootCategories);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Category>> CreateCategory([FromBody] Category category)
+        public async Task<ActionResult<Category>> CreateCategory([FromBody] CategoryDto dto)
         {
             // Optional: validate parent existence
-            if (category.ParentId != null)
+            if (dto.ParentId != null)
             {
-                var parentExists = await _context.Categories.AnyAsync(c => c.Id == category.ParentId);
+                var parentExists = await _context.Categories.AnyAsync(c => c.Id == dto.ParentId);
                 if (!parentExists)
                 {
                     return BadRequest("Parent category does not exist.");
                 }
             }
 
+            var duplicateExists = await _context.Categories.AnyAsync(c =>
+                c.Name.ToLower() == dto.Name.ToLower() &&
+                ((c.ParentId == null && dto.ParentId == null) || c.ParentId == dto.ParentId));
+
+            if (duplicateExists)
+                return BadRequest("V rámci tejto nadkategórie už existuje rovnaká kategória.");
+
+            var category = new Category
+            {
+                Name = dto.Name,
+                ParentId = dto.ParentId
+            };
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            var duplicateExists = await _context.Categories.AnyAsync(c =>
+                c.Id != id &&
+                c.Name.ToLower() == dto.Name.ToLower() &&
+                ((c.ParentId == null && dto.ParentId == null) || c.ParentId == dto.ParentId));
+
+            if (duplicateExists)
+                return BadRequest("V rámci tejto nadkategórie už existuje rovnaká kategória.");
+
+            category.Name = dto.Name;
+            category.ParentId = dto.ParentId;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE /api/category/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
