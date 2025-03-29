@@ -1,28 +1,38 @@
 ﻿
-using Microsoft.EntityFrameworkCore;
-using List.Server.Data.Models;
+    using Microsoft.EntityFrameworkCore;
+    using List.Server.Data.Models;
 
-namespace List.Server.Data
-{
-    public class ApplicationDbContext : DbContext
+    namespace List.Server.Data
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
+        public class ApplicationDbContext : DbContext
         {
+            public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+                : base(options)
+            {
+            }
+
+            public DbSet<Category> Categories { get; set; }
+            public DbSet<Period> Periods { get; set; }
+            public DbSet<Course> Courses { get; set; }
+
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+                base.OnModelCreating(modelBuilder);
+
+                modelBuilder.Entity<Category>()
+                    .HasOne(c => c.Parent)
+                    .WithMany(c => c.Children)
+                    .HasForeignKey(c => c.ParentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                modelBuilder.Entity<Course>()
+                    .HasOne(c => c.Period)
+                    .WithMany(p => p.Courses)
+                    .HasForeignKey(c => c.PeriodId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            }
+
+
+
         }
-
-        public DbSet<Category> Categories { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<Category>()
-                .HasOne(c => c.Parent)
-                .WithMany(c => c.Children)
-                .HasForeignKey(c => c.ParentId)
-                .OnDelete(DeleteBehavior.Cascade);
-        }
-
     }
-}
