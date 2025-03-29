@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import * as React from "react";
 
-import { NotificationProvider } from './context/NotificationContext'
+import { NotificationProvider } from './shared/components/NotificationContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

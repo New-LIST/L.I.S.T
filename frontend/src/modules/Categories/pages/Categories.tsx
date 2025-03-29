@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import {Container, Typography, Card, CardContent, CircularProgress, Button} from '@mui/material';
-import api from '../services/api';  
+import api from '../../../services/api.ts';
 import CategoryTree from '../components/CategoryTree';
 import { Category } from '../types/Category';
 import CategoryDialog from '../components/CategoryDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useNotification } from "../context/NotificationContext";
+import { useNotification } from "../../../shared/components/NotificationContext.tsx";
 
 
 const Categories = () => {
