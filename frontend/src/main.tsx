@@ -4,12 +4,16 @@ import './index.css'
 import App from './App.tsx'
 import * as React from "react";
 
-import { NotificationProvider } from './context/NotificationContext'
+import { NotificationProvider } from './shared/NotificationContext'
+import {StyledEngineProvider} from "@mui/material";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-      <NotificationProvider>
-        <App />
-      </NotificationProvider>
+      <StyledEngineProvider injectFirst>
+          <NotificationProvider>
+                  <App />
+          </NotificationProvider>
+      </StyledEngineProvider>
+
   </StrictMode>
 )
