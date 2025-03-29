@@ -13,6 +13,7 @@ type Props = {
   editMode: boolean;
   categories: Category[];
   excludeIds: Set<number>;
+  nameError: string | null;
 };
 
 const flattenCategories = (
@@ -41,6 +42,7 @@ const CategoryDialog = ({
   editMode,
   categories,
   excludeIds,
+  nameError
 }: Props) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -48,12 +50,15 @@ const CategoryDialog = ({
         {editMode ? 'Upraviť kategóriu' : 'Pridať novú kategóriu'}
       </DialogTitle>
       <DialogContent
+      dividers
         sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
       >
         <TextField
           label="Názov kategórie"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          error={!!nameError}
+          helperText={nameError}
           fullWidth
         />
 

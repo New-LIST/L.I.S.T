@@ -19,6 +19,8 @@ const Categories = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
   const { showNotification } = useNotification();
+  const [nameError, setNameError] = useState<string | null>(null);
+
 
   const collectSubtreeIds = (category: Category): Set<number> => {
     const ids = new Set<number>();
@@ -31,6 +33,7 @@ const Categories = () => {
   };
 
   const resetForm = () => {
+    setNameError(null);
     setOpen(false);
     setEditMode(false);
     setEditCategory(null);
@@ -52,7 +55,13 @@ const Categories = () => {
 
   const handleSubmit = () => {
     const payload = { name, parentId };
+    setNameError(null);
 
+    if (name.trim() === "") {
+      setNameError("Názov kategórie nemôže byť prázdny.");
+      return;
+    }
+    
     const request =
       editMode && editCategory
         ? api.put(`/category/${editCategory.id}`, payload)
@@ -66,7 +75,16 @@ const Categories = () => {
       })
       .catch((err) => {
         console.error(err);
-        showNotification("Nepodarilo sa uložiť kategóriu", "error");
+        if (
+          err.response &&
+          err.response.status === 400 &&
+          typeof err.response.data === 'string' &&
+          err.response.data.includes("existuje rovnaká kategória")
+        ) {
+          setNameError("V tejto nadkategórii už existuje rovnaká kategória.");
+        } else {
+          showNotification("Nepodarilo sa uložiť kategóriu", "error");
+        }
       });
   };
 
@@ -137,6 +155,7 @@ const Categories = () => {
         editMode={editMode}
         categories={categories}
         excludeIds={editCategory ? collectSubtreeIds(editCategory) : new Set()}
+        nameError={nameError}
       />
       <ConfirmDialog
         open={confirmOpen}
