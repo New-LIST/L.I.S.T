@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Container, Typography, Card, CardContent, CircularProgress } from '@mui/material';
-import api from '../services/api';
-import CategoryTree from '../components/CategoryTree';
+import api from '../../../services/api.ts';
+import CategoryTree from '../components/CategoryTree.tsx';
 
 type Category = {
   id: number;
