@@ -1,7 +1,7 @@
 import './App.css'
-import { useNotification } from './context/NotificationContext'
+import { useNotification } from './shared/components/NotificationContext.tsx'
 import { Button, Stack } from '@mui/material'
-import Categories from './pages/Categories';
+import Categories from './modules/Categories/pages/Categories.tsx';
 
 function App() {
     const { showNotification } = useNotification()
