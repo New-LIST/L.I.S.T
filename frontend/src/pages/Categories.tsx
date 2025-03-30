@@ -4,7 +4,7 @@ import api from '../services/api';
 import CategoryTree from '../components/CategoryTree';
 import { Category } from '../types/Category';
 import CategoryDialog from '../components/CategoryDialog';
-import ConfirmDialog from '../components/ConfirmDialog';
+import ConfirmDeleteCategoryDialog from '../components/ConfirmDeleteCategoryDialog';
 import { useNotification } from "../context/NotificationContext";
 
 
@@ -157,7 +157,7 @@ const Categories = () => {
         excludeIds={editCategory ? collectSubtreeIds(editCategory) : new Set()}
         nameError={nameError}
       />
-      <ConfirmDialog
+      <ConfirmDeleteCategoryDialog
         open={confirmOpen}
         title="Potvrdenie vymazania"
         message="Naozaj chceš vymazať túto kategóriu?"

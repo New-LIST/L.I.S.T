@@ -2,11 +2,15 @@ import './App.css'
 import { useNotification } from './context/NotificationContext'
 import { Button, Stack } from '@mui/material'
 import Categories from './pages/Categories';
+import PeriodList from './components/PeriodList';
 
 function App() {
     const { showNotification } = useNotification()
 
-    return (<><Categories />
+    return (<>
+        <div><PeriodList /></div>
+        <div><Categories /></div>
+    
 
 
         <div style={{ padding: '2rem' }}>

@@ -11,7 +11,7 @@ import {
     onConfirm: () => void;
   };
   
-  const ConfirmDialog = ({ open, title, message, onClose, onConfirm }: Props) => {
+  const ConfirmDeleteCategoryDialog = ({ open, title, message, onClose, onConfirm }: Props) => {
     return (
       <Dialog open={open} onClose={onClose}>
         <DialogTitle>{title}</DialogTitle>
@@ -28,5 +28,5 @@ import {
     );
   };
   
-  export default ConfirmDialog;
+  export default ConfirmDeleteCategoryDialog;
   
