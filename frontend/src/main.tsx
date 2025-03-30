@@ -5,11 +5,14 @@ import App from './App.tsx'
 import * as React from "react";
 
 import { NotificationProvider } from './shared/components/NotificationContext.tsx'
+import { BrowserRouter } from 'react-router-dom';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-      <NotificationProvider>
-        <App />
-      </NotificationProvider>
-  </StrictMode>
+    <StrictMode>
+        <BrowserRouter>
+            <NotificationProvider>
+                <App />
+            </NotificationProvider>
+        </BrowserRouter>
+    </StrictMode>
 )
