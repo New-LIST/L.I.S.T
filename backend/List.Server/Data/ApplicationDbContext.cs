@@ -31,6 +31,7 @@ namespace List.Server.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+                
             modelBuilder.Entity<Course>()
                     .HasOne(c => c.Period)
                     .WithMany(p => p.Courses)
