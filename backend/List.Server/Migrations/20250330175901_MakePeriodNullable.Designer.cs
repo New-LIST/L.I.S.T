@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250330001938_AddUserTable")]
-    partial class AddUserTable
+    [Migration("20250330175901_MakePeriodNullable")]
+    partial class MakePeriodNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,45 @@ namespace List.Server.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("List.Server.Data.Models.Course", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PeriodId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("List.Server.Data.Models.Period", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Periods");
                 });
 
             modelBuilder.Entity("List.Server.Data.Models.User", b =>
@@ -97,9 +136,24 @@ namespace List.Server.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("List.Server.Data.Models.Course", b =>
+                {
+                    b.HasOne("List.Server.Data.Models.Period", "Period")
+                        .WithMany("Courses")
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Period");
+                });
+
             modelBuilder.Entity("List.Server.Data.Models.Category", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("List.Server.Data.Models.Period", b =>
+                {
+                    b.Navigation("Courses");
                 });
 #pragma warning restore 612, 618
         }

@@ -13,6 +13,9 @@ namespace List.Server.Data
 
         public DbSet<Category> Categories { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Period> Periods { get; set; }
+        public DbSet<Course> Courses { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -28,6 +31,11 @@ namespace List.Server.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+            modelBuilder.Entity<Course>()
+                    .HasOne(c => c.Period)
+                    .WithMany(p => p.Courses)
+                    .HasForeignKey(c => c.PeriodId)
+                    .OnDelete(DeleteBehavior.SetNull);
         }
 
     }
