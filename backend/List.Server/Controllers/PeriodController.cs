@@ -20,8 +20,16 @@ namespace List.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var periods = await _context.Periods.ToListAsync();
-            return Ok(periods);
+            var periods = await _context.Periods
+                .Select(p => new PeriodReadDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    CourseCount = p.Courses.Count()
+                })
+                .ToListAsync();
+
+    return Ok(periods);
         }
 
         [HttpPost]

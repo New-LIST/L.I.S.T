@@ -29,7 +29,7 @@
                     .HasOne(c => c.Period)
                     .WithMany(p => p.Courses)
                     .HasForeignKey(c => c.PeriodId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.SetNull);
             }
 
 
