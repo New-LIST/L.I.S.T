@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250330175901_MakePeriodNullable")]
-    partial class MakePeriodNullable
+    [Migration("20250330232746_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,6 +54,21 @@ namespace List.Server.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoAcceptStudents")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EnrollmentLimit")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("GroupChangeDeadline")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HiddenInList")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()

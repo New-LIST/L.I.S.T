@@ -52,6 +52,21 @@ namespace List.Server.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AutoAcceptStudents")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EnrollmentLimit")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("GroupChangeDeadline")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HiddenInList")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");

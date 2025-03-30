@@ -71,7 +71,12 @@ namespace List.Server.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    PeriodId = table.Column<int>(type: "integer", nullable: true)
+                    PeriodId = table.Column<int>(type: "integer", nullable: true),
+                    Capacity = table.Column<int>(type: "integer", nullable: false),
+                    GroupChangeDeadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    EnrollmentLimit = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    HiddenInList = table.Column<bool>(type: "boolean", nullable: false),
+                    AutoAcceptStudents = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
