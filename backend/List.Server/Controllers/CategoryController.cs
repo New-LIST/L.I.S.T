@@ -4,6 +4,7 @@ using List.Server.Data.Models;
 using List.Server.Data.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace List.Server.Controllers
 {
@@ -54,6 +55,7 @@ namespace List.Server.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Teacher")]
         public async Task<ActionResult<Category>> CreateCategory([FromBody] CategoryDto dto)
         {
             // Optional: validate parent existence
@@ -86,6 +88,7 @@ namespace List.Server.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
         {
             var category = await _context.Categories.FindAsync(id);
@@ -109,6 +112,7 @@ namespace List.Server.Controllers
 
         // DELETE /api/category/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);
