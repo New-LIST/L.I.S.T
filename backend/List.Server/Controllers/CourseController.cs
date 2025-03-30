@@ -26,7 +26,12 @@ namespace List.Server.Controllers
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    PeriodName = c.Period.Name
+                    PeriodName = c.Period != null ? c.Period.Name : "—",
+                    Capacity = c.Capacity,
+                    GroupChangeDeadline = c.GroupChangeDeadline,
+                    EnrollmentLimit = c.EnrollmentLimit,
+                    HiddenInList = c.HiddenInList,
+                    AutoAcceptStudents = c.AutoAcceptStudents
                 })
                 .ToListAsync();
 
@@ -39,7 +44,12 @@ namespace List.Server.Controllers
             var course = new Course
             {
                 Name = dto.Name,
-                PeriodId = dto.PeriodId
+                PeriodId = dto.PeriodId,
+                Capacity = dto.Capacity,
+                GroupChangeDeadline = dto.GroupChangeDeadline,
+                EnrollmentLimit = dto.EnrollmentLimit,
+                HiddenInList = dto.HiddenInList,
+                AutoAcceptStudents = dto.AutoAcceptStudents
             };
 
             _context.Courses.Add(course);
