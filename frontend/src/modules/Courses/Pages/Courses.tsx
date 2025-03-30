@@ -29,11 +29,21 @@ const Courses = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [name, setName] = useState('');
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | ''>(''); 
-
   const [nameError, setNameError] = useState<string | null>(null);
   const { showNotification } = useNotification();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [capacity, setCapacity] = useState(0);
+  const [groupChangeDeadline, setGroupChangeDeadline] = useState<string | null>(
+    null
+  );
+  const [enrollmentLimit, setEnrollmentLimit] = useState<string | null>(null);
+  const [hiddenInList, setHiddenInList] = useState(false);
+  const [autoAcceptStudents, setAutoAcceptStudents] = useState(false);
+  const [capacityError, setCapacityError] = useState<string | null>(null);
+  const [periodError, setPeriodError] = useState<string | null>(null);
+
+
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -70,23 +80,50 @@ const Courses = () => {
     setSelectedPeriodId(periods[0]?.id ?? 0);
     setNameError(null);
     setOpenDialog(false);
+    setCapacity(0);
+    setGroupChangeDeadline(null);
+    setEnrollmentLimit(null);
+    setHiddenInList(false);
+    setAutoAcceptStudents(false);
+    setCapacityError(null);
+
   };
 
   const handleCreate = async (name: string, periodId: number | '') => {
     const trimmed = name.trim();
+    let hasError = false;
+
     setNameError(null);
+    setCapacityError(null);
+    setPeriodError(null);
 
     if (!trimmed) {
-      setNameError('Názov kurzu nemôže byť prázdny.');
-      return;
-    }
-    if (selectedPeriodId === '') {
-      setNameError('Musíš vybrať obdobie');
-      return;
+      setNameError("Názov kurzu nemôže byť prázdny.");
+      hasError = true;
     }
 
+    if (periodId === "") {
+      setPeriodError("Musíš vybrať obdobie");
+      hasError = true;
+    }
+
+    if (capacity <= 0) {
+      setCapacityError("Kapacita nemôže byť 0 alebo menej.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
     try {
-      await api.post('/courses', { name: trimmed, periodId: selectedPeriodId});
+      await api.post('/courses', { 
+        name: trimmed,
+        periodId: selectedPeriodId,
+        capacity,
+        groupChangeDeadline: groupChangeDeadline || null,
+        enrollmentLimit,
+        hiddenInList,
+        autoAcceptStudents
+        });
       resetForm();
       fetchCourses();
       showNotification('Kurz bol úspešne pridaný.', 'success');
@@ -172,6 +209,18 @@ const Courses = () => {
         setSelectedPeriodId={setSelectedPeriodId}
         nameError={nameError}
         periods={periods}
+        capacity={capacity}
+        setCapacity={setCapacity}
+        groupChangeDeadline={groupChangeDeadline}
+        setGroupChangeDeadline={setGroupChangeDeadline}
+        enrollmentLimit={enrollmentLimit}
+        setEnrollmentLimit={setEnrollmentLimit}
+        hiddenInList={hiddenInList}
+        setHiddenInList={setHiddenInList}
+        autoAcceptStudents={autoAcceptStudents}
+        setAutoAcceptStudents={setAutoAcceptStudents}
+        capacityError={capacityError}
+        periodError={periodError}
       />
 
       <ConfirmDeleteCourseDialog
