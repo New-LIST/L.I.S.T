@@ -3,6 +3,10 @@ using List.Server.Data;
 using List.Server.Data.DTOs;
 using List.Server.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+
+
+
 
 namespace List.Server.Controllers
 {
@@ -20,7 +24,7 @@ namespace List.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var courses = await _context.Courses
+            var rawCourses = await _context.Courses
                 .Include(c => c.Period)
                 .Select(c => new CourseReadDto
                 {
@@ -35,10 +39,20 @@ namespace List.Server.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(courses);
+            foreach (var c in rawCourses)
+            {
+                if (c.GroupChangeDeadline.HasValue)
+                    c.GroupChangeDeadline = DateTime.SpecifyKind(c.GroupChangeDeadline.Value, DateTimeKind.Utc);
+
+                if (c.EnrollmentLimit.HasValue)
+                    c.EnrollmentLimit = DateTime.SpecifyKind(c.EnrollmentLimit.Value, DateTimeKind.Utc);
+            }
+
+            return Ok(rawCourses);
         }
 
         [HttpPost]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Create(CourseCreateDto dto)
         {
             var course = new Course
@@ -58,6 +72,7 @@ namespace List.Server.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
             var course = await _context.Courses.FindAsync(id);

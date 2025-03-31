@@ -3,6 +3,10 @@ using List.Server.Data;
 using List.Server.Data.DTOs;
 using List.Server.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+
+
+
 
 namespace List.Server.Controllers
 {
@@ -29,10 +33,11 @@ namespace List.Server.Controllers
                 })
                 .ToListAsync();
 
-    return Ok(periods);
+            return Ok(periods);
         }
 
         [HttpPost]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Create(PeriodCreateDto dto)
         {
             var period = new Period { Name = dto.Name };
@@ -42,6 +47,7 @@ namespace List.Server.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
             var period = await _context.Periods.FindAsync(id);
