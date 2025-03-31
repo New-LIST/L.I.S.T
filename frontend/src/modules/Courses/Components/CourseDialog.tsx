@@ -32,6 +32,8 @@ import {
     setAutoAcceptStudents: (value: boolean) => void;
     capacityError: string | null;
     periodError: string | null;
+    groupChangeError: string | null;
+    enrollmentLimitError: string | null;
 
   };
   
@@ -57,6 +59,9 @@ import {
     setAutoAcceptStudents,
     capacityError,
     periodError,
+    groupChangeError,
+    enrollmentLimitError,
+
   }: Props) => {
     return (
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -112,17 +117,21 @@ import {
             onChange={(e) =>
               setGroupChangeDeadline(e.target.value ? e.target.value : null)
             }
+            error={!!groupChangeError}
+            helperText={groupChangeError}
             fullWidth
           />
 
           <TextField
-            label="Časový limit zápisu"
+            label="Časový limit zápisu na kurz"
             type="date"
             InputLabelProps={{ shrink: true }}
             value={enrollmentLimit ?? ""}
             onChange={(e) =>
               setEnrollmentLimit(e.target.value ? e.target.value : null)
             }
+            error={!!enrollmentLimitError}
+            helperText={enrollmentLimitError}
             fullWidth
           />
 
