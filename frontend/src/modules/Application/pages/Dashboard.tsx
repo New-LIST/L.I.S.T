@@ -1,4 +1,6 @@
 import Categories from '../../Categories/pages/Categories.tsx';
+import Periods from '../../Periods/Pages/Periods.tsx'
+import Courses from '../../Courses/Pages/Courses.tsx'
 import {Button, Typography} from '@mui/material';
 import {getStoredUser, logout} from '../../Authentication/utils/auth.ts';
 export default function Dashboard() {
@@ -14,6 +16,8 @@ export default function Dashboard() {
             </Typography>
 
                 <Categories />
+                <Periods/>
+                <Courses/>
 
             <Typography sx={{ mt: 2 }}>
                 Tvoje meno: <strong>{name || 'Neznáme'}</strong> <br />
