@@ -7,15 +7,17 @@ import RequireAuth from './modules/Authentication/components/RequireAuth.tsx';
 function App() {
     return (
         <Routes>
+            <Route path="/signin" element={<SignIn />} />
+
             <Route
-                path="/"
+                path="/*"
                 element={
                     <RequireAuth>
                         <Dashboard />
                     </RequireAuth>
                 }
             />
-            <Route path="/signin" element={<SignIn />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
