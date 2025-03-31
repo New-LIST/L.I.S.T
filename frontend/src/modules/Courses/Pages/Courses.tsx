@@ -42,6 +42,8 @@ const Courses = () => {
   const [autoAcceptStudents, setAutoAcceptStudents] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
   const [periodError, setPeriodError] = useState<string | null>(null);
+  const [enrollmentLimitError, setELimitError] = useState<string | null>(null);
+  const [groupChangeError, setGChangeError] = useState<string | null>(null);
 
 
 
@@ -79,6 +81,10 @@ const Courses = () => {
     setName('');
     setSelectedPeriodId(periods[0]?.id ?? 0);
     setNameError(null);
+    setGChangeError(null);
+    setCapacityError(null);
+    setPeriodError(null);
+    setELimitError(null);
     setOpenDialog(false);
     setCapacity(0);
     setGroupChangeDeadline(null);
@@ -96,6 +102,8 @@ const Courses = () => {
     setNameError(null);
     setCapacityError(null);
     setPeriodError(null);
+    setGChangeError(null);
+    setELimitError(null);
 
     if (!trimmed) {
       setNameError("Názov kurzu nemôže byť prázdny.");
@@ -112,6 +120,18 @@ const Courses = () => {
       hasError = true;
     }
 
+    const now = new Date();
+
+    if (groupChangeDeadline && new Date(groupChangeDeadline) < now) {
+      setGChangeError("Termín na zmenu skupiny musí byť v budúcnosti.");
+      hasError = true;
+    }
+
+    if (enrollmentLimit && new Date(enrollmentLimit) < now) {
+      setELimitError("Limit prihlásení musí byť v budúcnosti.");
+      hasError = true;
+    }
+
     if (hasError) return;
 
     try {
@@ -119,8 +139,8 @@ const Courses = () => {
         name: trimmed,
         periodId: selectedPeriodId,
         capacity,
-        groupChangeDeadline: groupChangeDeadline || null,
-        enrollmentLimit,
+        groupChangeDeadline: groupChangeDeadline ? new Date(groupChangeDeadline).toISOString() : null,
+        enrollmentLimit: enrollmentLimit ? new Date(enrollmentLimit).toISOString() : null,
         hiddenInList,
         autoAcceptStudents
         });
@@ -221,6 +241,8 @@ const Courses = () => {
         setAutoAcceptStudents={setAutoAcceptStudents}
         capacityError={capacityError}
         periodError={periodError}
+        groupChangeError={groupChangeError}
+        enrollmentLimitError={enrollmentLimitError}
       />
 
       <ConfirmDeleteCourseDialog
