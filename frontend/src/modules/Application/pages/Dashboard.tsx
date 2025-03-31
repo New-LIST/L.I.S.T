@@ -1,37 +1,37 @@
-import Categories from '../../Categories/pages/Categories.tsx';
-import Periods from '../../Periods/Pages/Periods.tsx'
-import Courses from '../../Courses/Pages/Courses.tsx'
-import {Button, Typography} from '@mui/material';
-import {getStoredUser, logout} from '../../Authentication/utils/auth.ts';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import {getStoredUser} from "../../Authentication/utils/auth.ts";
+import {menuConfigByRole} from "../config/menuConfigByRole.tsx";
+import Header from "../components/Header.tsx";
+import Sidebar from "../components/Sidebar.tsx";
+
 export default function Dashboard() {
     const user = getStoredUser();
-    const role = user?.role;
-    const name = user?.fullname;
+
+    if (!user) return <Navigate to="/signin" replace />; // user nie je prihlásený
+
+    const role = user.role?.toLowerCase(); // napr. "Teacher" → "teacher"
+    const items = menuConfigByRole[role] || [];
+
+    if (items.length === 0) {
+        return (
+            <div style={{ padding: '2rem' }}>
+                <p>Nemáš prístup k žiadnym modulom.</p>
+            </div>
+        );
+    }
 
     return (
-        <div>
-            <Typography variant="h4" gutterBottom>
-                This is your dashboard content
-
-            </Typography>
-
-                <Categories />
-                <Periods/>
-                <Courses/>
-
-            <Typography sx={{ mt: 2 }}>
-                Tvoje meno: <strong>{name || 'Neznáme'}</strong> <br />
-                Tvoja rola: <strong>{role || 'neznáma rola'}</strong>
-            </Typography>
-
-            <Button
-                variant="outlined"
-                color="error"
-                onClick={logout}
-                sx={{ mt: 4 }}
-            >
-                Odhlásiť sa
-            </Button>
-        </div>
+        <>
+            <Header onMenuClick={() => {}} />
+            <Sidebar mobileOpen={false} onClose={() => {}} role={role} />
+            <main style={{ marginTop: '64px', padding: '1rem' }}>
+                <Routes>
+                    <Route index element={<Navigate to={items[0].path} replace />} />
+                    {items.map(({ path, element }) => (
+                        <Route key={path} path={path} element={element} />
+                    ))}
+                </Routes>
+            </main>
+        </>
     );
 }
