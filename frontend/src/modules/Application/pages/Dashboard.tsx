@@ -1,6 +1,7 @@
 import Categories from '../../Categories/pages/Categories.tsx';
 import {Button, Typography} from '@mui/material';
 import {getStoredUser, logout} from '../../Authentication/utils/auth.ts';
+import Users from "../../Users/pages/Users.tsx";
 export default function Dashboard() {
     const user = getStoredUser();
     const role = user?.role;
@@ -13,7 +14,9 @@ export default function Dashboard() {
 
             </Typography>
 
-                <Categories />
+            <Categories />
+        
+            <Users />
 
             <Typography sx={{ mt: 2 }}>
                 Tvoje meno: <strong>{name || 'Neznáme'}</strong> <br />

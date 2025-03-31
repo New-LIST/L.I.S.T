@@ -1,6 +1,6 @@
 import './App.css'
 import { Route, Routes, Navigate } from 'react-router-dom'
-import SignIn from './modules/authentication/pages/SignIn.tsx'
+import SignIn from './modules/Authentication/pages/SignIn.tsx'
 import Dashboard from './modules/Application/pages/Dashboard.tsx'
 import RequireAuth from './modules/Authentication/components/RequireAuth.tsx';
 
