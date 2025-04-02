@@ -6,7 +6,7 @@ namespace List.Common.Integrations;
 
 public static class ModuleExtensions
 {
-    public static IModule? AddModule<TModule>(this IServiceCollection service, IConfiguration configuration) where TModule : IModule
+    public static IModule AddModule<TModule>(this IServiceCollection service, IConfiguration configuration) where TModule : IModule
     {
         var module = Activator.CreateInstance<TModule>();
         
