@@ -1,10 +1,29 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using List.Common.Integrations;
+using List.Server.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<RateLimitingOptions>(builder.Configuration.GetSection(RateLimitingOptions.ConfigSection));
+
+var rateLimitOptions = new RateLimitingOptions();
+builder.Configuration.GetSection(RateLimitingOptions.ConfigSection).Bind(rateLimitOptions);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(RateLimitingOptions.FixedPolicy, opt =>
+    {
+        opt.PermitLimit = rateLimitOptions.PermitLimit;
+        opt.Window = TimeSpan.FromSeconds(rateLimitOptions.Window);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = rateLimitOptions.QueueLimit;
+    }); 
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -35,7 +54,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -45,6 +63,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+builder.Services.AddControllers();
 
 builder.Services.Configure<RouteOptions>(options =>
 {
@@ -67,14 +87,15 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowFrontend");
-
 app.UseModule<List.Users.Module>();
 app.UseModule<List.Courses.Module>();
 
+app.UseRateLimiter();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.UseCors("AllowFrontend");
+app.MapControllers()
+    .RequireRateLimiting(RateLimitingOptions.FixedPolicy);
 
 app.Run();
