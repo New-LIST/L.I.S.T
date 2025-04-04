@@ -41,4 +41,3 @@ Thumbs.db
 
 # === Lokalne configs
 backend/List/List.Server/appsettings.Development.json
-backend/List/List.Server/appsettings.json
