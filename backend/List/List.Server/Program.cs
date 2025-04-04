@@ -60,7 +60,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -90,11 +91,11 @@ if (app.Environment.IsDevelopment())
 app.UseModule<List.Users.Module>();
 app.UseModule<List.Courses.Module>();
 
+app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowFrontend");
 app.MapControllers()
     .RequireRateLimiting(RateLimitingOptions.FixedPolicy);
 
