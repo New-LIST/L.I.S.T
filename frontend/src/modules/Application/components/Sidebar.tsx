@@ -1,5 +1,5 @@
 import {
-    Drawer, List, ListItem, ListItemText, Toolbar
+    Drawer, List, ListItem,ListItemButton, ListItemText, Toolbar
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import { menuConfigByRole } from '../config/menuConfigByRole.tsx';
@@ -18,8 +18,7 @@ export default function Sidebar({ mobileOpen, onClose, role }: {
             <Toolbar />
             <List>
                 {items.map(({ label, path }) => (
-                    <ListItem
-                        button
+                    <ListItemButton
                         key={path}
                         component={NavLink}
                         to={`/${path}`}
@@ -34,7 +33,7 @@ export default function Sidebar({ mobileOpen, onClose, role }: {
                         }}
                     >
                         <ListItemText primary={label} />
-                    </ListItem>
+                    </ListItemButton>
                 ))}
             </List>
         </div>
