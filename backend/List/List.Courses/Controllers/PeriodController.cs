@@ -54,5 +54,20 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> Update(int id, PeriodCreateDto dto)
+        {
+            var period = await _context.Periods.FindAsync(id);
+            if (period == null)
+                return NotFound();
+
+            period.Name = dto.Name;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
