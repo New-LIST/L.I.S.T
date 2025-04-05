@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Box,
   Container,
   Typography,
   Button,
@@ -15,10 +16,13 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import api from '../../../services/api';
 import { Course } from '../Types/Course';
 import { Period } from '../../Periods/Types/Period';
-import CourseDialog from '../Components/CourseDialog';
+import CreateCourseDialog from '../Components/CreateCourseDialog';
+import EditCourseDialog from '../Components/EditCourseDialog';
+
 import ConfirmDeleteCourseDialog from '../Components/ConfirmDeleteCourseDialog';
 import { useNotification } from '../../../shared/components/NotificationContext';
 
@@ -44,6 +48,8 @@ const Courses = () => {
   const [periodError, setPeriodError] = useState<string | null>(null);
   const [enrollmentLimitError, setELimitError] = useState<string | null>(null);
   const [groupChangeError, setGChangeError] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [courseToEdit, setCourseToEdit] = useState<Course | null>(null);
 
 
 
@@ -72,10 +78,10 @@ const Courses = () => {
 
   useEffect(() => {
     fetchCourses();
-    if (openDialog) {
+    if (openDialog || editDialogOpen) {
       fetchPeriods(); // ⬅️ načíta sa vždy, keď sa otvorí dialog
     }
-  }, [openDialog]);
+  }, [openDialog, editDialogOpen]);
 
   const resetForm = () => {
     setName('');
@@ -92,6 +98,9 @@ const Courses = () => {
     setHiddenInList(false);
     setAutoAcceptStudents(false);
     setCapacityError(null);
+    setEditDialogOpen(false);
+    setCourseToEdit(null);
+    setConfirmOpen(false);
 
   };
 
@@ -153,6 +162,76 @@ const Courses = () => {
     }
   };
 
+  const handleUpdate = async (id: number, periodId: number | '') => {
+    const trimmed = name.trim();
+    setNameError(null);
+    setCapacityError(null);
+    setPeriodError(null);
+  
+    let hasError = false;
+  
+    if (!trimmed) {
+      setNameError("Názov kurzu nemôže byť prázdny.");
+      hasError = true;
+    }
+    if (selectedPeriodId === '') {
+      setPeriodError("Musíš vybrať obdobie.");
+      hasError = true;
+    }
+    if (capacity <= 0) {
+      setCapacityError("Kapacita nemôže byť 0 alebo menej.");
+      hasError = true;
+    }
+  
+    if (!trimmed) {
+      setNameError("Názov kurzu nemôže byť prázdny.");
+      hasError = true;
+    }
+
+    if (periodId === "") {
+      setPeriodError("Musíš vybrať obdobie");
+      hasError = true;
+    }
+
+    if (capacity <= 0) {
+      setCapacityError("Kapacita nemôže byť 0 alebo menej.");
+      hasError = true;
+    }
+
+    const now = new Date();
+
+    if (groupChangeDeadline && new Date(groupChangeDeadline) < now) {
+      setGChangeError("Termín na zmenu skupiny musí byť v budúcnosti.");
+      hasError = true;
+    }
+
+    if (enrollmentLimit && new Date(enrollmentLimit) < now) {
+      setELimitError("Limit prihlásení musí byť v budúcnosti.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+  
+    try {
+      await api.put(`/courses/${id}`, {
+        name: trimmed,
+        periodId: selectedPeriodId,
+        capacity,
+        groupChangeDeadline: groupChangeDeadline || null,
+        enrollmentLimit,
+        hiddenInList,
+        autoAcceptStudents,
+      });
+      setEditDialogOpen(false);
+      resetForm();
+      fetchCourses();
+      showNotification('Kurz bol upravený.', 'success');
+    } catch (err) {
+      console.error(err);
+      showNotification('Nepodarilo sa upraviť kurz.', 'error');
+    }
+  };
+
   const handleDelete = async () => {
     if (!courseToDelete) return;
     try {
@@ -200,16 +279,46 @@ const Courses = () => {
                 {courses.map((course) => (
                   <TableRow key={course.id}>
                     <TableCell>{course.name}</TableCell>
-                    <TableCell>{course.periodName || 'Kurz nie je zaradený k obdobiu'}</TableCell>
+                    <TableCell>
+                      {course.periodName || "Kurz nie je zaradený k obdobiu"}
+                    </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        onClick={() => {
-                          setCourseToDelete(course);
-                          setConfirmOpen(true);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box >
+                        <IconButton
+                          onClick={() => {
+                            setCourseToEdit(course);
+                            setName(course.name);
+                            setSelectedPeriodId(
+                              periods.find((p) => p.name === course.periodName)
+                                ?.id ?? ""
+                            );
+                            setCapacity(course.capacity);
+                            setGroupChangeDeadline(
+                              course.groupChangeDeadline
+                                ? course.groupChangeDeadline.split("T")[0]
+                                : null
+                            );
+                            setEnrollmentLimit(
+                              course.enrollmentLimit
+                                ? course.enrollmentLimit.split("T")[0]
+                                : null
+                            );
+                            setHiddenInList(course.hiddenInList);
+                            setAutoAcceptStudents(course.autoAcceptStudents);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => {
+                            setCourseToDelete(course);
+                            setConfirmOpen(true);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -219,7 +328,7 @@ const Courses = () => {
         </CardContent>
       </Card>
 
-      <CourseDialog
+      <CreateCourseDialog
         open={openDialog}
         onClose={resetForm}
         onCreate={handleCreate}
@@ -247,10 +356,39 @@ const Courses = () => {
 
       <ConfirmDeleteCourseDialog
         open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
+        onClose={resetForm}
         onConfirm={handleDelete}
-        courseName={courseToDelete?.name ?? ''}
+        courseName={courseToDelete?.name ?? ""}
       />
+      {courseToEdit && (
+        <EditCourseDialog
+          open={editDialogOpen}
+          onClose={resetForm}
+          onSubmit={() => {
+            if (courseToEdit) handleUpdate(courseToEdit.id, selectedPeriodId);
+          }} 
+          name={name}
+          setName={setName}
+          selectedPeriodId={selectedPeriodId}
+          setSelectedPeriodId={setSelectedPeriodId}
+          capacity={capacity}
+          setCapacity={setCapacity}
+          groupChangeDeadline={groupChangeDeadline}
+          setGroupChangeDeadline={setGroupChangeDeadline}
+          enrollmentLimit={enrollmentLimit}
+          setEnrollmentLimit={setEnrollmentLimit}
+          hiddenInList={hiddenInList}
+          setHiddenInList={setHiddenInList}
+          autoAcceptStudents={autoAcceptStudents}
+          setAutoAcceptStudents={setAutoAcceptStudents}
+          periods={periods}
+          nameError = {nameError}
+          capacityError={capacityError}
+          periodError={periodError}
+          groupChangeError={groupChangeError}
+          enrollmentLimitError={enrollmentLimitError}
+        />
+      )}
     </Container>
   );
 };

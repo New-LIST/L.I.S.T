@@ -13,13 +13,12 @@ import {
   type Props = {
     open: boolean;
     onClose: () => void;
-    onCreate: (name: string, periodId: number | "") => void;
+    onSubmit: () => void;
+  
     name: string;
     setName: (value: string) => void;
-    selectedPeriodId: number | "";
-    setSelectedPeriodId: (id: number | "") => void;
-    nameError: string | null;
-    periods: Period[];
+    selectedPeriodId: number | '';
+    setSelectedPeriodId: (id: number | '') => void;
     capacity: number;
     setCapacity: (value: number) => void;
     groupChangeDeadline: string | null;
@@ -30,23 +29,24 @@ import {
     setHiddenInList: (value: boolean) => void;
     autoAcceptStudents: boolean;
     setAutoAcceptStudents: (value: boolean) => void;
+    periods: Period[];
+  
+    nameError: string | null;
     capacityError: string | null;
     periodError: string | null;
     groupChangeError: string | null;
     enrollmentLimitError: string | null;
-
+    
   };
   
-  const CourseDialog = ({
+  const EditCourseDialog = ({
     open,
     onClose,
-    onCreate,
+    onSubmit,
     name,
     setName,
     selectedPeriodId,
     setSelectedPeriodId,
-    nameError,
-    periods,
     capacity,
     setCapacity,
     groupChangeDeadline,
@@ -57,18 +57,19 @@ import {
     setHiddenInList,
     autoAcceptStudents,
     setAutoAcceptStudents,
-    capacityError,
+    periods,
+    nameError,
     periodError,
+    capacityError,
     groupChangeError,
     enrollmentLimitError,
-
   }: Props) => {
     return (
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle>Pridať nový kurz</DialogTitle>
+        <DialogTitle>Upraviť kurz</DialogTitle>
         <DialogContent
           dividers
-          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
         >
           <TextField
             label="Názov kurzu"
@@ -84,13 +85,12 @@ import {
             value={selectedPeriodId}
             onChange={(e) =>
               setSelectedPeriodId(
-                e.target.value === "" ? "" : Number(e.target.value)
+                e.target.value === '' ? '' : Number(e.target.value)
               )
             }
             error={!!periodError}
             helperText={periodError}
             fullWidth
-            required
           >
             {periods.map((period) => (
               <MenuItem key={period.id} value={period.id}>
@@ -105,15 +105,13 @@ import {
             onChange={(e) => setCapacity(Number(e.target.value))}
             error={!!capacityError}
             helperText={capacityError}
-            required
             fullWidth
           />
-
           <TextField
             label="Termín na zmenu skupiny"
             type="date"
             InputLabelProps={{ shrink: true }}
-            value={groupChangeDeadline ?? ""}
+            value={groupChangeDeadline ?? ''}
             onChange={(e) =>
               setGroupChangeDeadline(e.target.value ? e.target.value : null)
             }
@@ -121,12 +119,11 @@ import {
             helperText={groupChangeError}
             fullWidth
           />
-
           <TextField
             label="Časový limit zápisu na kurz"
             type="date"
             InputLabelProps={{ shrink: true }}
-            value={enrollmentLimit ?? ""}
+            value={enrollmentLimit ?? ''}
             onChange={(e) =>
               setEnrollmentLimit(e.target.value ? e.target.value : null)
             }
@@ -134,23 +131,21 @@ import {
             helperText={enrollmentLimitError}
             fullWidth
           />
-
           <TextField
             select
             label="Skryť v zozname"
-            value={hiddenInList ? "true" : "false"}
-            onChange={(e) => setHiddenInList(e.target.value === "true")}
+            value={hiddenInList ? 'true' : 'false'}
+            onChange={(e) => setHiddenInList(e.target.value === 'true')}
             fullWidth
           >
             <MenuItem value="false">Nie</MenuItem>
             <MenuItem value="true">Áno</MenuItem>
           </TextField>
-
           <TextField
             select
             label="Automaticky prijať študentov"
-            value={autoAcceptStudents ? "true" : "false"}
-            onChange={(e) => setAutoAcceptStudents(e.target.value === "true")}
+            value={autoAcceptStudents ? 'true' : 'false'}
+            onChange={(e) => setAutoAcceptStudents(e.target.value === 'true')}
             fullWidth
           >
             <MenuItem value="false">Nie</MenuItem>
@@ -159,18 +154,13 @@ import {
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Zrušiť</Button>
-          <Button
-            onClick={() => {
-              onCreate(name, selectedPeriodId);
-            }}
-            variant="contained"
-          >
-            Pridať
+          <Button onClick={onSubmit} variant="contained">
+            Uložiť
           </Button>
         </DialogActions>
       </Dialog>
     );
   };
   
-  export default CourseDialog;
+  export default EditCourseDialog;
   
