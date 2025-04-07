@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, logout } from '../modules/Authentication/utils/auth.ts';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5209/api', // prispôsob podľa tvojho backendu
+  baseURL: 'http://localhost:5000/api', // prispôsob podľa tvojho backendu
   headers: {
     'Content-Type': 'application/json',
   },
