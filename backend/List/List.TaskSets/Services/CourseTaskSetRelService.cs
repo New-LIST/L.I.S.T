@@ -1,6 +1,8 @@
 using List.TaskSets.Data;
 using List.TaskSets.Dtos;
 using List.TaskSets.Models;
+using List.TaskSets.Formula;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.TaskSets.Services;
@@ -58,9 +60,22 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
             MinPointsInPercentage = dto.MinPointsInPercentage,
             IncludeInTotal = dto.IncludeInTotal,
             Virtual = dto.Virtual,
-            Formula = dto.Formula,
-            FormulaObject = dto.FormulaObject
+            Formula = dto.Formula
         };
+
+        if (!string.IsNullOrWhiteSpace(dto.Formula))
+        {
+            var parser = new FormulaExpressionParser();
+            var ast = parser.Parse(dto.Formula!);
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Converters = { new FormulaNodeJsonConverter() }
+            };
+
+            entity.FormulaObject = JsonSerializer.Serialize(ast, options);
+        }
 
         context.CourseTaskSetRels.Add(entity);
         await context.SaveChangesAsync();
@@ -82,7 +97,24 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
         entity.IncludeInTotal = dto.IncludeInTotal;
         entity.Virtual = dto.Virtual;
         entity.Formula = dto.Formula;
-        entity.FormulaObject = dto.FormulaObject;
+
+        if (!string.IsNullOrWhiteSpace(dto.Formula))
+        {
+            var parser = new FormulaExpressionParser();
+            var ast = parser.Parse(dto.Formula!);
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Converters = { new FormulaNodeJsonConverter() }
+            };
+
+            entity.FormulaObject = JsonSerializer.Serialize(ast, options);
+        }
+        else
+        {
+            entity.FormulaObject = null;
+        }
 
         await context.SaveChangesAsync();
 

@@ -5,8 +5,6 @@ namespace List.TaskSets.Formula;
 
 public class FormulaExpressionParser
 {
-    private static readonly HashSet<string> AllowedVariables = new() { "points", "maxPoints" };
-
     public FormulaNode Parse(string input)
     {
         var tokens = Tokenize(input);
@@ -39,10 +37,12 @@ public class FormulaExpressionParser
             else if (token.StartsWith("~"))
             {
                 var varName = token[1..];
-                if (!AllowedVariables.Contains(varName))
-                    throw new Exception($"Nepovolená premenná: {varName}");
-
                 stack.Push(new VariableNode { Name = varName });
+            }
+            else if (token.StartsWith("$"))
+            {
+                var varName = token[1..];
+                stack.Push(new MaxVariableNode { Name = varName });
             }
             else if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
             {
