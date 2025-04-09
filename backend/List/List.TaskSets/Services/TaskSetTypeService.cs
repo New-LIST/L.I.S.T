@@ -89,4 +89,15 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
         };
     }
 
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var existing = await context.TaskSetTypes.FindAsync(id);
+        if (existing == null)
+            return false;
+
+        context.TaskSetTypes.Remove(existing);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
 }

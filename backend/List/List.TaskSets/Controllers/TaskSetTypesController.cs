@@ -70,6 +70,17 @@ public class TaskSetTypesController : ControllerBase
         }
     }
 
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var success = await _service.DeleteAsync(id);
+        if (!success)
+            return NotFound();
+
+        return NoContent();
+    }
+
     private static bool IsUniqueConstraintViolation(DbUpdateException ex)
     {
         return ex.InnerException is PostgresException pgEx &&

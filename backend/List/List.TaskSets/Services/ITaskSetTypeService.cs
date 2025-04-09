@@ -9,4 +9,6 @@ public interface ITaskSetTypeService
 
     Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto);
 
+    Task<bool> DeleteAsync(int id); 
+
 }
