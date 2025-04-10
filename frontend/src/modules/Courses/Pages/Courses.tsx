@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
@@ -13,26 +14,27 @@ import {
   TableBody,
   CircularProgress,
   IconButton,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import api from '../../../services/api';
-import { Course } from '../Types/Course';
-import { Period } from '../../Periods/Types/Period';
-import CreateCourseDialog from '../Components/CreateCourseDialog';
-import EditCourseDialog from '../Components/EditCourseDialog';
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import AssignmentIcon  from "@mui/icons-material/Assignment";
+import api from "../../../services/api";
+import { Course } from "../Types/Course";
+import { Period } from "../../Periods/Types/Period";
+import CreateCourseDialog from "../Components/CreateCourseDialog";
+import EditCourseDialog from "../Components/EditCourseDialog";
 
-import ConfirmDeleteCourseDialog from '../Components/ConfirmDeleteCourseDialog';
-import { useNotification } from '../../../shared/components/NotificationContext';
+import ConfirmDeleteCourseDialog from "../Components/ConfirmDeleteCourseDialog";
+import { useNotification } from "../../../shared/components/NotificationContext";
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
-  const [name, setName] = useState('');
-  const [selectedPeriodId, setSelectedPeriodId] = useState<number | ''>(''); 
+  const [name, setName] = useState("");
+  const [selectedPeriodId, setSelectedPeriodId] = useState<number | "">("");
   const [nameError, setNameError] = useState<string | null>(null);
   const { showNotification } = useNotification();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -50,17 +52,16 @@ const Courses = () => {
   const [groupChangeError, setGChangeError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [courseToEdit, setCourseToEdit] = useState<Course | null>(null);
-
-
+  const navigate = useNavigate();
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const res = await api.get<Course[]>('/courses');
+      const res = await api.get<Course[]>("/courses");
       setCourses(res.data);
     } catch (err) {
       console.error(err);
-      showNotification('Nepodarilo sa načítať kurzy.', 'error');
+      showNotification("Nepodarilo sa načítať kurzy.", "error");
     } finally {
       setLoading(false);
     }
@@ -68,11 +69,11 @@ const Courses = () => {
 
   const fetchPeriods = async () => {
     try {
-      const res = await api.get<Period[]>('/periods');
+      const res = await api.get<Period[]>("/periods");
       setPeriods(res.data);
     } catch (err) {
       console.error(err);
-      showNotification('Nepodarilo sa načítať obdobia.', 'error');
+      showNotification("Nepodarilo sa načítať obdobia.", "error");
     }
   };
 
@@ -84,7 +85,7 @@ const Courses = () => {
   }, [openDialog, editDialogOpen]);
 
   const resetForm = () => {
-    setName('');
+    setName("");
     setSelectedPeriodId(periods[0]?.id ?? 0);
     setNameError(null);
     setGChangeError(null);
@@ -101,10 +102,9 @@ const Courses = () => {
     setEditDialogOpen(false);
     setCourseToEdit(null);
     setConfirmOpen(false);
-
   };
 
-  const handleCreate = async (name: string, periodId: number | '') => {
+  const handleCreate = async (name: string, periodId: number | "") => {
     const trimmed = name.trim();
     let hasError = false;
 
@@ -144,37 +144,41 @@ const Courses = () => {
     if (hasError) return;
 
     try {
-      await api.post('/courses', { 
+      await api.post("/courses", {
         name: trimmed,
         periodId: selectedPeriodId,
         capacity,
-        groupChangeDeadline: groupChangeDeadline ? new Date(groupChangeDeadline).toISOString() : null,
-        enrollmentLimit: enrollmentLimit ? new Date(enrollmentLimit).toISOString() : null,
+        groupChangeDeadline: groupChangeDeadline
+          ? new Date(groupChangeDeadline).toISOString()
+          : null,
+        enrollmentLimit: enrollmentLimit
+          ? new Date(enrollmentLimit).toISOString()
+          : null,
         hiddenInList,
-        autoAcceptStudents
-        });
+        autoAcceptStudents,
+      });
       resetForm();
       fetchCourses();
-      showNotification('Kurz bol úspešne pridaný.', 'success');
+      showNotification("Kurz bol úspešne pridaný.", "success");
     } catch (err) {
       console.error(err);
-      showNotification('Nepodarilo sa pridať kurz.', 'error');
+      showNotification("Nepodarilo sa pridať kurz.", "error");
     }
   };
 
-  const handleUpdate = async (id: number, periodId: number | '') => {
+  const handleUpdate = async (id: number, periodId: number | "") => {
     const trimmed = name.trim();
     setNameError(null);
     setCapacityError(null);
     setPeriodError(null);
-  
+
     let hasError = false;
-  
+
     if (!trimmed) {
       setNameError("Názov kurzu nemôže byť prázdny.");
       hasError = true;
     }
-    if (selectedPeriodId === '') {
+    if (selectedPeriodId === "") {
       setPeriodError("Musíš vybrať obdobie.");
       hasError = true;
     }
@@ -182,7 +186,7 @@ const Courses = () => {
       setCapacityError("Kapacita nemôže byť 0 alebo menej.");
       hasError = true;
     }
-  
+
     if (!trimmed) {
       setNameError("Názov kurzu nemôže byť prázdny.");
       hasError = true;
@@ -211,7 +215,7 @@ const Courses = () => {
     }
 
     if (hasError) return;
-  
+
     try {
       await api.put(`/courses/${id}`, {
         name: trimmed,
@@ -225,10 +229,10 @@ const Courses = () => {
       setEditDialogOpen(false);
       resetForm();
       fetchCourses();
-      showNotification('Kurz bol upravený.', 'success');
+      showNotification("Kurz bol upravený.", "success");
     } catch (err) {
       console.error(err);
-      showNotification('Nepodarilo sa upraviť kurz.', 'error');
+      showNotification("Nepodarilo sa upraviť kurz.", "error");
     }
   };
 
@@ -237,10 +241,10 @@ const Courses = () => {
     try {
       await api.delete(`/courses/${courseToDelete.id}`);
       fetchCourses();
-      showNotification('Kurz bol vymazaný.', 'success');
+      showNotification("Kurz bol vymazaný.", "success");
     } catch (err) {
       console.error(err);
-      showNotification('Nepodarilo sa vymazať kurz.', 'error');
+      showNotification("Nepodarilo sa vymazať kurz.", "error");
     } finally {
       setCourseToDelete(null);
       setConfirmOpen(false);
@@ -283,7 +287,7 @@ const Courses = () => {
                       {course.periodName || "Kurz nie je zaradený k obdobiu"}
                     </TableCell>
                     <TableCell align="right">
-                      <Box >
+                      <Box>
                         <IconButton
                           onClick={() => {
                             setCourseToEdit(course);
@@ -317,6 +321,13 @@ const Courses = () => {
                           }}
                         >
                           <DeleteIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() =>
+                            navigate(`/courses/${course.id}/tasksets`)
+                          }
+                        >
+                          <AssignmentIcon />
                         </IconButton>
                       </Box>
                     </TableCell>
@@ -366,7 +377,7 @@ const Courses = () => {
           onClose={resetForm}
           onSubmit={() => {
             if (courseToEdit) handleUpdate(courseToEdit.id, selectedPeriodId);
-          }} 
+          }}
           name={name}
           setName={setName}
           selectedPeriodId={selectedPeriodId}
@@ -382,7 +393,7 @@ const Courses = () => {
           autoAcceptStudents={autoAcceptStudents}
           setAutoAcceptStudents={setAutoAcceptStudents}
           periods={periods}
-          nameError = {nameError}
+          nameError={nameError}
           capacityError={capacityError}
           periodError={periodError}
           groupChangeError={groupChangeError}
