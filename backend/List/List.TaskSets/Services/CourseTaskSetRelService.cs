@@ -49,6 +49,26 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
         };
     }
 
+    public async Task<List<CourseTaskSetRelDto>> GetByCourseIdAsync(int courseId)
+    {
+        return await context.CourseTaskSetRels
+            .Where(r => r.CourseId == courseId)
+            .Select(rel => new CourseTaskSetRelDto
+            {
+                Id = rel.Id,
+                CourseId = rel.CourseId,
+                TaskSetTypeId = rel.TaskSetTypeId,
+                UploadSolution = rel.UploadSolution,
+                MinPoints = rel.MinPoints,
+                MinPointsInPercentage = rel.MinPointsInPercentage,
+                IncludeInTotal = rel.IncludeInTotal,
+                Virtual = rel.Virtual,
+                Formula = rel.Formula,
+                FormulaObject = rel.FormulaObject
+            })
+            .ToListAsync();
+    }
+
     public async Task<CourseTaskSetRelDto> CreateAsync(CourseTaskSetRelDto dto)
     {
         var entity = new CourseTaskSetRel

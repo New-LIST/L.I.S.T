@@ -29,6 +29,13 @@ public class CourseTaskSetRelController : ControllerBase
         return Ok(dto);
     }
 
+    [HttpGet("by-course/{courseId}")]
+    public async Task<IActionResult> GetByCourseId(int courseId)
+    {
+        var rels = await _service.GetByCourseIdAsync(courseId);
+        return Ok(rels);
+    }
+
     [HttpPost]
     public async Task<ActionResult<CourseTaskSetRelDto>> Create(CourseTaskSetRelDto dto)
     {
