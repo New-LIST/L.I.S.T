@@ -31,6 +31,9 @@ public class FormulaNodeJsonConverter : JsonConverter<FormulaNode>
             case VariableNode variable:
                 JsonSerializer.Serialize(writer, variable, options);
                 break;
+            case MaxVariableNode maxVariable:
+                JsonSerializer.Serialize(writer, maxVariable, options);
+                break;
             case ConstantNode constant:
                 JsonSerializer.Serialize(writer, constant, options);
                 break;

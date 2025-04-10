@@ -91,7 +91,9 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new FormulaNodeJsonConverter() }
+                Converters = { new FormulaNodeJsonConverter() },
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+
             };
 
             entity.FormulaObject = JsonSerializer.Serialize(ast, options);
@@ -126,7 +128,9 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new FormulaNodeJsonConverter() }
+                Converters = { new FormulaNodeJsonConverter() },
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+
             };
 
             entity.FormulaObject = JsonSerializer.Serialize(ast, options);
