@@ -21,6 +21,21 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
             .ToListAsync();
     }
 
+    public async Task<List<string>> GetIdentifiersByCourseIdAsync(int courseId)
+    {
+        return await context.CourseTaskSetRels
+            .Where(rel => rel.CourseId == courseId)
+            .Join(
+                context.TaskSetTypes,
+                rel => rel.TaskSetTypeId,
+                type => type.Id,
+                (rel, type) => type.Identifier
+            )
+            .Where(identifier => !string.IsNullOrEmpty(identifier))
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto)
     {
         // Kontrola unikátneho mena

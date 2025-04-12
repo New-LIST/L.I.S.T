@@ -53,9 +53,10 @@ namespace List.TaskSets.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_course_task_set_rel_course_id",
+                name: "IX_course_task_set_rel_course_id_task_set_type_id",
                 table: "course_task_set_rel",
-                column: "course_id");
+                columns: new[] { "course_id", "task_set_type_id" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_course_task_set_rel_task_set_type_id",

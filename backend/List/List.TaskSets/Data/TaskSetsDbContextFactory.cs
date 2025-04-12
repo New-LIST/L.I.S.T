@@ -11,7 +11,7 @@ public class TaskSetsDbContextFactory : IDesignTimeDbContextFactory<TaskSetsDbCo
     {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../List.Server"))
-            .AddJsonFile("appsettings.json")
+            .AddJsonFile("appsettings.Development.json")
             .Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<TaskSetsDbContext>();

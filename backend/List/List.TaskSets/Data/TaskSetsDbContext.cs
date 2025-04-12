@@ -67,6 +67,8 @@ public class TaskSetsDbContext(DbContextOptions<TaskSetsDbContext> options) : Db
                 .WithMany()
                 .HasForeignKey(e => e.TaskSetTypeId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.CourseId, e.TaskSetTypeId }).IsUnique();
         });
     }
 }

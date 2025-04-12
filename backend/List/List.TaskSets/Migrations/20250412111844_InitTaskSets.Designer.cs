@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.TaskSets.Migrations
 {
     [DbContext(typeof(TaskSetsDbContext))]
-    [Migration("20250406224309_InitTaskSets")]
+    [Migration("20250412111844_InitTaskSets")]
     partial class InitTaskSets
     {
         /// <inheritdoc />
@@ -103,9 +103,10 @@ namespace List.TaskSets.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CourseId");
-
                     b.HasIndex("TaskSetTypeId");
+
+                    b.HasIndex("CourseId", "TaskSetTypeId")
+                        .IsUnique();
 
                     b.ToTable("course_task_set_rel", (string)null);
                 });

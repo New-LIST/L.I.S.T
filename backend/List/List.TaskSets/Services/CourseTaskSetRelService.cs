@@ -99,6 +99,14 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
             entity.FormulaObject = JsonSerializer.Serialize(ast, options);
         }
 
+        var exists = await context.CourseTaskSetRels.AnyAsync(r =>
+                r.CourseId == dto.CourseId && r.TaskSetTypeId == dto.TaskSetTypeId);
+
+        if (exists)
+        {
+            throw new InvalidOperationException("Zostava s týmto typom pre daný kurz už existuje.");
+        }
+
         context.CourseTaskSetRels.Add(entity);
         await context.SaveChangesAsync();
 

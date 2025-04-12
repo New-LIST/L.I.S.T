@@ -100,9 +100,10 @@ namespace List.TaskSets.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CourseId");
-
                     b.HasIndex("TaskSetTypeId");
+
+                    b.HasIndex("CourseId", "TaskSetTypeId")
+                        .IsUnique();
 
                     b.ToTable("course_task_set_rel", (string)null);
                 });

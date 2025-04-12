@@ -27,6 +27,13 @@ public class TaskSetTypesController : ControllerBase
         return Ok(types);
     }
 
+    [HttpGet("identifiers/by-course/{courseId}")]
+    public async Task<IActionResult> GetIdentifiersByCourse(int courseId)
+    {
+        var identifiers = await _service.GetIdentifiersByCourseIdAsync(courseId);
+        return Ok(identifiers);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] TaskSetTypeDto dto)
     {
@@ -69,6 +76,7 @@ public class TaskSetTypesController : ControllerBase
             return Conflict(new { message = "Name or identifier already exists." });
         }
     }
+
 
 
     [HttpDelete("{id}")]
