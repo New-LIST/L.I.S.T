@@ -19,12 +19,14 @@ import {
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import api from "../../../services/api";
 import { TaskSetType } from "../Types/TaskSetType";
 import { CourseTaskSetRel } from "../Types/CourseTaskSetRel";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import FormulaEditor from "../Components/FormulaEditor";
 import { validateFormula } from "../Utils/validateFormula";
+import ConfirmDeleteTaskSetDialog from "../Components/ConfirmDeleteTaskSetDialog";
 
 const TaskSets = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,9 +42,15 @@ const TaskSets = () => {
   const [variables, setVariables] = useState<string[]>([]);
   const [taskTypeError, setTaskTypeError] = useState<string | null>(null);
   const [formulaError, setFormulaError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [affectedCount, setAffectedCount] = useState<number>(0);
 
   const usedTypeIds = new Set(taskSets.map((rel) => rel.taskSetTypeId));
-  const availableTypes = types.filter((type) => !usedTypeIds.has(type.id));
+  const availableTypes = types.filter(
+    (type) => !usedTypeIds.has(type.id) || type.id === selectedTypeId
+  );
 
   const { showNotification } = useNotification();
 
@@ -57,7 +65,9 @@ const TaskSets = () => {
       setTaskSets(relsRes.data);
       setVariables(identifiersRes.data);
       const usedTypeIds = new Set(taskSets.map((rel) => rel.taskSetTypeId));
-      const availableTypes = types.filter((type) => !usedTypeIds.has(type.id));
+      const availableTypes = types.filter(
+        (type) => !usedTypeIds.has(type.id) || type.id === selectedTypeId
+      );
     } catch (err) {
       showNotification("Nepodarilo sa načítať dáta.", "error");
     }
@@ -73,25 +83,56 @@ const TaskSets = () => {
     setMinPointsInPercentage(false);
     setTaskTypeError(null);
     setFormulaError(null);
+    setEditingId(null);
+    setOpenConfirmDelete(false);
+    setDeletingId(null);
+    setAffectedCount(0);
   };
 
-  const handleCreate = async () => {
+  const askDelete = async (id: number) => {
+    try {
+      const res = await api.get(`/course-task-set-rel/${id}/dependent-count`);
+      setAffectedCount(res.data);
+      setDeletingId(id);
+      setOpenConfirmDelete(true);
+    } catch {
+      showNotification("Nepodarilo sa načítať závislosti.", "error");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/course-task-set-rel/${deletingId}`);
+      resetForm();
+      fetchData();
+      showNotification("Zostava bola odstránená.", "success");
+    } catch {
+      showNotification("Zmazanie zlyhalo.", "error");
+    }
+  };
+
+  const handleSubmit = async () => {
     setTaskTypeError(null);
-    let hasError = false
-    if (selectedTypeId == null) {
+    let hasError = false;
+
+    if (selectedTypeId === null) {
       setTaskTypeError("Musíš vybrať typ zostavy");
       hasError = true;
     }
-    const result = validateFormula(formula, variables);
-    if (virtual && !result.valid) {      
-      setFormulaError(result.error ?? null);
-      hasError = true;
+
+    if (virtual) {
+      const result = validateFormula(formula, variables);
+      if (!result.valid) {
+        setFormulaError(result.error ?? null);
+        hasError = true;
+      }
     }
-    if(hasError){
-      return;
-    }
+
+    if (hasError) return;
+
     try {
-      await api.post("/course-task-set-rel", {
+      const payload = {
+        id: editingId ?? 0,
         courseId: Number(id),
         taskSetTypeId: selectedTypeId,
         uploadSolution,
@@ -100,25 +141,32 @@ const TaskSets = () => {
         formula: virtual ? formula : null,
         minPoints,
         minPointsInPercentage,
-      });
-      // reset stavu
+      };
+
+      if (editingId !== null) {
+        await api.put(`/course-task-set-rel/${editingId}`, payload);
+        showNotification("Zostava bola upravená.", "success");
+      } else {
+        await api.post("/course-task-set-rel", payload);
+        showNotification("Zostava úspešne pridaná.", "success");
+      }
+
       resetForm();
       fetchData();
-      showNotification("Zostava úspešne pridaná.", "success");
     } catch {
-      showNotification("Nepodarilo sa pridať zostavu.", "error");
+      showNotification("Operácia zlyhala.", "error");
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await api.delete(`/course-task-set-rel/${id}`);
-      resetForm();
-      fetchData();
-      showNotification("Zostava bola odstránená.", "success");
-    } catch {
-      showNotification("Zmazanie zlyhalo.", "error");
-    }
+  const handleEdit = (rel: CourseTaskSetRel) => {
+    setEditingId(rel.id);
+    setSelectedTypeId(rel.taskSetTypeId);
+    setFormula(rel.formula ?? "");
+    setMinPoints(rel.minPoints ?? null);
+    setUploadSolution(rel.uploadSolution);
+    setIncludeInTotal(rel.includeInTotal);
+    setVirtual(rel.virtual);
+    setMinPointsInPercentage(rel.minPointsInPercentage);
   };
 
   useEffect(() => {
@@ -137,7 +185,11 @@ const TaskSets = () => {
             select
             label="Typ zostavy"
             value={selectedTypeId ?? ""}
-            onChange={(e) => setSelectedTypeId(e.target.value === "" ? null : Number(e.target.value))}
+            onChange={(e) =>
+              setSelectedTypeId(
+                e.target.value === "" ? null : Number(e.target.value)
+              )
+            }
             fullWidth
             error={!!taskTypeError}
             helperText={taskTypeError}
@@ -210,9 +262,14 @@ const TaskSets = () => {
             />
           )}
 
-          <Button variant="contained" onClick={handleCreate}>
-            Pridať zostavu
+          <Button variant="contained" onClick={handleSubmit}>
+            {editingId !== null ? "Zmeň zostavu" : "Pridať zostavu"}
           </Button>
+          {editingId && (
+            <Button variant="outlined" onClick={resetForm} sx={{ ml: 2 }}>
+              Zrušiť
+            </Button>
+          )}
         </Box>
 
         <Card>
@@ -255,8 +312,11 @@ const TaskSets = () => {
                         </TableCell>
                         <TableCell>{rel.formula || "-"}</TableCell>
                         <TableCell>
-                          <IconButton onClick={() => handleDelete(rel.id)}>
+                          <IconButton onClick={() => askDelete(rel.id)}>
                             <DeleteIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleEdit(rel)}>
+                            <EditIcon />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -268,6 +328,13 @@ const TaskSets = () => {
           </CardContent>
         </Card>
       </Box>
+
+      <ConfirmDeleteTaskSetDialog
+        open={openConfirmDelete}
+        onClose={() => setOpenConfirmDelete(false)}
+        onConfirm={handleDelete}
+        affectedCount={affectedCount}
+      />
     </Container>
   );
 };
