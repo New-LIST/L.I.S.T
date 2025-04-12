@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.TaskSets.Migrations
 {
     [DbContext(typeof(TaskSetsDbContext))]
-    [Migration("20250412111844_InitTaskSets")]
+    [Migration("20250412191129_InitTaskSets")]
     partial class InitTaskSets
     {
         /// <inheritdoc />
@@ -120,7 +120,6 @@ namespace List.TaskSets.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Identifier")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("identifier");

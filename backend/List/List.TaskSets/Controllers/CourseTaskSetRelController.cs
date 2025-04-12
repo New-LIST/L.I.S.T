@@ -61,4 +61,15 @@ public class CourseTaskSetRelController : ControllerBase
         if (!deleted) return NotFound();
         return Ok();
     }
+
+    [HttpGet("{id}/dependent-count")]
+    public async Task<IActionResult> GetDependentCount(int id)
+    {
+        var count = await _service.GetDependentCountAsync(id);
+        if (count == null)
+            return NotFound();
+
+        return Ok(count);
+    }
+
 }

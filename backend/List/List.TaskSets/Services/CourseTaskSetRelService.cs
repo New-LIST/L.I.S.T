@@ -159,7 +159,43 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
         if (entity == null) return false;
 
         context.CourseTaskSetRels.Remove(entity);
+
+        var taskSetType = await context.TaskSetTypes.FindAsync(entity.TaskSetTypeId);
+
+        if (taskSetType != null && !string.IsNullOrWhiteSpace(taskSetType.Identifier))
+        {
+            var identifier = taskSetType.Identifier;
+
+            var related = await context.CourseTaskSetRels
+                .Where(x => x.CourseId == entity.CourseId && x.Formula != null)
+                .Where(x => x.Formula.Contains($"~{identifier}") || x.Formula.Contains($"${identifier}"))
+                .ToListAsync();
+
+            context.CourseTaskSetRels.RemoveRange(related);
+        }
+
         await context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<int?> GetDependentCountAsync(int id)
+{
+    var entity = await context.CourseTaskSetRels.FindAsync(id);
+    if (entity == null)
+        return null;
+
+    var taskSetType = await context.TaskSetTypes.FindAsync(entity.TaskSetTypeId);
+    if (taskSetType == null || string.IsNullOrWhiteSpace(taskSetType.Identifier))
+        return 0;
+
+    var identifier = taskSetType.Identifier;
+
+    return await context.CourseTaskSetRels
+        .Where(r => r.CourseId == entity.CourseId &&
+                    r.Id != id &&
+                    r.Formula != null &&
+                    (r.Formula.Contains($"~{identifier}") || r.Formula.Contains($"${identifier}"))) 
+        .CountAsync();
+}
+
 }
