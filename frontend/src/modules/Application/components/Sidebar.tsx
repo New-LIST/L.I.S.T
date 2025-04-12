@@ -2,23 +2,31 @@ import {
     Drawer, List, ListItem,ListItemButton, ListItemText, Toolbar
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
-import { menuConfigByRole } from '../config/menuConfigByRole.tsx';
 
 const drawerWidth = 240;
 
-export default function Sidebar({ mobileOpen, onClose, role }: {
-    mobileOpen: boolean,
-    onClose: () => void,
-    role: string
-}) {
-    const items = menuConfigByRole[role] || [];
+const sidebarItems = [
+    { label: 'Kurzy', path: 'dash/courses' },
+    { label: 'Obdobia', path: 'dash/periods' },
+    { label: 'Kategórie', path: 'dash/categories' },
+    { label: 'Používatelia', path: 'dash/users' },
+    { label: 'Typy Zostav', path: 'dash/task set types' },
+];
 
+export default function Sidebar({
+                                    mobileOpen,
+                                    onClose,
+                                }: {
+    mobileOpen: boolean;
+    onClose: () => void;
+}) {
     const drawer = (
         <div>
             <Toolbar />
             <List>
-                {items.map(({ label, path }) => (
+                {sidebarItems.map(({ label, path }) => (
                     <ListItemButton
+
                         key={path}
                         component={NavLink}
                         to={`/${path}`}

@@ -324,7 +324,7 @@ const Courses = () => {
                         </IconButton>
                         <IconButton
                           onClick={() =>
-                            navigate(`/courses/${course.id}/tasksets`)
+                            navigate(`/dash/courses/${course.id}/tasksets`)
                           }
                         >
                           <AssignmentIcon />

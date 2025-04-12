@@ -8,14 +8,28 @@ import Categories from "../../Categories/pages/Categories";
 import Dashboard from "../pages/Dashboard";
 import RequireAuth from "../../Authentication/components/RequireAuth";
 import SignIn from "../../Authentication/pages/SignIn";
+import StudentCourses from "../../Courses/Pages/StudentCourses";
+import CourseDetail from "../../Courses/Pages/CourseDetail";
+import RootRedirect from "./RootRedirect";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<RootRedirect />} />
       <Route path="/signin" element={<SignIn />} />
-
       <Route
-        path="/"
+        path="/student"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      >
+        <Route index element={<StudentCourses />} />
+        <Route path="courses/:id" element={<CourseDetail />} />
+      </Route>
+      <Route
+        path="/dash"
         element={
           <RequireAuth>
             <Dashboard />

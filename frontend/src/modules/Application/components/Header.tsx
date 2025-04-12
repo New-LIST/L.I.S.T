@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, IconButton, Typography, Box, Button } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { logout } from '../../Authentication/utils/auth.ts';
 import { getStoredUser } from '../../Authentication/utils/auth.ts';

@@ -3,26 +3,34 @@ import { getStoredUser } from "../../Authentication/utils/auth.ts";
 import { menuConfigByRole } from "../config/menuConfigByRole.tsx";
 import Header from "../components/Header.tsx";
 import Sidebar from "../components/Sidebar.tsx";
+import React, { useState } from 'react';
 
 export default function Dashboard() {
-  const user = getStoredUser();
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const user = getStoredUser();
+    if (!user) return <Navigate to="/signin" replace />;
 
-  if (!user) return <Navigate to="/signin" replace />; // user nie je prihlásený
+    const role = user.role?.toLowerCase();
 
-  const role = user.role?.toLowerCase(); // napr. "Teacher" → "teacher"
-  const items = menuConfigByRole[role] || [];
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
 
-  if (items.length === 0) {
-    return (
-      <div style={{ padding: "2rem" }}>
-        <p>Nemáš prístup k žiadnym modulom.</p>
-      </div>
-    );
-  }
+    if (role === 'student') {
+        return (
+            <>
+                <Header onMenuClick={handleDrawerToggle}/>
+                <main style={{marginTop: '64px', padding: '1rem'}}>
+                    <Outlet/>
+                </main>
+
+            </>
+        );
+    }
 
   return (
     <div style={{ display: "flex" }}>
-    <Sidebar mobileOpen={false} onClose={() => {}} role={role} />
+    <Sidebar mobileOpen={false} onClose={handleDrawerToggle} />
     <div style={{ flexGrow: 1, marginLeft: 240 }}>
       <Header onMenuClick={() => {}} />
       <main style={{ marginTop: "64px", padding: "1rem" }}>
