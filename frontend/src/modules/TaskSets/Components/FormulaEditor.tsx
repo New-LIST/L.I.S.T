@@ -5,17 +5,17 @@ type Props = {
   value: string;
   onChange: (value: string) => void;
   variables: string[];
-  maxVariables: string[];
+  error: string | null;
+
 };
 
-const FormulaEditor = ({ value, onChange, variables, maxVariables }: Props) => {
+const FormulaEditor = ({ value, onChange, variables, error }: Props) => {
   const [formula, setFormula] = useState(value);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const insert = (text: string) => {
     const el = inputRef.current;
     if (!el) return;
-
     const start = el.selectionStart ?? formula.length;
     const end = el.selectionEnd ?? formula.length;
 
@@ -64,7 +64,7 @@ const FormulaEditor = ({ value, onChange, variables, maxVariables }: Props) => {
           size="small"
         >
           <MenuItem value="" disabled>Max premenná</MenuItem>
-          {maxVariables.map((v) => (
+          {variables.map((v) => (
             <MenuItem key={v} value={v}>{v}</MenuItem>
           ))}
         </Select>
@@ -78,6 +78,8 @@ const FormulaEditor = ({ value, onChange, variables, maxVariables }: Props) => {
           setFormula(e.target.value);
           onChange(e.target.value);
         }}
+        error={!!error}
+        helperText={error}
         fullWidth
         multiline
         minRows={2}

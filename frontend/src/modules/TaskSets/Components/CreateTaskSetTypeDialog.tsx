@@ -39,7 +39,7 @@ const CreateTaskSetTypeDialog = ({
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
         <TextField
-          label="Názov kurzu"
+          label="Názov typu"
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={!!nameError}

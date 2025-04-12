@@ -24,30 +24,40 @@ import { TaskSetType } from "../Types/TaskSetType";
 import { CourseTaskSetRel } from "../Types/CourseTaskSetRel";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import FormulaEditor from "../Components/FormulaEditor";
-
+import { validateFormula } from "../Utils/validateFormula";
 
 const TaskSets = () => {
   const { id } = useParams<{ id: string }>();
   const [types, setTypes] = useState<TaskSetType[]>([]);
   const [taskSets, setTaskSets] = useState<CourseTaskSetRel[]>([]);
-  const [selectedTypeId, setSelectedTypeId] = useState<number>(0);
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
   const [formula, setFormula] = useState("");
   const [minPoints, setMinPoints] = useState<number | null>(null);
   const [uploadSolution, setUploadSolution] = useState(false);
   const [includeInTotal, setIncludeInTotal] = useState(true);
   const [virtual, setVirtual] = useState(false);
   const [minPointsInPercentage, setMinPointsInPercentage] = useState(false);
+  const [variables, setVariables] = useState<string[]>([]);
+  const [taskTypeError, setTaskTypeError] = useState<string | null>(null);
+  const [formulaError, setFormulaError] = useState<string | null>(null);
+
+  const usedTypeIds = new Set(taskSets.map((rel) => rel.taskSetTypeId));
+  const availableTypes = types.filter((type) => !usedTypeIds.has(type.id));
 
   const { showNotification } = useNotification();
 
   const fetchData = async () => {
     try {
-      const [typesRes, relsRes] = await Promise.all([
+      const [typesRes, relsRes, identifiersRes] = await Promise.all([
         api.get("/task-set-types"),
         api.get(`/course-task-set-rel/by-course/${id}`),
+        api.get(`/task-set-types/identifiers/by-course/${id}`),
       ]);
       setTypes(typesRes.data);
       setTaskSets(relsRes.data);
+      setVariables(identifiersRes.data);
+      const usedTypeIds = new Set(taskSets.map((rel) => rel.taskSetTypeId));
+      const availableTypes = types.filter((type) => !usedTypeIds.has(type.id));
     } catch (err) {
       showNotification("Nepodarilo sa načítať dáta.", "error");
     }
@@ -55,15 +65,31 @@ const TaskSets = () => {
 
   const resetForm = async () => {
     setFormula("");
+    setSelectedTypeId(null);
     setMinPoints(null);
     setUploadSolution(false);
     setIncludeInTotal(true);
     setVirtual(false);
     setMinPointsInPercentage(false);
-    fetchData();
+    setTaskTypeError(null);
+    setFormulaError(null);
   };
 
   const handleCreate = async () => {
+    setTaskTypeError(null);
+    let hasError = false
+    if (selectedTypeId == null) {
+      setTaskTypeError("Musíš vybrať typ zostavy");
+      hasError = true;
+    }
+    const result = validateFormula(formula, variables);
+    if (virtual && !result.valid) {      
+      setFormulaError(result.error ?? null);
+      hasError = true;
+    }
+    if(hasError){
+      return;
+    }
     try {
       await api.post("/course-task-set-rel", {
         courseId: Number(id),
@@ -77,6 +103,7 @@ const TaskSets = () => {
       });
       // reset stavu
       resetForm();
+      fetchData();
       showNotification("Zostava úspešne pridaná.", "success");
     } catch {
       showNotification("Nepodarilo sa pridať zostavu.", "error");
@@ -86,6 +113,7 @@ const TaskSets = () => {
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/course-task-set-rel/${id}`);
+      resetForm();
       fetchData();
       showNotification("Zostava bola odstránená.", "success");
     } catch {
@@ -108,11 +136,13 @@ const TaskSets = () => {
           <TextField
             select
             label="Typ zostavy"
-            value={selectedTypeId}
-            onChange={(e) => setSelectedTypeId(Number(e.target.value))}
+            value={selectedTypeId ?? ""}
+            onChange={(e) => setSelectedTypeId(e.target.value === "" ? null : Number(e.target.value))}
             fullWidth
+            error={!!taskTypeError}
+            helperText={taskTypeError}
           >
-            {types.map((type) => (
+            {availableTypes.map((type) => (
               <MenuItem key={type.id} value={type.id}>
                 {type.name}
               </MenuItem>
@@ -171,14 +201,14 @@ const TaskSets = () => {
             label="Virtuálna zostava (vzorec)"
           />
 
-{virtual && (
-  <FormulaEditor
-    value={formula}
-    onChange={setFormula}
-    variables={["points"]}
-    maxVariables={["maxPoints"]}
-  />
-)}
+          {virtual && (
+            <FormulaEditor
+              value={formula}
+              onChange={setFormula}
+              variables={variables}
+              error={formulaError}
+            />
+          )}
 
           <Button variant="contained" onClick={handleCreate}>
             Pridať zostavu
