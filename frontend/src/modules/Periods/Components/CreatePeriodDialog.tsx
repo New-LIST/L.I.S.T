@@ -17,7 +17,7 @@ type Props = {
   nameError: string | null;
 };
 
-const PeriodDialog = ({
+const CreatePeriodDialog = ({
   open,
   onClose,
   onSubmit,
@@ -53,4 +53,4 @@ const PeriodDialog = ({
   );
 };
 
-export default PeriodDialog;
+export default CreatePeriodDialog;

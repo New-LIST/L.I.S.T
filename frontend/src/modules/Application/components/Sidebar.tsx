@@ -1,15 +1,16 @@
 import {
-    Drawer, List, ListItem, ListItemText, Toolbar
+    Drawer, List, ListItem,ListItemButton, ListItemText, Toolbar
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 
 const drawerWidth = 240;
 
 const sidebarItems = [
-    { label: 'Kurzy', path: 'courses' },
-    { label: 'Obdobia', path: 'periods' },
-    { label: 'Kategórie', path: 'categories' },
-    { label: 'Používatelia', path: 'users' },
+    { label: 'Kurzy', path: 'dash/courses' },
+    { label: 'Obdobia', path: 'dash/periods' },
+    { label: 'Kategórie', path: 'dash/categories' },
+    { label: 'Používatelia', path: 'dash/users' },
+    { label: 'Typy Zostav', path: 'dash/task set types' },
 ];
 
 export default function Sidebar({
@@ -24,8 +25,8 @@ export default function Sidebar({
             <Toolbar />
             <List>
                 {sidebarItems.map(({ label, path }) => (
-                    <ListItem
-                        button
+                    <ListItemButton
+
                         key={path}
                         component={NavLink}
                         to={`/${path}`}
@@ -40,7 +41,7 @@ export default function Sidebar({
                         }}
                     >
                         <ListItemText primary={label} />
-                    </ListItem>
+                    </ListItemButton>
                 ))}
             </List>
         </div>

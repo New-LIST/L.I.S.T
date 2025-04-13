@@ -1,14 +1,9 @@
+import { Outlet, Navigate } from "react-router-dom";
+import { getStoredUser } from "../../Authentication/utils/auth.ts";
+import { menuConfigByRole } from "../config/menuConfigByRole.tsx";
+import Header from "../components/Header.tsx";
+import Sidebar from "../components/Sidebar.tsx";
 import React, { useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { getStoredUser } from '../../Authentication/utils/auth';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
-import Courses from '../../Courses/Pages/Courses';
-import Periods from '../../Periods/Pages/Periods';
-import Categories from '../../Categories/pages/Categories';
-import Users from '../../Users/pages/Users';
-import StudentCourses from '../../Courses/Pages/StudentCourses';
-import CourseDetail from "../../Courses/Pages/CourseDetail.tsx";
 
 export default function Dashboard() {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -26,29 +21,22 @@ export default function Dashboard() {
             <>
                 <Header onMenuClick={handleDrawerToggle}/>
                 <main style={{marginTop: '64px', padding: '1rem'}}>
-                    <Routes>
-                        <Route index element={<StudentCourses/>}/>
-                        <Route path="courses/:id" element={<CourseDetail/>}/>
-                    </Routes>
+                    <Outlet/>
                 </main>
 
             </>
         );
     }
 
-    return (
-        <>
-            <Header onMenuClick={handleDrawerToggle}/>
-            <Sidebar mobileOpen={mobileOpen} onClose={handleDrawerToggle}/>
-            <main style={{marginTop: '64px', padding: '1rem' }}>
-                <Routes>
-                    <Route path="courses" element={<Courses />} />
-                    <Route path="periods" element={<Periods />} />
-                    <Route path="categories" element={<Categories />} />
-                    <Route path="users" element={<Users />} />
-                    <Route index element={<Navigate to="courses" replace />} />
-                </Routes>
-            </main>
-        </>
-    );
+  return (
+    <div style={{ display: "flex" }}>
+    <Sidebar mobileOpen={false} onClose={handleDrawerToggle} />
+    <div style={{ flexGrow: 1, marginLeft: 240 }}>
+      <Header onMenuClick={() => {}} />
+      <main style={{ marginTop: "64px", padding: "1rem" }}>
+        <Outlet />
+      </main>
+    </div>
+  </div>
+  );
 }

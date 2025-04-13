@@ -57,8 +57,8 @@ namespace List.Courses.Controllers
                 Name = dto.Name,
                 PeriodId = dto.PeriodId,
                 Capacity = dto.Capacity,
-                GroupChangeDeadline = dto.GroupChangeDeadline,
-                EnrollmentLimit = dto.EnrollmentLimit,
+                GroupChangeDeadline = dto.GroupChangeDeadline?.ToUniversalTime(),
+                EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime(),
                 HiddenInList = dto.HiddenInList,
                 AutoAcceptStudents = dto.AutoAcceptStudents
             };
@@ -79,5 +79,26 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> Update(int id, [FromBody] CourseCreateDto dto)
+        {
+            var course = await _context.Courses.FindAsync(id);
+            if (course == null)
+                return NotFound();
+
+            course.Name = dto.Name;
+            course.PeriodId = dto.PeriodId;
+            course.Capacity = dto.Capacity;
+            course.GroupChangeDeadline = dto.GroupChangeDeadline?.ToUniversalTime();
+            course.EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime();
+            course.HiddenInList = dto.HiddenInList;
+            course.AutoAcceptStudents = dto.AutoAcceptStudents;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
     }
 }

@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../services/api';
-import { TextField,Card,Typography, Container, Button, List, ListItem, ListItemText, IconButton, CircularProgress, Alert, CardContent, } from '@mui/material';
+import { Card, Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,Typography, Container, Button, List, ListItem, ListItemText, IconButton, CircularProgress, CardContent, Box } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import PeriodDialog from '../Components/PeriodDialog';
+import EditIcon from '@mui/icons-material/Edit'
 import { useNotification } from '../../../shared/components/NotificationContext';
+import CreatePeriodDialog from '../Components/CreatePeriodDialog';
+import EditPeriodDialog from '../Components/EditPeriodDialog';
 import ConfirmDeletePeriodDialog from '../Components/ConfirmDeletePeriodDialog';
 import {Period} from '../Types/Period'
 
 const Periods = () => {
   const [periods, setPeriods] = useState<Period[]>([]);
   const [newName, setNewName] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const { showNotification } = useNotification();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [periodToDelete, setPeriodToDelete] = useState<Period | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [periodToEdit, setPeriodToEdit] = useState<Period | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
 
   const fetchPeriods = async () => {
     setLoading(true);
@@ -29,6 +38,18 @@ const Periods = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setNewName('');
+    setNameError(null);
+    setEditError(null);
+    setEditDialogOpen(false);
+    setOpenDialog(false);
+    setConfirmOpen(false);
+    setEditName('');
+    setPeriodToDelete(null);
+    setPeriodToEdit(null);
   };
 
   const handleCreate = async () => {
@@ -49,10 +70,6 @@ const Periods = () => {
     try {
       setLoading(true);
       await api.post('/periods', { name: trimmed });
-      setOpenDialog(false);
-      setNewName('');
-      setNameError(null);
-      setError(null);
       showNotification('Obdobie bolo úspešne pridané.', 'success');
       fetchPeriods();
     } catch (err) {
@@ -60,6 +77,7 @@ const Periods = () => {
       showNotification('Nepodarilo sa pridať nové obdobie.', 'error');
     } finally {
       setLoading(false);
+      resetForm();
     }
   };
 
@@ -78,10 +96,35 @@ const Periods = () => {
       console.error(err);
       showNotification('Nepodarilo sa vymazať obdobie.', 'error');
     } finally {
-      setConfirmOpen(false);
-      setPeriodToDelete(null);
+      resetForm();
     }
   };
+
+  const openEditDialog = (period: Period) => {
+    setPeriodToEdit(period);
+    setEditName(period.name);
+    setEditError(null);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async (newName: string) => {
+    if (!newName.trim()) {
+      setEditError('Názov nemôže byť prázdny.');
+      return;
+    }
+  
+    try {
+      await api.put(`/periods/${periodToEdit!.id}`, { name: newName.trim() });
+      showNotification('Obdobie bolo aktualizované.', 'success');
+      fetchPeriods();
+      setEditDialogOpen(false);
+    } catch (err) {
+      resetForm();
+      console.error(err);
+      showNotification('Nepodarilo sa upraviť obdobie.', 'error');
+    }
+  };
+  
   
 
   useEffect(() => {
@@ -107,27 +150,39 @@ const Periods = () => {
           {loading ? (
             <CircularProgress />
           ) : (
-            <List>
-              {periods.map((period) => (
-                <ListItem
-                  key={period.id}
-                  secondaryAction={
-                    <IconButton
-                      edge="end"
-                      onClick={() => requestDeletePeriod(period)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  }
-                >
-                  <ListItemText primary={period.name} />
-                </ListItem>
-              ))}
-            </List>
+            <Table>
+              <TableHead>
+              <TableRow>
+                <TableCell>Názov odbodbia</TableCell>
+                <TableCell align="right">Akcie</TableCell>
+              </TableRow>
+              </TableHead>
+              <TableBody>
+                {periods.map((period) => (
+                  <TableRow key = {period.id}>
+                    <TableCell>{period.name}</TableCell>
+                    <TableCell align="right">
+                      <Box>
+                      <IconButton
+                        onClick={() => openEditDialog(period)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => requestDeletePeriod(period)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
-      <PeriodDialog
+      <CreatePeriodDialog
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
@@ -148,6 +203,14 @@ const Periods = () => {
           courseCount={periodToDelete.courseCount}
         />
       )}
+      <EditPeriodDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        onSave={handleSaveEdit}
+        currentName={editName}
+        setCurrentName={setEditName}
+        error={editError}
+      />
     </Container>
   );
 };

@@ -7,7 +7,7 @@ export default function CourseCard({ id, name, teacher, imageUrl, isMine }: Cour
 
     const handleClick = () => {
         if (isMine) {
-            navigate(`/courses/${id}`);
+            navigate(`/student/courses/${id}`);
         }
     };
 
