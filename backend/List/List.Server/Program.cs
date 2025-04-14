@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Threading.RateLimiting;
 using List.Common.Integrations;
 using List.Server.Models;
@@ -76,6 +76,7 @@ builder.Services.Configure<RouteOptions>(options =>
 builder.Services.AddModule<List.Users.Module>(builder.Configuration);
 builder.Services.AddModule<List.Courses.Module>(builder.Configuration);
 builder.Services.AddModule<List.TaskSets.Module>(builder.Configuration);
+builder.Services.AddModule<List.Tasks.Module>(builder.Configuration);
 
 var app = builder.Build();
 
@@ -92,7 +93,7 @@ if (app.Environment.IsDevelopment())
 app.UseModule<List.Users.Module>();
 app.UseModule<List.Courses.Module>();
 app.UseModule<List.TaskSets.Module>();
-
+app.UseModule<List.Tasks.Module>();
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseHttpsRedirection();
