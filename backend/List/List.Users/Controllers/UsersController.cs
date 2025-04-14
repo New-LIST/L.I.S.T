@@ -35,10 +35,10 @@ public class UsersController(IUserService userService) : ControllerBase
         return BadRequest();
     }
     
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUserAsync(int userId)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteUserAsync(int id)
     {
-        if (await userService.DeleteUserAsync(userId))
+        if (await userService.DeleteUserAsync(id))
             return Ok();
         
         return BadRequest();
