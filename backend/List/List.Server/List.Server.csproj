@@ -29,6 +29,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\List.BackgroundTasks\List.BackgroundTasks.csproj" />
       <ProjectReference Include="..\List.Common\List.Common.csproj" />
       <ProjectReference Include="..\List.Courses\List.Courses.csproj" />
       <ProjectReference Include="..\List.Users\List.Users.csproj" />
