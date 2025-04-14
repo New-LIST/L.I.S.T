@@ -1,17 +1,38 @@
-import { useParams } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { useParams, Outlet } from 'react-router-dom';
+import { Box } from '@mui/material';
+import React, { useState } from "react";
+import Sidebar from "../../Application/components/Sidebar.tsx";
 
+const courseSidebarItems = [
+    { label: 'Popis', path: 'description' },
+    { label: 'Úlohy', path: 'assignments' },
+    { label: 'Prehľad', path: 'overview' },
+    { label: 'Projekty', path: 'projects' },
+];
+const drawerWidth = 240;
 export default function CourseDetail() {
+    const [isPermanent, setIsPermanent] = useState(false);
     const { id } = useParams();
+    if (!id) return null;
 
     return (
-        <Box sx={{ p: 4 }}>
-            <Typography variant="h5" fontWeight="bold">
-                Detail kurzu
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-                ID kurzu: {id}
-            </Typography>
+        <Box sx={{ display: 'flex' }}>
+            <Sidebar
+                items={courseSidebarItems}
+                basePath={`/student/courses/${id}/`}
+                onModeChange={(permanent) => setIsPermanent(permanent)}
+            />
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    p: 3,
+                    ml: isPermanent ? `${drawerWidth}px` : 0,
+                    transition: 'margin-left 0.3s',
+                }}
+            >
+                <Outlet />
+            </Box>
         </Box>
     );
 }
