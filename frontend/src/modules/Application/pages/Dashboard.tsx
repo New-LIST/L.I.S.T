@@ -6,11 +6,11 @@ import React, { useState } from 'react';
 import {Box} from "@mui/material";
 
 const sidebarItems = [
-    { label: 'Kurzy', path: 'dash/courses' },
-    { label: 'Obdobia', path: 'dash/periods' },
-    { label: 'Kategórie', path: 'dash/categories' },
-    { label: 'Používatelia', path: 'dash/users' },
-    { label: 'Typy Zostav', path: 'dash/task set types' },
+    { label: 'Kurzy', path: 'courses' },
+    { label: 'Obdobia', path: 'periods' },
+    { label: 'Kategórie', path: 'categories' },
+    { label: 'Používatelia', path: 'users' },
+    { label: 'Typy Zostav', path: 'task set types' },
 ];
 const drawerWidth = 240;
 
