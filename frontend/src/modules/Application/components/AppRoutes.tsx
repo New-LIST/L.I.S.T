@@ -10,6 +10,10 @@ import RequireAuth from "../../Authentication/components/RequireAuth";
 import SignIn from "../../Authentication/pages/SignIn";
 import StudentCourses from "../../Courses/Pages/StudentCourses";
 import CourseDetail from "../../Courses/Pages/CourseDetail";
+import CourseDescription from "../../Courses/Pages/Course/CourseDescription.tsx";
+import Assignments from "../../Courses/Pages/Course/Assignments";
+import Overview from "../../Courses/Pages/Course/Overview/Overview.tsx";
+import Projects from "../../Courses/Pages/Course/Projects";
 import RootRedirect from "./RootRedirect";
 
 const AppRoutes = () => {
@@ -17,17 +21,16 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/signin" element={<SignIn />} />
-      <Route
-        path="/student"
-        element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        }
-      >
-        <Route index element={<StudentCourses />} />
-        <Route path="courses/:id" element={<CourseDetail />} />
-      </Route>
+        <Route path="/student" element={<RequireAuth><Dashboard /></RequireAuth>}>
+            <Route index element={<StudentCourses />} />
+            <Route path="courses/:id" element={<CourseDetail />}>
+                <Route index element={<CourseDescription />} />
+                <Route path="description" element={<CourseDescription />} />
+                <Route path="assignments" element={<Assignments />} />
+                <Route path="overview" element={<Overview />} />
+                <Route path="projects" element={<Projects />} />
+            </Route>
+        </Route>
       <Route
         path="/dash"
         element={

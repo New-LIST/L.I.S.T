@@ -2,7 +2,7 @@ import { Button, Card, CardContent, CardMedia, Typography } from '@mui/material'
 import {Course} from "../Types/Course.ts";
 import {useNavigate} from "react-router-dom";
 
-export default function CourseCard({ id, name, teacher, imageUrl, isMine }: Course) {
+export default function CourseCard({ id, name, teacher, imageUrl, isMine, periodName }: Course) {
     const navigate = useNavigate();
 
     const handleClick = () => {
@@ -43,6 +43,13 @@ export default function CourseCard({ id, name, teacher, imageUrl, isMine }: Cour
                 <Typography variant="subtitle1" fontWeight="bold">
                     {name}
                 </Typography>
+
+                {periodName && (
+                    <Typography variant="body2" color="text.secondary">
+                        {periodName}
+                    </Typography>
+                )}
+
                 {teacher && (
                     <Typography variant="body2" color="text.secondary">
                         {teacher}

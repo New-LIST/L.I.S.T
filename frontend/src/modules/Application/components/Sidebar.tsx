@@ -1,36 +1,45 @@
+// Sidebar.tsx
 import {
-    Drawer, List, ListItem,ListItemButton, ListItemText, Toolbar
+    Drawer, List, ListItemButton, ListItemText, Toolbar, IconButton
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu';
+import React, { useState, useEffect } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const drawerWidth = 240;
 
-const sidebarItems = [
-    { label: 'Kurzy', path: 'dash/courses' },
-    { label: 'Obdobia', path: 'dash/periods' },
-    { label: 'Kategórie', path: 'dash/categories' },
-    { label: 'Používatelia', path: 'dash/users' },
-    { label: 'Typy Zostav', path: 'dash/task set types' },
-];
+export type SidebarItem = {
+    label: string;
+    path: string;
+};
 
 export default function Sidebar({
-                                    mobileOpen,
-                                    onClose,
+                                    items,
+                                    basePath = '',
+                                    onModeChange,
                                 }: {
-    mobileOpen: boolean;
-    onClose: () => void;
+    items: SidebarItem[];
+    basePath?: string;
+    onModeChange?: (isPermanent: boolean) => void;
 }) {
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const isPermanent = useMediaQuery('(min-width:900px)');
+
+    useEffect(() => {
+        onModeChange?.(isPermanent);
+    }, [isPermanent]);
+
     const drawer = (
         <div>
             <Toolbar />
             <List>
-                {sidebarItems.map(({ label, path }) => (
+                {items.map(({ label, path }) => (
                     <ListItemButton
-
                         key={path}
                         component={NavLink}
-                        to={`/${path}`}
-                        onClick={onClose}
+                        to={`${basePath}${path}`}
+                        onClick={() => setMobileOpen(false)}
                         sx={{
                             '&.active': {
                                 backgroundColor: '#e0e0e0',
@@ -49,26 +58,35 @@ export default function Sidebar({
 
     return (
         <>
-            <Drawer
-                variant="temporary"
-                open={mobileOpen}
-                onClose={onClose}
-                ModalProps={{ keepMounted: true }}
-                sx={{
-                    display: { xs: 'block', md: 'none' },
-                    '& .MuiDrawer-paper': { width: drawerWidth },
-                }}
-            >
-                {drawer}
-            </Drawer>
+            {!isPermanent && !mobileOpen && (
+                <IconButton
+                    onClick={() => setMobileOpen(true)}
+                    sx={{
+                        position: 'fixed',
+                        top: 72,
+                        left: 16,
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        backgroundColor: 'white',
+                        boxShadow: 2,
+                        display: { md: 'inline-flex', lg: 'none' },
+                    }}
+                >
+                    <MenuIcon />
+                </IconButton>
+            )}
 
             <Drawer
-                variant="permanent"
+                variant={isPermanent ? 'permanent' : 'temporary'}
+                open={isPermanent || mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                ModalProps={{ keepMounted: true }}
                 sx={{
-                    display: { xs: 'none', md: 'block' },
-                    '& .MuiDrawer-paper': { width: drawerWidth },
+                    display: { xs: 'block' },
+                    '& .MuiDrawer-paper': {
+                        width: drawerWidth,
+                        boxSizing: 'border-box',
+                    },
                 }}
-                open
             >
                 {drawer}
             </Drawer>
