@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Tasks.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTasksTable : Migration
+    public partial class InitTasks : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,12 +22,24 @@ namespace List.Tasks.Migrations
                     Updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Text = table.Column<string>(type: "text", nullable: true),
-                    InternalComment = table.Column<string>(type: "text", nullable: true)
+                    InternalComment = table.Column<string>(type: "text", nullable: true),
+                    author_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_tasks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_tasks_Users_author_id",
+                        column: x => x.author_id,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_tasks_author_id",
+                table: "tasks",
+                column: "author_id");
         }
 
         /// <inheritdoc />

@@ -8,12 +8,16 @@ public class TaskService(TasksDbContext context) : ITaskService
 {
     public async Task<IEnumerable<TaskModel>> GetAllTasksAsync()
     {
-        return await context.Tasks.ToListAsync();
+        return await context.Tasks
+            .Include(t => t.Author)
+            .ToListAsync();
     }
 
     public async Task<TaskModel?> GetTaskAsync(int id)
     {
-        return await context.Tasks.FindAsync(id);
+        return await context.Tasks
+            .Include(t => t.Author)
+            .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task<bool> AddTaskAsync(TaskModel task)
