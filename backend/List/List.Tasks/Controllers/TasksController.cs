@@ -1,6 +1,9 @@
 using List.Tasks.Models;
 using List.Tasks.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using List.Tasks.DTOs;
+
 
 namespace List.Tasks.Controllers;
 
@@ -23,25 +26,46 @@ public class TasksController(ITaskService taskService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddTask([FromBody] TaskModel task)
+    public async Task<IActionResult> AddTask([FromBody] taskDto taskDto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        task.Id = 0;
-        var now = DateTime.UtcNow;
-        task.Created = now;
-        task.Updated = now;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+            return Unauthorized();
+
+        var task = new TaskModel
+        {
+            Name = taskDto.Name,
+            Text = taskDto.Text,
+            InternalComment = taskDto.InternalComment,
+            AuthorId = int.Parse(userIdClaim),
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        };
 
         var added = await taskService.AddTaskAsync(task);
         return added ? Created() : BadRequest("Failed to add task.");
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskModel updatedTask)
+    public async Task<IActionResult> UpdateTask(int id, [FromBody] taskDto taskDto)
     {
-        var success = await taskService.UpdateTaskAsync(id, updatedTask);
-        return success ? Ok() : NotFound();
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var existingTask = await taskService.GetTaskAsync(id);
+        if (existingTask == null)
+            return NotFound();
+
+        existingTask.Name = taskDto.Name;
+        existingTask.Text = taskDto.Text;
+        existingTask.InternalComment = taskDto.InternalComment;
+        existingTask.Updated = DateTime.UtcNow;
+
+        var success = await taskService.UpdateTaskAsync(id, existingTask);
+        return success ? Ok() : BadRequest("Failed to update task.");
     }
 
     [HttpDelete("{id}")]

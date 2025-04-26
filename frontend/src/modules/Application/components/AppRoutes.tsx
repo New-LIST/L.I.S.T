@@ -15,8 +15,8 @@ import Assignments from "../../Courses/Pages/Course/Assignments";
 import Overview from "../../Courses/Pages/Course/Overview/Overview.tsx";
 import Projects from "../../Courses/Pages/Course/Projects";
 import RootRedirect from "./RootRedirect";
-import {Task} from "@mui/icons-material";
 import Tasks from "../../Tasks/Pages/Tasks.tsx";
+import TaskEditor from "../../Tasks/Pages/TaskEditor.tsx";
 
 const AppRoutes = () => {
   return (
@@ -50,6 +50,8 @@ const AppRoutes = () => {
         <Route path="categories" element={<Categories />} />
         <Route path="users" element={<Users />} />
           <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks/new" element={<TaskEditor />} />
+          <Route path="tasks/:id/edit" element={<TaskEditor />} />
       </Route>
 
       {/* fallback na root */}

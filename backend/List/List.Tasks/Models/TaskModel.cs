@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using List.Users.Models;
+
 namespace List.Tasks.Models;
 
 [Table("tasks")]
@@ -23,4 +25,11 @@ public class TaskModel
     public string? Text { get; set; }
 
     public string? InternalComment { get; set; }
+
+    [Required]
+    [Column("author_id")]
+    public int AuthorId { get; set; }
+
+    [ForeignKey(nameof(AuthorId))]
+    public User Author { get; set; } = null!;
 }
