@@ -5,4 +5,5 @@ export type Task = {
     internalComment?: string;
     created: string;
     updated: string;
+    authorFullname: string;
 };

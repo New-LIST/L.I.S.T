@@ -25,6 +25,7 @@ const TaskEditor = () => {
     const [name, setName] = useState('');
     const [text, setText] = useState('');
     const [comment, setComment] = useState('');
+    const [authorName, setAuthorName] = useState('');
     const navigate = useNavigate();
     const [loading, setLoading] = useState(isEditMode);
 
@@ -38,6 +39,7 @@ const TaskEditor = () => {
                 const task = response.data;
                 setName(task.name);
                 setText(task.text ?? '');
+                setAuthorName(task.authorFullname ?? 'unknown');
                 setComment(task.internalComment ?? '');
             } catch {
                 showNotification('Nepodarilo sa načítať úlohu.', 'error');
@@ -147,7 +149,7 @@ const TaskEditor = () => {
                     </Stack>
                 </Stack>
             ) : (
-                <TaskPreview name={name} text={text} comment={comment} />
+                <TaskPreview name={name} text={text} comment={comment} authorName = {authorName} />
             )}
         </Container>
     );

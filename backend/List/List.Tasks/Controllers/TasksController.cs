@@ -15,14 +15,41 @@ public class TasksController(ITaskService taskService) : ControllerBase
     public async Task<IActionResult> GetAllTasks()
     {
         var tasks = await taskService.GetAllTasksAsync();
-        return Ok(tasks);
+
+        var taskDtos = tasks.Select(t => new TaskResponseDto
+        {
+            Id = t.Id,
+            Created = t.Created,
+            Updated = t.Updated,
+            Name = t.Name ?? string.Empty,
+            Text = t.Text,
+            InternalComment = t.InternalComment,
+            AuthorId = t.AuthorId,
+            AuthorFullname = t.Author?.Fullname ?? "Unknown"
+        });
+
+        return Ok(taskDtos);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTask(int id)
     {
         var task = await taskService.GetTaskAsync(id);
-        return task is null ? NotFound() : Ok(task);
+        if (task is null) return NotFound();
+
+        var taskDto = new TaskResponseDto
+        {
+            Id = task.Id,
+            Created = task.Created,
+            Updated = task.Updated,
+            Name = task.Name ?? string.Empty,
+            Text = task.Text,
+            InternalComment = task.InternalComment,
+            AuthorId = task.AuthorId,
+            AuthorFullname = task.Author?.Fullname ?? "Unknown"
+        };
+
+        return Ok(taskDto);
     }
 
     [HttpPost]

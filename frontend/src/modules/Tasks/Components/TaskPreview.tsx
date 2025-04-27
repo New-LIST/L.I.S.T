@@ -7,10 +7,10 @@ type Props = {
     comment: string;
 };
 
-const TaskPreview = ({ name, text, comment }: Props) => {
+const TaskPreview = ({ name, text, comment, authorName }: Props) => {
     return (
         <Box>
-            <TaskCard name={name} text={text} />
+            <TaskCard name={name} text={text} authorName = {authorName} />
 
             <Divider sx={{ mb: 1 }} />
 
