@@ -56,23 +56,4 @@ public class AssignmentsController : ControllerBase
             return NotFound();
         return NoContent();
     }
-
-    [HttpPost("{assignmentId}/tasks")]
-    public async Task<ActionResult<AssignmentTaskRelModel>> AddTaskToAssignment(int assignmentId, AssignmentTaskRelModel rel)
-    {
-        if (assignmentId != rel.AssignmentId)
-            return BadRequest("Assignment ID in URL and body do not match.");
-
-        var createdRel = await _assignmentService.AddTaskToAssignmentAsync(rel);
-        return Ok(createdRel);
-    }
-
-    [HttpDelete("{assignmentId}/tasks/{taskId}")]
-    public async Task<ActionResult> RemoveTaskFromAssignment(int assignmentId, int taskId)
-    {
-        var deleted = await _assignmentService.RemoveTaskFromAssignmentAsync(taskId, assignmentId);
-        if (!deleted)
-            return NotFound();
-        return NoContent();
-    }
 }

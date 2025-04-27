@@ -16,6 +16,7 @@ public class Module : IModule
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IAssignmentService, AssignmentService>();
+        services.AddScoped<IAssignmentTaskRelService, AssignmentTaskRelService>();
     }
 
     public void UseServices(IApplicationBuilder app)

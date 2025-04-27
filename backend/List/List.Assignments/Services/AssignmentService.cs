@@ -87,32 +87,4 @@ public class AssignmentService : IAssignmentService
         return true;
     }
 
-
-    public async Task<AssignmentTaskRelModel> AddTaskToAssignmentAsync(CreateAssignmentTaskRelDto dto)
-    {
-        var rel = new AssignmentTaskRelModel
-        {
-            AssignmentId = dto.AssignmentId,
-            TaskId = dto.TaskId,
-            PointsTotal = dto.PointsTotal,
-            BonusTask = dto.BonusTask,
-            InternalComment = dto.InternalComment
-        };
-        
-        await _dbContext.SaveChangesAsync();
-        return rel;
-    }
-
-    public async Task<bool> RemoveTaskFromAssignmentAsync(int taskId, int assignmentId)
-    {
-        var rel = await _dbContext.AssignmentTaskRels.FindAsync(taskId, assignmentId);
-        if (rel == null)
-        {
-            return false;
-        }
-
-        _dbContext.AssignmentTaskRels.Remove(rel);
-        await _dbContext.SaveChangesAsync();
-        return true;
-    }
 }
