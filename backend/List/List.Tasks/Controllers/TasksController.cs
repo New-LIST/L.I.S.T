@@ -2,7 +2,9 @@ using List.Tasks.Models;
 using List.Tasks.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using List.Tasks.DTOs;
+using List.Common.Files;
 
 
 namespace List.Tasks.Controllers;
@@ -101,5 +103,19 @@ public class TasksController(ITaskService taskService) : ControllerBase
         var success = await taskService.DeleteTaskAsync(id);
         return success ? Ok() : NotFound();
     }
+
+    [HttpPost("upload-image")]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var relativePath = await fileStorageService.SaveFileAsync(file, "tasks"); // saves to /uploads/tasks
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var url = $"{baseUrl}/{relativePath.Replace("\\", "/")}";
+
+        return Ok(new { location = url });
+    }
+
 
 }

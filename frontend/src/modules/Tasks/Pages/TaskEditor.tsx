@@ -2,15 +2,16 @@ import {Container, Typography, Box, TextField, Stack, Button, CircularProgress, 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
-import 'tinymce/tinymce'; // základ
-import 'tinymce/themes/silver/theme'; // ← NEVYNECHAŤ
-import 'tinymce/icons/default/icons'; // ← NEVYNECHAŤ
-import 'tinymce/models/dom/model'; // ← TOTO JE NOVÉ – fix na "nothing rendered" problém
+import 'tinymce/tinymce';
+import 'tinymce/themes/silver/theme';
+import 'tinymce/icons/default/icons';
+import 'tinymce/models/dom/model';
 
-// pluginy ktoré použiješ
+
 import 'tinymce/plugins/link';
 import 'tinymce/plugins/lists';
 import 'tinymce/plugins/code';
+import 'tinymce/plugins/image';
 
 import api from '../../../services/api';
 import { useNotification } from '../../../shared/components/NotificationContext';
@@ -56,17 +57,38 @@ const TaskEditor = () => {
         if (!name.trim()) return;
 
         try {
+            let updatedText = text;
+
+            const matches = [...text.matchAll(/<img[^>]+src=["'](data:image\/[^"']+)["'][^>]*>/g)];
+
+            for (const match of matches) {
+                const base64Data = match[1];
+
+                const blob = await (await fetch(base64Data)).blob();
+                const formData = new FormData();
+                formData.append('file', blob, 'image.png');
+
+                const response = await api.post('/tasks/upload-image', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    withCredentials: true,
+                });
+
+                const { location } = response.data;
+
+                updatedText = updatedText.replace(base64Data, location);
+            }
+
             if (isEditMode) {
                 await api.put(`/tasks/${id}`, {
                     name,
-                    text,
+                    text: updatedText,
                     internalComment: comment,
                 });
                 showNotification('Úloha bola upravená.', 'success');
             } else {
                 await api.post('/tasks', {
                     name,
-                    text,
+                    text: updatedText,
                     internalComment: comment,
                 });
                 showNotification('Úloha bola vytvorená.', 'success');
@@ -117,15 +139,38 @@ const TaskEditor = () => {
                             value={text}
                             onEditorChange={(content) => setText(content)}
                             init={{
-                                height: 300,
+                                height: 600,
                                 menubar: false,
-                                plugins: ['lists', 'link', 'code'],
-                                toolbar: 'undo redo | bold italic | bullist numlist | link | code',
+                                plugins: 'lists link code image autoresize',
+                                toolbar: 'undo redo | bold italic | bullist numlist | link | image | code',
                                 content_style: 'body { font-family:Roboto,Arial,sans-serif; font-size:14px }',
                                 skin_url: '/tinymce/skins/ui/oxide',
                                 content_css: '/tinymce/skins/content/default/content.css',
                                 license_key: 'gpl',
                                 model: 'dom',
+
+                                file_picker_types: 'image',
+                                file_picker_callback: (callback, value, meta) => {
+                                    if (meta.filetype === 'image') {
+                                        const input = document.createElement('input');
+                                        input.setAttribute('type', 'file');
+                                        input.setAttribute('accept', 'image/*');
+
+                                        input.onchange = function () {
+                                            const file = (this as HTMLInputElement).files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = function () {
+                                                    const base64 = (reader.result as string);
+                                                    callback(base64, { title: file.name });
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        };
+
+                                        input.click();
+                                    }
+                                }
                             }}
                         />
 

@@ -41,3 +41,5 @@ Thumbs.db
 
 # === Lokalne configs
 backend/List/List.Server/appsettings.Development.json
+
+wwwroot/uploads/
