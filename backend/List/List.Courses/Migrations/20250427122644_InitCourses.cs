@@ -7,27 +7,27 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Courses.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitCourses : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Categories",
+                name: "categories",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    ParentId = table.Column<int>(type: "integer", nullable: true)
+                    name = table.Column<string>(type: "text", nullable: false),
+                    parent_id = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Categories", x => x.Id);
+                    table.PrimaryKey("PK_categories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Categories_Categories_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "Categories",
+                        name: "FK_categories_categories_parent_id",
+                        column: x => x.parent_id,
+                        principalTable: "categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -38,7 +38,7 @@ namespace List.Courses.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -51,41 +51,41 @@ namespace List.Courses.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    PeriodId = table.Column<int>(type: "integer", nullable: true),
-                    Capacity = table.Column<int>(type: "integer", nullable: false),
-                    GroupChangeDeadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    EnrollmentLimit = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    HiddenInList = table.Column<bool>(type: "boolean", nullable: false),
-                    AutoAcceptStudents = table.Column<bool>(type: "boolean", nullable: false)
+                    name = table.Column<string>(type: "text", nullable: false),
+                    period_id = table.Column<int>(type: "integer", nullable: true),
+                    capacity = table.Column<int>(type: "integer", nullable: false),
+                    group_change_deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    enrollment_limit = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    hidden = table.Column<bool>(type: "boolean", nullable: false),
+                    auto_accept_students = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Courses", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Courses_Periods_PeriodId",
-                        column: x => x.PeriodId,
+                        name: "FK_Courses_Periods_period_id",
+                        column: x => x.period_id,
                         principalTable: "Periods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Categories_ParentId",
-                table: "Categories",
-                column: "ParentId");
+                name: "IX_categories_parent_id",
+                table: "categories",
+                column: "parent_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Courses_PeriodId",
+                name: "IX_Courses_period_id",
                 table: "Courses",
-                column: "PeriodId");
+                column: "period_id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Categories");
+                name: "categories");
 
             migrationBuilder.DropTable(
                 name: "Courses");

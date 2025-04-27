@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Assignments.Migrations
 {
     [DbContext(typeof(AssignmentsDbContext))]
-    [Migration("20250427114521_UpdateAssignmentNameRequired")]
-    partial class UpdateAssignmentNameRequired
+    [Migration("20250427122815_InitAssignments")]
+    partial class InitAssignments
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,37 +38,45 @@ namespace List.Assignments.Migrations
                         .HasColumnName("course_id");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
 
                     b.Property<string>("Instructions")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("instructions");
 
                     b.Property<string>("InternalComment")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("internal_comment");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<double?>("PointsOverride")
-                        .HasColumnType("double precision");
+                        .HasColumnType("double precision")
+                        .HasColumnName("points_override");
 
                     b.Property<DateTime?>("PublishStartTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("publish_start_time");
 
                     b.Property<bool>("Published")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("published");
 
                     b.Property<int>("TaskSetTypeId")
                         .HasColumnType("integer")
                         .HasColumnName("task_set_type_id");
 
                     b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated");
 
                     b.Property<DateTime?>("UploadEndTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("upload_end_time");
 
                     b.HasKey("Id");
 
@@ -82,19 +90,24 @@ namespace List.Assignments.Migrations
             modelBuilder.Entity("List.Assignments.Models.AssignmentTaskRelModel", b =>
                 {
                     b.Property<int>("TaskId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("task_id");
 
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("assignment_id");
 
                     b.Property<bool>("BonusTask")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("bonus");
 
                     b.Property<string>("InternalComment")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("internal_comment");
 
                     b.Property<double>("PointsTotal")
-                        .HasColumnType("double precision");
+                        .HasColumnType("double precision")
+                        .HasColumnName("points_total");
 
                     b.HasKey("TaskId", "AssignmentId");
 
@@ -112,26 +125,33 @@ namespace List.Assignments.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("AutoAcceptStudents")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("auto_accept_students");
 
                     b.Property<int>("Capacity")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("capacity");
 
                     b.Property<DateTime?>("EnrollmentLimit")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enrollment_limit");
 
                     b.Property<DateTime?>("GroupChangeDeadline")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("group_change_deadline");
 
                     b.Property<bool>("HiddenInList")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("hidden");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<int?>("PeriodId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("period_id");
 
                     b.HasKey("Id");
 
@@ -153,7 +173,8 @@ namespace List.Assignments.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.HasKey("Id");
 
@@ -172,11 +193,13 @@ namespace List.Assignments.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Identifier")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("identifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.HasKey("Id");
 
@@ -234,28 +257,35 @@ namespace List.Assignments.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("e_mail");
 
                     b.Property<string>("Fullname")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("password");
 
                     b.Property<string>("PasswordToken")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("password_token");
 
                     b.Property<int>("Role")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
 
                     b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated");
 
                     b.HasKey("Id");
 

@@ -12,12 +12,14 @@ public class AssignmentModel
     public int Id { get; set; }
 
     [Required]
+    [Column("created")]
     public DateTime Created { get; set; }
 
     [Required]
+    [Column("updated")]
     public DateTime Updated { get; set; }
 
-    [MaxLength(255)]
+    [Column("name")]
     public string Name { get; set; }
 
     [Required]
@@ -35,14 +37,21 @@ public class AssignmentModel
     public Course Course { get; set; } = null!;
 
     [Required]
+    [Column("published")]
     public bool Published { get; set; }
 
+    [Column("publish_start_time")]
     public DateTime? PublishStartTime { get; set; }
+
+    [Column("upload_end_time")]
     public DateTime? UploadEndTime { get; set; }
 
+    [Column("instructions")]
     public string? Instructions { get; set; }
 
+    [Column("points_override")]
     public double? PointsOverride { get; set; }
 
+    [Column("internal_comment")]
     public string? InternalComment { get; set; }
 }

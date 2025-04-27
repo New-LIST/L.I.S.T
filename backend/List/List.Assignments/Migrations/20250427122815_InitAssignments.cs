@@ -18,17 +18,17 @@ namespace List.Assignments.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
                     task_set_type_id = table.Column<int>(type: "integer", nullable: false),
                     course_id = table.Column<int>(type: "integer", nullable: false),
-                    Published = table.Column<bool>(type: "boolean", nullable: false),
-                    PublishStartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UploadEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Instructions = table.Column<string>(type: "text", nullable: true),
-                    PointsOverride = table.Column<double>(type: "double precision", nullable: true),
-                    InternalComment = table.Column<string>(type: "text", nullable: true)
+                    published = table.Column<bool>(type: "boolean", nullable: false),
+                    publish_start_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    upload_end_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    instructions = table.Column<string>(type: "text", nullable: true),
+                    points_override = table.Column<double>(type: "double precision", nullable: true),
+                    internal_comment = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -51,33 +51,33 @@ namespace List.Assignments.Migrations
                 name: "assignment_task_rel",
                 columns: table => new
                 {
-                    TaskId = table.Column<int>(type: "integer", nullable: false),
-                    AssignmentId = table.Column<int>(type: "integer", nullable: false),
-                    PointsTotal = table.Column<double>(type: "double precision", nullable: false),
-                    BonusTask = table.Column<bool>(type: "boolean", nullable: false),
-                    InternalComment = table.Column<string>(type: "text", nullable: true)
+                    task_id = table.Column<int>(type: "integer", nullable: false),
+                    assignment_id = table.Column<int>(type: "integer", nullable: false),
+                    points_total = table.Column<double>(type: "double precision", nullable: false),
+                    bonus = table.Column<bool>(type: "boolean", nullable: false),
+                    internal_comment = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_assignment_task_rel", x => new { x.TaskId, x.AssignmentId });
+                    table.PrimaryKey("PK_assignment_task_rel", x => new { x.task_id, x.assignment_id });
                     table.ForeignKey(
-                        name: "FK_assignment_task_rel_assignments_AssignmentId",
-                        column: x => x.AssignmentId,
+                        name: "FK_assignment_task_rel_assignments_assignment_id",
+                        column: x => x.assignment_id,
                         principalTable: "assignments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_assignment_task_rel_tasks_TaskId",
-                        column: x => x.TaskId,
+                        name: "FK_assignment_task_rel_tasks_task_id",
+                        column: x => x.task_id,
                         principalTable: "tasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_assignment_task_rel_AssignmentId",
+                name: "IX_assignment_task_rel_assignment_id",
                 table: "assignment_task_rel",
-                column: "AssignmentId");
+                column: "assignment_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_assignments_course_id",

@@ -12,6 +12,6 @@ public interface IAssignmentService
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
     Task<bool> DeleteAsync(int id);
 
-    Task<AssignmentTaskRelModel> AddTaskToAssignmentAsync(AssignmentTaskRelModel rel);
+    Task<AssignmentTaskRelModel> AddTaskToAssignmentAsync(CreateAssignmentTaskRelDto dto);
     Task<bool> RemoveTaskFromAssignmentAsync(int taskId, int assignmentId);
 }

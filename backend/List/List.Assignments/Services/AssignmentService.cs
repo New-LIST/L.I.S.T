@@ -88,9 +88,17 @@ public class AssignmentService : IAssignmentService
     }
 
 
-    public async Task<AssignmentTaskRelModel> AddTaskToAssignmentAsync(AssignmentTaskRelModel rel)
+    public async Task<AssignmentTaskRelModel> AddTaskToAssignmentAsync(CreateAssignmentTaskRelDto dto)
     {
-        _dbContext.AssignmentTaskRels.Add(rel);
+        var rel = new AssignmentTaskRelModel
+        {
+            AssignmentId = dto.AssignmentId,
+            TaskId = dto.TaskId,
+            PointsTotal = dto.PointsTotal,
+            BonusTask = dto.BonusTask,
+            InternalComment = dto.InternalComment
+        };
+        
         await _dbContext.SaveChangesAsync();
         return rel;
     }
