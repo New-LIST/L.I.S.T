@@ -12,6 +12,7 @@ import 'tinymce/plugins/link';
 import 'tinymce/plugins/lists';
 import 'tinymce/plugins/code';
 import 'tinymce/plugins/image';
+import 'tinymce/plugins/table';
 
 import api from '../../../services/api';
 import { useNotification } from '../../../shared/components/NotificationContext';
@@ -141,13 +142,17 @@ const TaskEditor = () => {
                             init={{
                                 height: 600,
                                 menubar: false,
-                                plugins: 'lists link code image autoresize',
-                                toolbar: 'undo redo | bold italic | bullist numlist | link | image | code',
+                                plugins: 'lists link image table code',
+                                toolbar: 'undo redo | fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist outdent indent | link image | table | code ',
+                                fontsize_formats: '8pt 10pt 12pt 14pt 18pt 24pt 36pt',
+                                font_formats:
+                                    'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Verdana=verdana,geneva,sans-serif; Times New Roman=times new roman,times,serif;',
                                 content_style: 'body { font-family:Roboto,Arial,sans-serif; font-size:14px }',
                                 skin_url: '/tinymce/skins/ui/oxide',
                                 content_css: '/tinymce/skins/content/default/content.css',
                                 license_key: 'gpl',
                                 model: 'dom',
+
 
                                 file_picker_types: 'image',
                                 file_picker_callback: (callback, value, meta) => {
