@@ -41,6 +41,11 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             entity.ToTable("Periods", t => t.ExcludeFromMigrations());
         });
 
+        modelBuilder.Entity<CourseTaskSetRel>(entity =>
+        {
+            entity.ToTable("course_task_set_rel", t => t.ExcludeFromMigrations());
+        });
+
         // Relacia Assignment ↔ AssignmentTaskRel
         modelBuilder.Entity<AssignmentTaskRelModel>()
             .HasOne(r => r.Assignment)
@@ -71,6 +76,13 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             .HasOne(a => a.Course)
             .WithMany()
             .HasForeignKey(a => a.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AssignmentModel>()
+            .HasOne(a => a.CourseTaskSetRel)
+            .WithMany() // ak nechceš navigáciu naspäť
+            .HasForeignKey(a => new { a.CourseId, a.TaskSetTypeId })
+            .HasPrincipalKey(c => new { c.CourseId, c.TaskSetTypeId })
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -54,4 +54,6 @@ public class AssignmentModel
 
     [Column("internal_comment")]
     public string? InternalComment { get; set; }
+
+    public CourseTaskSetRel CourseTaskSetRel { get; set; } = null!;
 }
