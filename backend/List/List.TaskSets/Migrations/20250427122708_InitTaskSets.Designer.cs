@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.TaskSets.Migrations
 {
     [DbContext(typeof(TaskSetsDbContext))]
-    [Migration("20250412191129_InitTaskSets")]
+    [Migration("20250427122708_InitTaskSets")]
     partial class InitTaskSets
     {
         /// <inheritdoc />
@@ -31,26 +31,33 @@ namespace List.TaskSets.Migrations
                         .HasColumnType("integer");
 
                     b.Property<bool>("AutoAcceptStudents")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("auto_accept_students");
 
                     b.Property<int>("Capacity")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("capacity");
 
                     b.Property<DateTime?>("EnrollmentLimit")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enrollment_limit");
 
                     b.Property<DateTime?>("GroupChangeDeadline")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("group_change_deadline");
 
                     b.Property<bool>("HiddenInList")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("hidden");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<int?>("PeriodId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("period_id");
 
                     b.HasKey("Id");
 

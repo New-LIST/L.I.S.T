@@ -78,6 +78,7 @@ builder.Services.AddModule<List.Courses.Module>(builder.Configuration);
 builder.Services.AddModule<List.TaskSets.Module>(builder.Configuration);
 builder.Services.AddModule<List.BackgroundTasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Tasks.Module>(builder.Configuration);
+builder.Services.AddModule<List.Assignments.Module>(builder.Configuration);
 
 var app = builder.Build();
 
@@ -96,6 +97,7 @@ app.UseModule<List.Courses.Module>();
 app.UseModule<List.TaskSets.Module>();
 app.UseModule<List.BackgroundTasks.Module>();
 app.UseModule<List.Tasks.Module>();
+app.UseModule<List.Assignments.Module>();
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();

@@ -35,6 +35,7 @@
       <ProjectReference Include="..\List.Users\List.Users.csproj" />
       <ProjectReference Include="..\List.TaskSets\List.TaskSets.csproj" />
 		<ProjectReference Include="..\List.Tasks\List.Tasks.csproj" />
+        <ProjectReference Include="..\List.Assignments\List.Assignments.csproj" />
     </ItemGroup>
 
 </Project>

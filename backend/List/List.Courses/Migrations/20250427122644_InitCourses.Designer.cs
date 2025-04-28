@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Courses.Migrations
 {
     [DbContext(typeof(CoursesDbContext))]
-    [Migration("20250402193818_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250427122644_InitCourses")]
+    partial class InitCourses
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,16 +35,18 @@ namespace List.Courses.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<int?>("ParentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("parent_id");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("categories");
                 });
 
             modelBuilder.Entity("List.Courses.Models.Course", b =>
@@ -56,26 +58,33 @@ namespace List.Courses.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("AutoAcceptStudents")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("auto_accept_students");
 
                     b.Property<int>("Capacity")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("capacity");
 
                     b.Property<DateTime?>("EnrollmentLimit")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enrollment_limit");
 
                     b.Property<DateTime?>("GroupChangeDeadline")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("group_change_deadline");
 
                     b.Property<bool>("HiddenInList")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("hidden");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<int?>("PeriodId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("period_id");
 
                     b.HasKey("Id");
 
@@ -94,7 +103,8 @@ namespace List.Courses.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.HasKey("Id");
 
