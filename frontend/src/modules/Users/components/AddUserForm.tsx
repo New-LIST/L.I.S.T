@@ -3,9 +3,10 @@ import * as React from "react";
 import api from "../../../services/api.ts";
 import {AxiosError, AxiosResponse} from "axios";
 import {User} from "../types/User.ts";
+import {useState} from "react";
 
 const AddUserForm = () => {
-    let role: string = "Student";
+    const [role, setRole] = useState<string>("Student");
     const submitUser = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -13,6 +14,7 @@ const AddUserForm = () => {
         const email = data.get('email') as string;
         const password = data.get('password') as string;
         const user: User = {
+            id: 0,
             fullname: name,
             email: email,
             password: password,
@@ -63,13 +65,13 @@ const AddUserForm = () => {
                 <FormControl>
                     <FormLabel id="demo-controlled-radio-buttons-group">Role</FormLabel>
                     <RadioGroup
-                        aria-labelledby="demo-controlled-radio-buttons-group"
-                        name="controlled-radio-buttons-group"
+                        aria-labelledby="role"
+                        name="role"
                         value={role}
                     >
-                        <FormControlLabel value="Teacher" control={<Radio />} label="Teacher" />
-                        <FormControlLabel value="Assistant" control={<Radio />} label="Assistant" />
-                        <FormControlLabel value="Student" control={<Radio />} label="Student" />
+                        <FormControlLabel value="Teacher" control={<Radio />} onClick={() => setRole("Teacher") } label="Teacher" />
+                        <FormControlLabel value="Assistant" control={<Radio onClick={() => setRole("Assistant") } />} label="Assistant" />
+                        <FormControlLabel value="Student" control={<Radio />} onClick={() => setRole("Student") } label="Student" />
                     </RadioGroup>
                 </FormControl>
                 <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>
