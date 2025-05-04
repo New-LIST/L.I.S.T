@@ -57,7 +57,8 @@ namespace List.Courses.Migrations
                     group_change_deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     enrollment_limit = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     hidden = table.Column<bool>(type: "boolean", nullable: false),
-                    auto_accept_students = table.Column<bool>(type: "boolean", nullable: false)
+                    auto_accept_students = table.Column<bool>(type: "boolean", nullable: false),
+                    teacher_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -68,6 +69,12 @@ namespace List.Courses.Migrations
                         principalTable: "Periods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Courses_Users_teacher_id",
+                        column: x => x.teacher_id,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -79,6 +86,11 @@ namespace List.Courses.Migrations
                 name: "IX_Courses_period_id",
                 table: "Courses",
                 column: "period_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Courses_teacher_id",
+                table: "Courses",
+                column: "teacher_id");
         }
 
         /// <inheritdoc />

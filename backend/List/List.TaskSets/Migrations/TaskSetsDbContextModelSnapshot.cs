@@ -56,6 +56,10 @@ namespace List.TaskSets.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("period_id");
 
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("integer")
+                        .HasColumnName("teacher_id");
+
                     b.HasKey("Id");
 
                     b.ToTable((string)null);

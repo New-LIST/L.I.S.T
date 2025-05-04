@@ -276,6 +276,7 @@ const Courses = () => {
                 <TableRow>
                   <TableCell>Názov kurzu</TableCell>
                   <TableCell>Obdobie</TableCell>
+                  <TableCell>Učiteľ</TableCell>
                   <TableCell align="right">Akcie</TableCell>
                 </TableRow>
               </TableHead>
@@ -286,6 +287,7 @@ const Courses = () => {
                     <TableCell>
                       {course.periodName || "Kurz nie je zaradený k obdobiu"}
                     </TableCell>
+                    <TableCell>{course.teacherName}</TableCell>
                     <TableCell align="right">
                       <Box>
                         <IconButton

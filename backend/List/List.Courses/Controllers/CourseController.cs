@@ -4,6 +4,7 @@ using List.Courses.DTOs;
 using List.Courses.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace List.Courses.Controllers
 {
@@ -23,6 +24,7 @@ namespace List.Courses.Controllers
         {
             var rawCourses = await _context.Courses
                 .Include(c => c.Period)
+                .Include(c => c.Teacher)
                 .Select(c => new CourseReadDto
                 {
                     Id = c.Id,
@@ -32,7 +34,8 @@ namespace List.Courses.Controllers
                     GroupChangeDeadline = c.GroupChangeDeadline,
                     EnrollmentLimit = c.EnrollmentLimit,
                     HiddenInList = c.HiddenInList,
-                    AutoAcceptStudents = c.AutoAcceptStudents
+                    AutoAcceptStudents = c.AutoAcceptStudents,
+                    TeacherName = c.Teacher.Fullname
                 })
                 .ToListAsync();
 
@@ -52,6 +55,7 @@ namespace List.Courses.Controllers
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Create(CourseCreateDto dto)
         {
+            var teacherId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
             var course = new Course
             {
                 Name = dto.Name,
@@ -60,7 +64,8 @@ namespace List.Courses.Controllers
                 GroupChangeDeadline = dto.GroupChangeDeadline?.ToUniversalTime(),
                 EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime(),
                 HiddenInList = dto.HiddenInList,
-                AutoAcceptStudents = dto.AutoAcceptStudents
+                AutoAcceptStudents = dto.AutoAcceptStudents,
+                TeacherId = teacherId
             };
 
             _context.Courses.Add(course);

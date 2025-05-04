@@ -83,9 +83,15 @@ namespace List.Courses.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("period_id");
 
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("integer")
+                        .HasColumnName("teacher_id");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PeriodId");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("Courses");
                 });
@@ -108,6 +114,53 @@ namespace List.Courses.Migrations
                     b.ToTable("Periods");
                 });
 
+            modelBuilder.Entity("List.Users.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("e_mail");
+
+                    b.Property<string>("Fullname")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("password");
+
+                    b.Property<string>("PasswordToken")
+                        .HasColumnType("text")
+                        .HasColumnName("password_token");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("List.Courses.Models.Category", b =>
                 {
                     b.HasOne("List.Courses.Models.Category", "Parent")
@@ -125,7 +178,15 @@ namespace List.Courses.Migrations
                         .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("List.Users.Models.User", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Period");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("List.Courses.Models.Category", b =>
