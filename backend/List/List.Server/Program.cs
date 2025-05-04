@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using List.Common.Files;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+
 builder.Services.Configure<RouteOptions>(options =>
 {
     options.LowercaseUrls = true;
@@ -102,6 +105,7 @@ app.UseModule<List.Assignments.Module>();
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers()

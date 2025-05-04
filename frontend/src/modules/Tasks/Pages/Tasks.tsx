@@ -69,6 +69,7 @@ const Tasks = () => {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Názov</TableCell>
+                                    <TableCell>Autor</TableCell>
                                     <TableCell>Vnútorný komentár</TableCell>
                                     <TableCell>Akcie</TableCell>
                                 </TableRow>
@@ -77,6 +78,7 @@ const Tasks = () => {
                                 {tasks.map(task => (
                                     <TableRow key={task.id}>
                                         <TableCell>{task.name}</TableCell>
+                                        <TableCell>{task.authorFullname}</TableCell>
                                         <TableCell>{task.internalComment}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => navigate(`/dash/tasks/${task.id}/edit`)}>

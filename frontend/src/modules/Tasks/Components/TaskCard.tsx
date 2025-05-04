@@ -3,9 +3,10 @@ import { Box, Paper, Typography, Divider } from '@mui/material';
 type Props = {
     name: string;
     text: string;
+    authorName: string;
 };
 
-const TaskCard = ({ name, text }: Props) => {
+const TaskCard = ({ name, text, authorName }: Props) => {
     return (
         <Paper
             elevation={2}
@@ -29,6 +30,13 @@ const TaskCard = ({ name, text }: Props) => {
                 }}
                 dangerouslySetInnerHTML={{ __html: text }}
             />
+            <Divider sx={{ mt: 2 }} />
+
+            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <Typography variant="caption" color="text.secondary">
+                    Vytvoril: {authorName}
+                </Typography>
+            </Box>
         </Paper>
     );
 };
