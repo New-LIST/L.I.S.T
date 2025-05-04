@@ -5,6 +5,8 @@ using List.Courses.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using List.Common.Files;
+using Microsoft.AspNetCore.Http;
 
 namespace List.Courses.Controllers
 {
@@ -103,6 +105,32 @@ namespace List.Courses.Controllers
 
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("{id}/upload-image")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> UploadCourseImage(int id, [FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
+        {
+            var course = await _context.Courses.FindAsync(id);
+            if (course == null)
+                return NotFound();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            if (!string.IsNullOrEmpty(course.ImageUrl))
+            {
+                await fileStorageService.DeleteFileAsync(course.ImageUrl);
+            }
+
+            var relativePath = await fileStorageService.SaveFileAsync(file, "courses"); // /uploads/courses/...
+            course.ImageUrl = relativePath.Replace("\\", "/");
+            await _context.SaveChangesAsync();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var fullUrl = $"{baseUrl}/{course.ImageUrl}";
+
+            return Ok(new { imageUrl = fullUrl });
         }
 
     }
