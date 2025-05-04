@@ -40,4 +40,6 @@ public class Course
 
     [ForeignKey("TeacherId")]
     public User Teacher { get; set; } = null!;
+
+    public ICollection<Participant> Participants { get; set; } = new List<Participant>();
 }
