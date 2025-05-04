@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using List.Users.Models;
 
 namespace List.Courses.Models;
 
@@ -33,4 +34,15 @@ public class Course
     [Required]
     [Column("auto_accept_students")]
     public bool AutoAcceptStudents { get; set; }
+
+    [Column("teacher_id")]
+    public int TeacherId { get; set; }
+
+    [ForeignKey("TeacherId")]
+    public User Teacher { get; set; } = null!;
+
+    [Column("image_url")]
+    public string? ImageUrl { get; set; }
+
+    public ICollection<Participant> Participants { get; set; } = new List<Participant>();
 }

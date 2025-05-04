@@ -4,6 +4,9 @@ using List.Courses.DTOs;
 using List.Courses.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using List.Common.Files;
+using Microsoft.AspNetCore.Http;
 
 namespace List.Courses.Controllers
 {
@@ -23,6 +26,7 @@ namespace List.Courses.Controllers
         {
             var rawCourses = await _context.Courses
                 .Include(c => c.Period)
+                .Include(c => c.Teacher)
                 .Select(c => new CourseReadDto
                 {
                     Id = c.Id,
@@ -32,7 +36,9 @@ namespace List.Courses.Controllers
                     GroupChangeDeadline = c.GroupChangeDeadline,
                     EnrollmentLimit = c.EnrollmentLimit,
                     HiddenInList = c.HiddenInList,
-                    AutoAcceptStudents = c.AutoAcceptStudents
+                    AutoAcceptStudents = c.AutoAcceptStudents,
+                    TeacherName = c.Teacher.Fullname,
+                    ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
                 })
                 .ToListAsync();
 
@@ -52,6 +58,7 @@ namespace List.Courses.Controllers
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Create(CourseCreateDto dto)
         {
+            var teacherId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
             var course = new Course
             {
                 Name = dto.Name,
@@ -60,7 +67,8 @@ namespace List.Courses.Controllers
                 GroupChangeDeadline = dto.GroupChangeDeadline?.ToUniversalTime(),
                 EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime(),
                 HiddenInList = dto.HiddenInList,
-                AutoAcceptStudents = dto.AutoAcceptStudents
+                AutoAcceptStudents = dto.AutoAcceptStudents,
+                TeacherId = teacherId
             };
 
             _context.Courses.Add(course);
@@ -98,6 +106,34 @@ namespace List.Courses.Controllers
 
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("{id}/upload-image")]
+        [Authorize(Roles = "Teacher")]
+        [ApiExplorerSettings(IgnoreApi = true)]
+
+        public async Task<IActionResult> UploadCourseImage(int id, [FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
+        {
+            var course = await _context.Courses.FindAsync(id);
+            if (course == null)
+                return NotFound();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            if (!string.IsNullOrEmpty(course.ImageUrl))
+            {
+                await fileStorageService.DeleteFileAsync(course.ImageUrl);
+            }
+
+            var relativePath = await fileStorageService.SaveFileAsync(file, "courses"); // /uploads/courses/...
+            course.ImageUrl = relativePath.Replace("\\", "/");
+            await _context.SaveChangesAsync();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var fullUrl = $"{baseUrl}/{course.ImageUrl}";
+
+            return Ok(new { imageUrl = fullUrl });
         }
 
     }

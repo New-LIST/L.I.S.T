@@ -11,4 +11,7 @@ public class CourseReadDto
     public DateTime? EnrollmentLimit { get; set; }
     public bool HiddenInList { get; set; }
     public bool AutoAcceptStudents { get; set; }
+
+    public string TeacherName { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
 }

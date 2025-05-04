@@ -7,6 +7,6 @@ export type Course = {
     enrollmentLimit: string | null;
     hiddenInList: boolean;
     autoAcceptStudents: boolean;
-    teacher?: string;
     imageUrl?: string;
+    teacherName: string;
   };

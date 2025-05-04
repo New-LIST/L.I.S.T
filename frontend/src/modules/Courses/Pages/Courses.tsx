@@ -53,6 +53,7 @@ const Courses = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [courseToEdit, setCourseToEdit] = useState<Course | null>(null);
   const navigate = useNavigate();
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -102,6 +103,7 @@ const Courses = () => {
     setEditDialogOpen(false);
     setCourseToEdit(null);
     setConfirmOpen(false);
+    setImageFile(null);
   };
 
   const handleCreate = async (name: string, periodId: number | "") => {
@@ -144,19 +146,31 @@ const Courses = () => {
     if (hasError) return;
 
     try {
-      await api.post("/courses", {
+      const res = await api.post("/courses", {
         name: trimmed,
         periodId: selectedPeriodId,
         capacity,
         groupChangeDeadline: groupChangeDeadline
-          ? new Date(groupChangeDeadline).toISOString()
-          : null,
+            ? new Date(groupChangeDeadline).toISOString()
+            : null,
         enrollmentLimit: enrollmentLimit
-          ? new Date(enrollmentLimit).toISOString()
-          : null,
+            ? new Date(enrollmentLimit).toISOString()
+            : null,
         hiddenInList,
         autoAcceptStudents,
       });
+
+      const createdCourse = res.data;
+
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
+
+        await api.post(`/courses/${createdCourse.id}/upload-image`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
+
       resetForm();
       fetchCourses();
       showNotification("Kurz bol úspešne pridaný.", "success");
@@ -226,6 +240,17 @@ const Courses = () => {
         hiddenInList,
         autoAcceptStudents,
       });
+
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
+
+        await api.post(`/courses/${id}/upload-image`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
+
+
       setEditDialogOpen(false);
       resetForm();
       fetchCourses();
@@ -276,6 +301,7 @@ const Courses = () => {
                 <TableRow>
                   <TableCell>Názov kurzu</TableCell>
                   <TableCell>Obdobie</TableCell>
+                  <TableCell>Učiteľ</TableCell>
                   <TableCell align="right">Akcie</TableCell>
                 </TableRow>
               </TableHead>
@@ -286,6 +312,7 @@ const Courses = () => {
                     <TableCell>
                       {course.periodName || "Kurz nie je zaradený k obdobiu"}
                     </TableCell>
+                    <TableCell>{course.teacherName}</TableCell>
                     <TableCell align="right">
                       <Box>
                         <IconButton
@@ -363,6 +390,8 @@ const Courses = () => {
         periodError={periodError}
         groupChangeError={groupChangeError}
         enrollmentLimitError={enrollmentLimitError}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
       />
 
       <ConfirmDeleteCourseDialog
@@ -398,6 +427,8 @@ const Courses = () => {
           periodError={periodError}
           groupChangeError={groupChangeError}
           enrollmentLimitError={enrollmentLimitError}
+          imageFile={imageFile}
+          setImageFile={setImageFile}
         />
       )}
     </Container>

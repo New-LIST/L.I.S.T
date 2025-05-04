@@ -3,6 +3,7 @@ using System;
 using List.Courses.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Courses.Migrations
 {
     [DbContext(typeof(CoursesDbContext))]
-    partial class CoursesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250504122043_AddParticipants")]
+    partial class AddParticipants
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,10 +77,6 @@ namespace List.Courses.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("hidden");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("image_url");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -108,10 +107,6 @@ namespace List.Courses.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Allowed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allowed");
 
                     b.Property<int>("CourseId")
                         .HasColumnType("integer")

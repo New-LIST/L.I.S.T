@@ -105,6 +105,7 @@ public class TasksController(ITaskService taskService) : ControllerBase
     }
 
     [HttpPost("upload-image")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadImage([FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
     {
         if (file == null || file.Length == 0)

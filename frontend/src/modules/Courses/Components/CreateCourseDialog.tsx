@@ -1,12 +1,12 @@
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    MenuItem,
-    Button,
-  } from '@mui/material';
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Button, Typography,
+} from '@mui/material';
   import React from 'react';
   import { Period } from '../../Periods/Types/Period';
   
@@ -34,6 +34,8 @@ import {
     periodError: string | null;
     groupChangeError: string | null;
     enrollmentLimitError: string | null;
+    imageFile: File | null;
+    setImageFile: (file: File | null) => void;
 
   };
   
@@ -61,7 +63,8 @@ import {
     periodError,
     groupChangeError,
     enrollmentLimitError,
-
+    imageFile,
+    setImageFile
   }: Props) => {
     return (
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -156,6 +159,24 @@ import {
             <MenuItem value="false">Nie</MenuItem>
             <MenuItem value="true">Áno</MenuItem>
           </TextField>
+          <Button variant="outlined" component="label">
+            Nahrať obrázok (titulka)
+            <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setImageFile(file);
+                }}
+            />
+          </Button>
+          {imageFile && (
+              <Typography variant="body2" color="text.secondary">
+                {imageFile.name}
+              </Typography>
+          )}
+
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Zrušiť</Button>

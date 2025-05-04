@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.TaskSets.Migrations
 {
     [DbContext(typeof(TaskSetsDbContext))]
-    [Migration("20250427122708_InitTaskSets")]
+    [Migration("20250504045117_InitTaskSets")]
     partial class InitTaskSets
     {
         /// <inheritdoc />
@@ -58,6 +58,10 @@ namespace List.TaskSets.Migrations
                     b.Property<int?>("PeriodId")
                         .HasColumnType("integer")
                         .HasColumnName("period_id");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("integer")
+                        .HasColumnName("teacher_id");
 
                     b.HasKey("Id");
 

@@ -1,6 +1,7 @@
 using List.TaskSets.Models;
 using Microsoft.EntityFrameworkCore;
 using List.Courses.Models;
+using List.Users.Models;
 namespace List.TaskSets.Data;
 
 public class TaskSetsDbContext(DbContextOptions<TaskSetsDbContext> options) : DbContext(options)
@@ -16,8 +17,9 @@ public class TaskSetsDbContext(DbContextOptions<TaskSetsDbContext> options) : Db
         
         modelBuilder.Entity<Course>().ToTable((string?)null);
         modelBuilder.Ignore<Period>();
-        
-    
+        modelBuilder.Ignore<User>();
+
+
         modelBuilder.Entity<TaskSetType>(entity =>
         {
             entity.ToTable("task_set_types");
