@@ -13,4 +13,5 @@ public class CourseReadDto
     public bool AutoAcceptStudents { get; set; }
 
     public string TeacherName { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
 }

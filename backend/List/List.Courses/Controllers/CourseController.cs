@@ -37,7 +37,8 @@ namespace List.Courses.Controllers
                     EnrollmentLimit = c.EnrollmentLimit,
                     HiddenInList = c.HiddenInList,
                     AutoAcceptStudents = c.AutoAcceptStudents,
-                    TeacherName = c.Teacher.Fullname
+                    TeacherName = c.Teacher.Fullname,
+                    ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
                 })
                 .ToListAsync();
 
