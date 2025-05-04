@@ -110,6 +110,8 @@ namespace List.Courses.Controllers
 
         [HttpPost("{id}/upload-image")]
         [Authorize(Roles = "Teacher")]
+        [ApiExplorerSettings(IgnoreApi = true)]
+
         public async Task<IActionResult> UploadCourseImage(int id, [FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
         {
             var course = await _context.Courses.FindAsync(id);
