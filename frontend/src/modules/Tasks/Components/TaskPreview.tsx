@@ -5,6 +5,7 @@ type Props = {
     name: string;
     text: string;
     comment: string;
+    authorName: string;
 };
 
 const TaskPreview = ({ name, text, comment, authorName }: Props) => {
