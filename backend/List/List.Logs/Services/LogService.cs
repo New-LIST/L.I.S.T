@@ -1,5 +1,6 @@
 using List.Logs.Data;
 using List.Logs.Models;
+using List.Logs.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Logs.Services;
@@ -18,5 +19,19 @@ public class LogService(LogsDbContext context) : ILogService
 
         context.ActivityLogs.Add(log);
         await context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<ActivityLogDto>> GetAllAsync()
+    {
+        return await context.ActivityLogs
+            .OrderByDescending(l => l.Timestamp)
+            .Select(l => new ActivityLogDto
+            {
+                UserId = l.UserId,
+                Action = l.Action,
+                Target = l.Target,
+                Timestamp = l.Timestamp
+            })
+            .ToListAsync();
     }
 }

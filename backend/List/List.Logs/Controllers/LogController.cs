@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using List.Logs.Services;
+using List.Logs.DTOs;
 
 namespace List.Logs.Controllers;
 
@@ -7,5 +8,10 @@ namespace List.Logs.Controllers;
 [Route("api/logs")]
 public class LogController(ILogService logService) : ControllerBase
 {
-    // Napr. endpoint pre výpis logov v budúcnosti
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ActivityLogDto>>> GetLogs()
+    {
+        var logs = await logService.GetAllAsync();
+        return Ok(logs);
+    }
 }
