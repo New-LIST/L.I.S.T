@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Threading.RateLimiting;
 using List.Common.Integrations;
+using List.Logs.Services;
 using List.Server.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -66,7 +67,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ActivityLoggingFilter>();
+});
 
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
@@ -82,6 +86,8 @@ builder.Services.AddModule<List.TaskSets.Module>(builder.Configuration);
 builder.Services.AddModule<List.BackgroundTasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Tasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Assignments.Module>(builder.Configuration);
+builder.Services.AddModule<List.Logs.Module>(builder.Configuration);
+
 
 var app = builder.Build();
 
@@ -101,6 +107,7 @@ app.UseModule<List.TaskSets.Module>();
 app.UseModule<List.BackgroundTasks.Module>();
 app.UseModule<List.Tasks.Module>();
 app.UseModule<List.Assignments.Module>();
+app.UseModule<List.Logs.Module>();
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
