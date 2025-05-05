@@ -10,4 +10,7 @@ public interface ITaskService
     Task<bool> UpdateTaskAsync(int id, TaskModel updatedTask);
     Task<bool> DeleteTaskAsync(int id);
 
+    Task<IEnumerable<TaskModel>> FilterTasksAsync(string? name, string? author, string? categoryFilter);
+
+
 }

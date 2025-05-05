@@ -14,6 +14,11 @@ public class TaskSetsDbContext(DbContextOptions<TaskSetsDbContext> options) : Db
     {
 
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Participant>(entity =>
+        {
+            entity.ToTable("participants", t => t.ExcludeFromMigrations());
+        });
         
         modelBuilder.Entity<Course>().ToTable((string?)null);
         modelBuilder.Ignore<Period>();

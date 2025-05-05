@@ -32,4 +32,6 @@ public class TaskModel
 
     [ForeignKey(nameof(AuthorId))]
     public User Author { get; set; } = null!;
+
+    public ICollection<TaskCategoryRel> TaskCategories { get; set; } = new List<TaskCategoryRel>();
 }
