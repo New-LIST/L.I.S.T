@@ -21,14 +21,30 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             entity.ToTable("tasks", t => t.ExcludeFromMigrations());
         });
 
+        modelBuilder.Entity<TaskCategoryRel>(entity =>
+        {
+            entity.ToTable("task_category_rel", t => t.ExcludeFromMigrations());
+            entity.HasKey(x => new { x.TaskId, x.CategoryId });
+        });
+
         modelBuilder.Entity<TaskSetType>(entity =>
         {
             entity.ToTable("task_set_types", t => t.ExcludeFromMigrations());
         });
 
+        modelBuilder.Entity<CategoryModel>(entity =>
+        {
+            entity.ToTable("categories", t => t.ExcludeFromMigrations());
+        });
+
         modelBuilder.Entity<Course>(entity =>
         {
             entity.ToTable("Courses", t => t.ExcludeFromMigrations());
+        });
+
+        modelBuilder.Entity<Participant>(entity =>
+        {
+            entity.ToTable("participants", t => t.ExcludeFromMigrations());
         });
 
         modelBuilder.Entity<User>(entity =>

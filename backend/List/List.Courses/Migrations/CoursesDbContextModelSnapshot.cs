@@ -22,30 +22,6 @@ namespace List.Courses.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("List.Courses.Models.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("integer")
-                        .HasColumnName("parent_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentId");
-
-                    b.ToTable("categories");
-                });
-
             modelBuilder.Entity("List.Courses.Models.Course", b =>
                 {
                     b.Property<int>("Id")
@@ -200,16 +176,6 @@ namespace List.Courses.Migrations
                         });
                 });
 
-            modelBuilder.Entity("List.Courses.Models.Category", b =>
-                {
-                    b.HasOne("List.Courses.Models.Category", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Parent");
-                });
-
             modelBuilder.Entity("List.Courses.Models.Course", b =>
                 {
                     b.HasOne("List.Courses.Models.Period", "Period")
@@ -245,11 +211,6 @@ namespace List.Courses.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("List.Courses.Models.Category", b =>
-                {
-                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("List.Courses.Models.Course", b =>

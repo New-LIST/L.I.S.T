@@ -54,6 +54,29 @@ public class TasksController(ITaskService taskService) : ControllerBase
         return Ok(taskDto);
     }
 
+    [HttpGet("filter")]
+    public async Task<IActionResult> FilterTasks([FromQuery] string? name, [FromQuery] string? author, [FromQuery] string? categoryFilter)
+    {
+        var tasks = await taskService.FilterTasksAsync(name, author, categoryFilter);
+        Console.WriteLine("FILTERED");
+
+        var taskDtos = tasks.Select(t => new TaskResponseDto
+        {
+            Id = t.Id,
+            Name = t.Name ?? string.Empty,
+            Text = t.Text,
+            InternalComment = t.InternalComment,
+            Created = t.Created,
+            Updated = t.Updated,
+            AuthorFullname = t.Author?.Fullname ?? "Unknown"
+        });
+
+        Console.WriteLine("FILTERED2");
+
+        return Ok(taskDtos);
+    }
+
+
     [HttpPost]
     public async Task<IActionResult> AddTask([FromBody] taskDto taskDto)
     {

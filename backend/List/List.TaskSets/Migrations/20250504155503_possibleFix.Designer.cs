@@ -3,6 +3,7 @@ using System;
 using List.TaskSets.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.TaskSets.Migrations
 {
     [DbContext(typeof(TaskSetsDbContext))]
-    partial class TaskSetsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250504155503_possibleFix")]
+    partial class possibleFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

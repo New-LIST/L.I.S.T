@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace List.Courses.Models;
+namespace List.Tasks.Models;
 
 [Table("categories")]
-public class Category
+public class CategoryModel
 {
     [Key]
     public int Id { get; set; }
@@ -14,7 +14,9 @@ public class Category
 
     [Column("parent_id")]
     public int? ParentId { get; set; }
-    public Category? Parent { get; set; }
+    public CategoryModel? Parent { get; set; }
 
-    public List<Category> Children { get; set; } = new();
+    public List<CategoryModel> Children { get; set; } = new();
+
+    public ICollection<TaskCategoryRel> TaskCategories { get; set; } = new List<TaskCategoryRel>();
 }

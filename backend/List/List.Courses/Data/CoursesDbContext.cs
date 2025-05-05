@@ -7,7 +7,6 @@ namespace List.Courses.Data;
 
 public class CoursesDbContext(DbContextOptions<CoursesDbContext> options) : DbContext(options)
 {
-    public DbSet<Category> Categories { get; set; }
     public DbSet<Period> Periods { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Participant> Participants { get; set; }
@@ -23,11 +22,6 @@ public class CoursesDbContext(DbContextOptions<CoursesDbContext> options) : DbCo
             entity.ToTable("Users", t => t.ExcludeFromMigrations());
         });
 
-        modelBuilder.Entity<Category>()
-            .HasOne(c => c.Parent)
-            .WithMany(c => c.Children)
-            .HasForeignKey(c => c.ParentId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Course>()
                 .HasOne(c => c.Period)

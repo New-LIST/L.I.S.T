@@ -1,4 +1,4 @@
-namespace List.Courses.DTOs;
+namespace List.Tasks.DTOs;
 
 public class CategoryDto
 {

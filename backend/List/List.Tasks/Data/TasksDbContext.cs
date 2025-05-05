@@ -12,6 +12,11 @@ public class TasksDbContext : DbContext
 
     public DbSet<TaskModel> Tasks { get; set; }
 
+    public DbSet<CategoryModel> Categories { get; set; }
+
+
+    public DbSet<TaskCategoryRel> TaskCategoryRels { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -32,5 +37,24 @@ public class TasksDbContext : DbContext
                   .HasForeignKey(t => t.AuthorId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<CategoryModel>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TaskCategoryRel>()
+            .HasKey(tc => new { tc.TaskId, tc.CategoryId });
+
+        modelBuilder.Entity<TaskCategoryRel>()
+            .HasOne(tc => tc.Task)
+            .WithMany(t => t.TaskCategories)
+            .HasForeignKey(tc => tc.TaskId);
+
+        modelBuilder.Entity<TaskCategoryRel>()
+            .HasOne(tc => tc.Category)
+            .WithMany(c => c.TaskCategories)
+            .HasForeignKey(tc => tc.CategoryId);
     }
 }
