@@ -17,6 +17,7 @@ import Projects from "../../Courses/Pages/Course/Projects";
 import RootRedirect from "./RootRedirect";
 import Tasks from "../../Tasks/Pages/Tasks.tsx";
 import TaskEditor from "../../Tasks/Pages/TaskEditor.tsx";
+import LogsPage from "../../Logs/Pages/LogsPage.tsx";
 
 const AppRoutes = () => {
   return (
@@ -49,9 +50,10 @@ const AppRoutes = () => {
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />
         <Route path="users" element={<Users />} />
-          <Route path="tasks" element={<Tasks />} />
+        <Route path="tasks" element={<Tasks />} />
           <Route path="tasks/new" element={<TaskEditor />} />
           <Route path="tasks/:id/edit" element={<TaskEditor />} />
+        <Route path="logs" element={<LogsPage/>}/>
       </Route>
 
       {/* fallback na root */}

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using List.Logs.Services;
 using List.Logs.DTOs;
+using List.Common.Models;
 
 namespace List.Logs.Controllers;
 
@@ -9,9 +10,15 @@ namespace List.Logs.Controllers;
 public class LogController(ILogService logService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ActivityLogDto>>> GetLogs()
+    public async Task<ActionResult<PagedResult<ActivityLogDto>>> GetLogs(
+    int page = 1,
+    int pageSize = 100,
+    string? filter = null,
+    string sort = "timestamp",
+    bool desc = true)
     {
-        var logs = await logService.GetAllAsync();
-        return Ok(logs);
+        var result = await logService.GetPagedAsync(page, pageSize, filter, sort, desc);
+        return Ok(result);
     }
+
 }
