@@ -1,23 +1,34 @@
 import { useEffect, useState } from "react";
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TableSortLabel, Paper, TextField, TablePagination, CircularProgress
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  CircularProgress,
+  IconButton,
 } from "@mui/material";
-import api from "../../../services/api";import { Log  } from "../Types/Log";
+import api from "../../../services/api";
+import { Log } from "../Types/Log";
 import { PagedResult } from "../../../shared/Interfaces/PagedResult";
-
-type Order = "asc" | "desc";
-type Sortable = keyof Log;
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 
 export default function LogsTable() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [order, setOrder] = useState<Order>("desc");
-  const [orderBy, setOrderBy] = useState<Sortable>("timestamp");
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -26,8 +37,6 @@ export default function LogsTable() {
         params: {
           page: page + 1,
           pageSize: rowsPerPage,
-          sort: orderBy,
-          desc: order === "desc",
           filter: filter || undefined,
         },
       });
@@ -40,13 +49,7 @@ export default function LogsTable() {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, rowsPerPage, order, orderBy, filter]);
-
-  const handleSort = (property: Sortable) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
-  };
+  }, [page, rowsPerPage, filter]);
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -55,6 +58,27 @@ export default function LogsTable() {
   const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
+  };
+
+  const handleOpenDialog = (log: Log) => {
+    setSelectedLog(log);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedLog(null);
+  };
+
+  const getActionText = (action: string) => {
+    switch (action) {
+      case "POST":
+        return "pridal";
+      case "UPDATE":
+        return "upravil";
+      case "DELETE":
+        return "odstránil";
+      default:
+        return action.toLowerCase();
+    }
   };
 
   return (
@@ -78,27 +102,26 @@ export default function LogsTable() {
             <Table>
               <TableHead>
                 <TableRow>
-                  {["userId", "action", "target", "targetId", "timestamp"].map((key) => (
-                    <TableCell key={key}>
-                      <TableSortLabel
-                        active={orderBy === key}
-                        direction={orderBy === key ? order : "asc"}
-                        onClick={() => handleSort(key as Sortable)}
-                      >
-                        {key}
-                      </TableSortLabel>
-                    </TableCell>
-                  ))}
+                  <TableCell>Popis</TableCell>
+                  <TableCell align="right">Akcia</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {logs.map((log, index) => (
                   <TableRow key={index}>
-                    <TableCell>{log.userId}</TableCell>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell>{log.target}</TableCell>
-                    <TableCell>{log.targetId}</TableCell>
-                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {`${log.userId} ${getActionText(log.action)} ${
+                        log.target
+                      } s názvom "${log.targetName ?? "(bez názvu)"}"`}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        onClick={() => handleOpenDialog(log)}
+                        size="small"
+                      >
+                        <InfoOutlineIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -115,6 +138,39 @@ export default function LogsTable() {
           />
         </>
       )}
+
+      <Dialog open={!!selectedLog} onClose={handleCloseDialog}>
+        <DialogTitle>Podrobnosti logu</DialogTitle>
+        <DialogContent>
+          {selectedLog && (
+            <DialogContentText component="div">
+              <div>
+                <strong>Id:</strong> {selectedLog.targetId}
+              </div>
+              <div>
+                <strong>UserId:</strong> {selectedLog.userId}
+              </div>
+              <div>
+                <strong>Action:</strong> {selectedLog.action}
+              </div>
+              <div>
+                <strong>Target:</strong> {selectedLog.target}
+              </div>
+              <div>
+                <strong>TargetId:</strong> {selectedLog.targetId}
+              </div>
+              <div>
+                <strong>TargetName:</strong>{" "}
+                {selectedLog.targetName ?? "(bez názvu)"}
+              </div>
+              <div>
+                <strong>Timestamp:</strong>{" "}
+                {new Date(selectedLog.timestamp).toLocaleString()}
+              </div>
+            </DialogContentText>
+          )}
+        </DialogContent>
+      </Dialog>
     </Paper>
   );
 }
