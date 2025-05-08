@@ -21,6 +21,7 @@ namespace List.Logs.Migrations
                     user_id = table.Column<string>(type: "text", nullable: false),
                     action = table.Column<string>(type: "text", nullable: false),
                     target = table.Column<string>(type: "text", nullable: false),
+                    target_id = table.Column<int>(type: "integer", nullable: false),
                     created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

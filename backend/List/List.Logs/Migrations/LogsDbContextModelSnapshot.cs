@@ -40,6 +40,10 @@ namespace List.Logs.Migrations
                         .HasColumnType("text")
                         .HasColumnName("target");
 
+                    b.Property<int>("TargetId")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_id");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created");

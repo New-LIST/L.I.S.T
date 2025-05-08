@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using List.Common.Files;
+using List.Logs.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace List.Courses.Controllers
@@ -15,10 +16,12 @@ namespace List.Courses.Controllers
     public class CourseController : ControllerBase
     {
         private readonly CoursesDbContext _context;
+        private readonly ILogService _logService;
 
-        public CourseController(CoursesDbContext context)
+        public CourseController(CoursesDbContext context, ILogService logService)
         {
             _context = context;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -73,6 +76,11 @@ namespace List.Courses.Controllers
 
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
+
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "POST", "course", course.Id);
+
             return Ok(course);
         }
 
@@ -85,6 +93,10 @@ namespace List.Courses.Controllers
 
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "DELETE", "course", course.Id);
+
             return NoContent();
         }
 
@@ -105,6 +117,10 @@ namespace List.Courses.Controllers
             course.AutoAcceptStudents = dto.AutoAcceptStudents;
 
             await _context.SaveChangesAsync();
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "UPDATE", "course", course.Id);
+
             return NoContent();
         }
 

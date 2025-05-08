@@ -20,6 +20,7 @@
       <ProjectReference Include="..\List.TaskSets\List.TaskSets.csproj" />
       <ProjectReference Include="..\List.Courses\List.Courses.csproj" />
       <ProjectReference Include="..\List.Users\List.Users.csproj" />
+      <ProjectReference Include="..\List.Logs\List.Logs.csproj" />
     </ItemGroup>
 
     <ItemGroup>

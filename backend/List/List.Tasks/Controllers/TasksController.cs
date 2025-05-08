@@ -97,7 +97,7 @@ public class TasksController(ITaskService taskService) : ControllerBase
             Updated = DateTime.UtcNow
         };
 
-        var added = await taskService.AddTaskAsync(task);
+        var added = await taskService.AddTaskAsync(task, User.Identity?.Name ?? "anonymous");
         return added ? Created() : BadRequest("Failed to add task.");
     }
 
@@ -116,14 +116,14 @@ public class TasksController(ITaskService taskService) : ControllerBase
         existingTask.InternalComment = taskDto.InternalComment;
         existingTask.Updated = DateTime.UtcNow;
 
-        var success = await taskService.UpdateTaskAsync(id, existingTask);
+        var success = await taskService.UpdateTaskAsync(id, existingTask, User.Identity?.Name ?? "anonymous");
         return success ? Ok() : BadRequest("Failed to update task.");
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)
     {
-        var success = await taskService.DeleteTaskAsync(id);
+        var success = await taskService.DeleteTaskAsync(id, User.Identity?.Name ?? "anonymous");
         return success ? Ok() : NotFound();
     }
 

@@ -1,6 +1,7 @@
 using List.Assignments.Data;
 using List.Assignments.Models;
 using List.Assignments.DTOs;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Assignments.Services;
@@ -8,10 +9,12 @@ namespace List.Assignments.Services;
 public class AssignmentService : IAssignmentService
 {
     private readonly AssignmentsDbContext _dbContext;
+    private readonly ILogService _logService;
 
-    public AssignmentService(AssignmentsDbContext dbContext)
+    public AssignmentService(AssignmentsDbContext dbContext, ILogService logService)
     {
         _dbContext = dbContext;
+        _logService = logService;
     }
 
     public async Task<List<AssignmentModel>> GetAllAsync()
@@ -30,7 +33,7 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto)
+    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, string userId)
     {
         var assignment = new AssignmentModel
         {
@@ -48,10 +51,13 @@ public class AssignmentService : IAssignmentService
         };
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "POST", "assignment", assignment.Id);
+
         return assignment;
     }
 
-    public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto)
+    public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto, string userId)
     {
         var existingAssignment = await _dbContext.Assignments.FindAsync(id);
         if (existingAssignment == null)
@@ -71,10 +77,14 @@ public class AssignmentService : IAssignmentService
         existingAssignment.InternalComment = updatedAssignmentDto.InternalComment;
 
         await _dbContext.SaveChangesAsync();
+
+
+        await _logService.LogAsync(userId, "UPDATE", "assignment", existingAssignment.Id);
+
         return existingAssignment;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, string userId)
     {
         var assignment = await _dbContext.Assignments.FindAsync(id);
         if (assignment == null)
@@ -84,6 +94,10 @@ public class AssignmentService : IAssignmentService
 
         _dbContext.Assignments.Remove(assignment);
         await _dbContext.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "DELETE", "assignment", assignment.Id);
+
+        
         return true;
     }
 

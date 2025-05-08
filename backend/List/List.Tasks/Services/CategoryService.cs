@@ -1,13 +1,21 @@
 using List.Tasks.Data;
 using List.Tasks.Models;
 using List.Tasks.DTOs;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Tasks.Services;
 
-public class CategoryService(TasksDbContext context) : ICategoryService
+public class CategoryService : ICategoryService
 {
+    private readonly TasksDbContext context;
+    private readonly ILogService _logService;
 
+    public CategoryService(TasksDbContext context, ILogService logService)
+    {
+        this.context = context;
+        _logService = logService;
+    }
     private CategoryDto MapCategory(CategoryModel category)
     {
         return new CategoryDto
@@ -18,7 +26,7 @@ public class CategoryService(TasksDbContext context) : ICategoryService
         };
     }
 
-    public async Task<bool> AddCategoryAsync(CategoryDto cat)
+    public async Task<bool> AddCategoryAsync(CategoryDto cat, string userId)
     {
         if (cat.ParentId != null)
         {
@@ -42,10 +50,13 @@ public class CategoryService(TasksDbContext context) : ICategoryService
 
         context.Categories.Add(category);
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "POST", "category", category.Id);
+
         return true;
     }
 
-    public async Task<bool> DeleteCategoryAsync(int id)
+    public async Task<bool> DeleteCategoryAsync(int id, string userId)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
@@ -53,6 +64,9 @@ public class CategoryService(TasksDbContext context) : ICategoryService
 
         context.Categories.Remove(category);
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "DELETE", "category", id);
+
         return true;
     }
 
@@ -85,7 +99,7 @@ public class CategoryService(TasksDbContext context) : ICategoryService
         return await context.Categories.FindAsync(id);
     }
 
-    public async Task<bool> UpdateCategoryAsync(int id, CategoryDto upCat)
+    public async Task<bool> UpdateCategoryAsync(int id, CategoryDto upCat, string userId)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
@@ -102,6 +116,10 @@ public class CategoryService(TasksDbContext context) : ICategoryService
         category.Name = upCat.Name;
         category.ParentId = upCat.ParentId;
         await context.SaveChangesAsync();
+
+
+        await _logService.LogAsync(userId, "UPDATE", "category", category.Id);
+        
         return true;
     }
 }

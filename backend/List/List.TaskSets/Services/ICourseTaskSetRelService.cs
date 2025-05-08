@@ -8,9 +8,9 @@ public interface ICourseTaskSetRelService
     Task<CourseTaskSetRelDto?> GetByIdAsync(int id);
     Task<List<CourseTaskSetRelDto>> GetByCourseIdAsync(int courseId);
 
-    Task<CourseTaskSetRelDto> CreateAsync(CourseTaskSetRelDto dto);
-    Task<CourseTaskSetRelDto?> UpdateAsync(int id, CourseTaskSetRelDto dto);
-    Task<bool> DeleteAsync(int id);
+    Task<CourseTaskSetRelDto> CreateAsync(CourseTaskSetRelDto dto, string userId);
+    Task<CourseTaskSetRelDto?> UpdateAsync(int id, CourseTaskSetRelDto dto, string userId);
+    Task<bool> DeleteAsync(int id, string userId);
 
     Task<int?> GetDependentCountAsync(int id);
 

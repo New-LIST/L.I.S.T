@@ -1,12 +1,22 @@
 using List.TaskSets.Data;
 using List.TaskSets.Dtos;
 using List.TaskSets.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.TaskSets.Services;
 
-public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
+public class TaskSetTypeService : ITaskSetTypeService
 {
+
+    private readonly TaskSetsDbContext context;
+    private readonly ILogService _logService;
+
+    public TaskSetTypeService(TaskSetsDbContext context, ILogService logService)
+    {
+        this.context = context;
+        _logService = logService;
+    }
 
 
     public async Task<List<TaskSetTypeDto>> GetAllAsync()
@@ -36,7 +46,7 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
             .ToListAsync();
     }
 
-    public async Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto)
+    public async Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto, string userId)
     {
         // Kontrola unikátneho mena
         var existingByName = await context.TaskSetTypes
@@ -63,11 +73,13 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
         context.TaskSetTypes.Add(entity);
         await context.SaveChangesAsync();
 
+        await _logService.LogAsync(userId, "POST", "task_set_type", entity.Id);
+
         dto.Id = entity.Id;
         return dto;
     }
 
-    public async Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto)
+    public async Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto, string userId)
     {
         var existing = await context.TaskSetTypes.FindAsync(dto.Id);
         if (existing == null)
@@ -96,6 +108,8 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
 
         await context.SaveChangesAsync();
 
+        await _logService.LogAsync(userId, "UPDATE", "task_set_type", existing.Id);
+
         return new TaskSetTypeDto
         {
             Id = existing.Id,
@@ -104,7 +118,7 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, string userId)
     {
         var existing = await context.TaskSetTypes.FindAsync(id);
         if (existing == null)
@@ -112,6 +126,9 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
 
         context.TaskSetTypes.Remove(existing);
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "DELETE", "task_set_type", id);
+
         return true;
     }
 

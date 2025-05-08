@@ -1,11 +1,22 @@
 using List.Tasks.Data;
 using List.Tasks.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Tasks.Services;
 
-public class TaskService(TasksDbContext context) : ITaskService
+public class TaskService : ITaskService
 {
+
+    private readonly TasksDbContext context;
+    private readonly ILogService _logService;
+
+    public TaskService(TasksDbContext context, ILogService logService)
+    {
+        this.context = context;
+        _logService = logService;
+    }
+
     public async Task<IEnumerable<TaskModel>> GetAllTasksAsync()
     {
         return await context.Tasks
@@ -20,14 +31,17 @@ public class TaskService(TasksDbContext context) : ITaskService
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
-    public async Task<bool> AddTaskAsync(TaskModel task)
+    public async Task<bool> AddTaskAsync(TaskModel task, string userId)
     {
         context.Tasks.Add(task);
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "POST", "task", task.Id);
+
         return true;
     }
 
-    public async Task<bool> UpdateTaskAsync(int id, TaskModel updatedTask)
+    public async Task<bool> UpdateTaskAsync(int id, TaskModel updatedTask, string userId)
     {
         var existingTask = await context.Tasks.FindAsync(id);
         if (existingTask is null) return false;
@@ -38,16 +52,22 @@ public class TaskService(TasksDbContext context) : ITaskService
         existingTask.Updated = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "UPDATE", "task", existingTask.Id);
+
         return true;
     }
 
-    public async Task<bool> DeleteTaskAsync(int id)
+    public async Task<bool> DeleteTaskAsync(int id, string userId)
     {
         var task = await context.Tasks.FindAsync(id);
         if (task is null) return false;
 
         context.Tasks.Remove(task);
         await context.SaveChangesAsync();
+
+        await _logService.LogAsync(userId, "DELETE", "task", id);
+        
         return true;
     }
 

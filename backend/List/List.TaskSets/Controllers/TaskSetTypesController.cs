@@ -39,7 +39,7 @@ public class TaskSetTypesController : ControllerBase
     {
         try
         {
-            var created = await _service.CreateAsync(dto);
+            var created = await _service.CreateAsync(dto, User.Identity?.Name ?? "anonymous");
             return Ok(created);
         }
         catch (InvalidOperationException ex)
@@ -61,7 +61,7 @@ public class TaskSetTypesController : ControllerBase
 
         try
         {
-            var updated = await _service.UpdateAsync(dto);
+            var updated = await _service.UpdateAsync(dto, User.Identity?.Name ?? "anonymous");
             if (updated == null)
                 return NotFound();
 
@@ -82,7 +82,7 @@ public class TaskSetTypesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var success = await _service.DeleteAsync(id);
+        var success = await _service.DeleteAsync(id, User.Identity?.Name ?? "anonymous");
         if (!success)
             return NotFound();
 

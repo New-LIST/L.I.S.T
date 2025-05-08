@@ -7,13 +7,14 @@ namespace List.Logs.Services;
 
 public class LogService(LogsDbContext context) : ILogService
 {
-    public async Task LogAsync(string userId, string action, string target)
+    public async Task LogAsync(string userId, string action, string target, int targetId)
     {
         var log = new ActivityLog
         {
             UserId = userId,
             Action = action,
             Target = target,
+            TargetId = targetId,
             Timestamp = DateTime.UtcNow
         };
 
@@ -30,6 +31,7 @@ public class LogService(LogsDbContext context) : ILogService
                 UserId = l.UserId,
                 Action = l.Action,
                 Target = l.Target,
+                TargetId = l.TargetId,
                 Timestamp = l.Timestamp
             })
             .ToListAsync();

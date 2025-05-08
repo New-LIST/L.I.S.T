@@ -39,7 +39,7 @@ public class CategoryController(ICategoryService categoryService) : ControllerBa
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
     {
-        var success = await _categoryService.AddCategoryAsync(dto);
+        var success = await _categoryService.AddCategoryAsync(dto, User.Identity?.Name ?? "anonymous");
         return success ? Ok() : BadRequest("Nepodarilo sa vytvoriť kategóriu.");
     }
 
@@ -47,7 +47,7 @@ public class CategoryController(ICategoryService categoryService) : ControllerBa
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
     {
-        var success = await _categoryService.UpdateCategoryAsync(id, dto);
+        var success = await _categoryService.UpdateCategoryAsync(id, dto, User.Identity?.Name ?? "anonymous");
         return success ? NoContent() : BadRequest("Nepodarilo sa upraviť kategóriu.");
     }
 
@@ -55,7 +55,7 @@ public class CategoryController(ICategoryService categoryService) : ControllerBa
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        var success = await _categoryService.DeleteCategoryAsync(id);
+        var success = await _categoryService.DeleteCategoryAsync(id, User.Identity?.Name ?? "anonymous");
         return success ? NoContent() : NotFound();
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using List.Courses.Data;
 using List.Courses.DTOs;
 using List.Courses.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 
@@ -12,10 +13,12 @@ namespace List.Courses.Controllers
     public class PeriodController : ControllerBase
     {
         private readonly CoursesDbContext _context;
+        private readonly ILogService _logService;
 
-        public PeriodController(CoursesDbContext context)
+        public PeriodController(CoursesDbContext context, ILogService logService)
         {
             _context = context;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -40,6 +43,9 @@ namespace List.Courses.Controllers
             var period = new Period { Name = dto.Name };
             _context.Periods.Add(period);
             await _context.SaveChangesAsync();
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "POST", "period", period.Id);
             return Ok(period);
         }
 
@@ -52,6 +58,10 @@ namespace List.Courses.Controllers
 
             _context.Periods.Remove(period);
             await _context.SaveChangesAsync();
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "DELETE", "period", period.Id);
+
             return NoContent();
         }
 
@@ -66,6 +76,9 @@ namespace List.Courses.Controllers
 
             period.Name = dto.Name;
             await _context.SaveChangesAsync();
+
+            var userId = User.Identity?.Name ?? "anonymous";
+            await _logService.LogAsync(userId, "UPDATE", "period", period.Id);
 
             return NoContent();
         }

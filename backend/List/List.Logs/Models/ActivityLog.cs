@@ -18,6 +18,9 @@ public class ActivityLog
     [Column("target")]
     public string Target { get; set; } = null!;
 
+    [Column("target_id")]
+    public int TargetId { get; set; }
+
     [Column("created")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }

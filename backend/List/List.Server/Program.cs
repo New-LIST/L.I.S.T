@@ -67,10 +67,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<ActivityLoggingFilter>();
-});
+builder.Services.AddControllers();
 
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 

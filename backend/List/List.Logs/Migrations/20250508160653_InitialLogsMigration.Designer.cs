@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Logs.Migrations
 {
     [DbContext(typeof(LogsDbContext))]
-    [Migration("20250505192703_InitialLogsMigration")]
+    [Migration("20250508160653_InitialLogsMigration")]
     partial class InitialLogsMigration
     {
         /// <inheritdoc />
@@ -42,6 +42,10 @@ namespace List.Logs.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("target");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_id");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")

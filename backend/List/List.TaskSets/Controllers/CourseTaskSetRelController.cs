@@ -39,7 +39,7 @@ public class CourseTaskSetRelController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CourseTaskSetRelDto>> Create(CourseTaskSetRelDto dto)
     {
-        var created = await _service.CreateAsync(dto);
+        var created = await _service.CreateAsync(dto, User.Identity?.Name ?? "anonymous");
         return Ok(created);
     }
 
@@ -48,7 +48,7 @@ public class CourseTaskSetRelController : ControllerBase
     {
         if (id != dto.Id) return BadRequest("ID mismatch");
 
-        var updated = await _service.UpdateAsync(id, dto);
+        var updated = await _service.UpdateAsync(id, dto, User.Identity?.Name ?? "anonymous");
         if (updated == null) return NotFound();
 
         return Ok(updated);
@@ -57,7 +57,7 @@ public class CourseTaskSetRelController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var deleted = await _service.DeleteAsync(id, User.Identity?.Name ?? "anonymous");
         if (!deleted) return NotFound();
         return Ok();
     }
