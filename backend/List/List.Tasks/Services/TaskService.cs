@@ -36,7 +36,7 @@ public class TaskService : ITaskService
         context.Tasks.Add(task);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "task", task.Id);
+        await _logService.LogAsync(userId, "POST", "task", task.Id, task.Name);
 
         return true;
     }
@@ -53,7 +53,7 @@ public class TaskService : ITaskService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "UPDATE", "task", existingTask.Id);
+        await _logService.LogAsync(userId, "UPDATE", "task", existingTask.Id, existingTask.Name);
 
         return true;
     }
@@ -66,7 +66,7 @@ public class TaskService : ITaskService
         context.Tasks.Remove(task);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "task", id);
+        await _logService.LogAsync(userId, "DELETE", "task", id, task.Name);
         
         return true;
     }

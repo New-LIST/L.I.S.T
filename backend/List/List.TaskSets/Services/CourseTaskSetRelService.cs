@@ -120,7 +120,7 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
         context.CourseTaskSetRels.Add(entity);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "task_set", entity.Id);
+        await _logService.LogAsync(userId, "POST", "task_set", entity.Id, null);
 
         dto.Id = entity.Id;
         return dto;
@@ -162,7 +162,7 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "UPDATE", "task_set", entity.Id);
+        await _logService.LogAsync(userId, "UPDATE", "task_set", entity.Id, null);
 
         return dto;
     }
@@ -190,7 +190,7 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "task_set", entity.Id);
+        await _logService.LogAsync(userId, "DELETE", "task_set", entity.Id, null);
 
         return true;
     }

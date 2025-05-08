@@ -6,6 +6,8 @@ public class ActivityLogDto
     public string Action { get; set; } = null!;
     public string Target { get; set; } = null!;
 
-    public int TargetId { get; set; }
+    public int? TargetId { get; set; }
+
+    public string? TargetName { get; set; }
     public DateTime Timestamp { get; set; }
 }

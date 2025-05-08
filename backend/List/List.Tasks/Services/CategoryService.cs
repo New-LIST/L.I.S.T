@@ -51,7 +51,7 @@ public class CategoryService : ICategoryService
         context.Categories.Add(category);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "category", category.Id);
+        await _logService.LogAsync(userId, "POST", "category", category.Id, category.Name);
 
         return true;
     }
@@ -65,7 +65,7 @@ public class CategoryService : ICategoryService
         context.Categories.Remove(category);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "category", id);
+        await _logService.LogAsync(userId, "DELETE", "category", id, category.Name);
 
         return true;
     }
@@ -118,7 +118,7 @@ public class CategoryService : ICategoryService
         await context.SaveChangesAsync();
 
 
-        await _logService.LogAsync(userId, "UPDATE", "category", category.Id);
+        await _logService.LogAsync(userId, "UPDATE", "category", category.Id, category.Name);
         
         return true;
     }

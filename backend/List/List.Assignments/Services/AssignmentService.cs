@@ -52,7 +52,7 @@ public class AssignmentService : IAssignmentService
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "assignment", assignment.Id);
+        await _logService.LogAsync(userId, "POST", "assignment", assignment.Id, assignmentDto.Name);
 
         return assignment;
     }
@@ -79,7 +79,7 @@ public class AssignmentService : IAssignmentService
         await _dbContext.SaveChangesAsync();
 
 
-        await _logService.LogAsync(userId, "UPDATE", "assignment", existingAssignment.Id);
+        await _logService.LogAsync(userId, "UPDATE", "assignment", existingAssignment.Id, existingAssignment.Name);
 
         return existingAssignment;
     }
@@ -95,7 +95,7 @@ public class AssignmentService : IAssignmentService
         _dbContext.Assignments.Remove(assignment);
         await _dbContext.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "assignment", assignment.Id);
+        await _logService.LogAsync(userId, "DELETE", "assignment", assignment.Id, assignment.Name);
 
         
         return true;

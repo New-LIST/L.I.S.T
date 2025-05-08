@@ -45,7 +45,7 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "POST", "period", period.Id);
+            await _logService.LogAsync(userId, "POST", "period", period.Id, period.Name);
             return Ok(period);
         }
 
@@ -60,7 +60,7 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "DELETE", "period", period.Id);
+            await _logService.LogAsync(userId, "DELETE", "period", period.Id, period.Name);
 
             return NoContent();
         }
@@ -78,7 +78,7 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "UPDATE", "period", period.Id);
+            await _logService.LogAsync(userId, "UPDATE", "period", period.Id, period.Name);
 
             return NoContent();
         }

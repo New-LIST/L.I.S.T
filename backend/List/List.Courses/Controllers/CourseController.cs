@@ -79,7 +79,7 @@ namespace List.Courses.Controllers
 
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "POST", "course", course.Id);
+            await _logService.LogAsync(userId, "POST", "course", course.Id, course.Name);
 
             return Ok(course);
         }
@@ -95,7 +95,7 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "DELETE", "course", course.Id);
+            await _logService.LogAsync(userId, "DELETE", "course", course.Id, course.Name);
 
             return NoContent();
         }
@@ -119,7 +119,7 @@ namespace List.Courses.Controllers
             await _context.SaveChangesAsync();
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "UPDATE", "course", course.Id);
+            await _logService.LogAsync(userId, "UPDATE", "course", course.Id, course.Name);
 
             return NoContent();
         }

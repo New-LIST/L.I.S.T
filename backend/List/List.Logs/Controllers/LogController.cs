@@ -17,7 +17,7 @@ public class LogController(ILogService logService) : ControllerBase
     string sort = "timestamp",
     bool desc = true)
     {
-        var result = await logService.GetPagedAsync(page, pageSize, filter, sort, desc);
+        var result = await logService.GetPagedAsync(page, pageSize, filter);
         return Ok(result);
     }
 

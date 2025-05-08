@@ -6,9 +6,9 @@ namespace List.Logs.Services;
 
 public interface ILogService
 {
-    Task LogAsync(string userId, string action, string target, int targetId);
+    Task LogAsync(string userId, string action, string target, int targetId, string? targetName = null);
 
-    Task<PagedResult<ActivityLogDto>> GetPagedAsync(int page, int pageSize, string? filter, string sort, bool desc);
+    Task<PagedResult<ActivityLogDto>> GetPagedAsync(int page, int pageSize, string? filter);
 
 
     Task<IEnumerable<ActivityLogDto>> GetAllAsync();

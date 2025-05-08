@@ -8,7 +8,7 @@ namespace List.Logs.Services;
 
 public class LogService(LogsDbContext context) : ILogService
 {
-    public async Task LogAsync(string userId, string action, string target, int targetId)
+    public async Task LogAsync(string userId, string action, string target, int targetId, string? targetName = null)
     {
         var log = new ActivityLog
         {
@@ -16,7 +16,8 @@ public class LogService(LogsDbContext context) : ILogService
             Action = action,
             Target = target,
             TargetId = targetId,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow,
+            TargetName = targetName
         };
 
         context.ActivityLogs.Add(log);
@@ -33,53 +34,50 @@ public class LogService(LogsDbContext context) : ILogService
                 Action = l.Action,
                 Target = l.Target,
                 TargetId = l.TargetId,
+                TargetName = l.TargetName,
                 Timestamp = l.Timestamp
             })
             .ToListAsync();
     }
 
-    public async Task<PagedResult<ActivityLogDto>> GetPagedAsync(int page, int pageSize, string? filter, string sort, bool desc)
+   public async Task<PagedResult<ActivityLogDto>> GetPagedAsync(int page, int pageSize, string? filter)
+{
+    var query = context.ActivityLogs.AsQueryable();
+
+    if (!string.IsNullOrWhiteSpace(filter))
     {
-        var query = context.ActivityLogs.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(filter))
-        {
-            filter = filter.ToLower();
-            query = query.Where(l =>
-                l.UserId.ToLower().Contains(filter) ||
-                l.Action.ToLower().Contains(filter) ||
-                l.Target.ToLower().Contains(filter));
-        }
-
-        var total = await query.CountAsync();
-
-        query = sort.ToLower() switch
-        {
-            "user" => desc ? query.OrderByDescending(l => l.UserId) : query.OrderBy(l => l.UserId),
-            "action" => desc ? query.OrderByDescending(l => l.Action) : query.OrderBy(l => l.Action),
-            "target" => desc ? query.OrderByDescending(l => l.Target) : query.OrderBy(l => l.Target),
-            "targetid" => desc ? query.OrderByDescending(l => l.TargetId) : query.OrderBy(l => l.TargetId),
-            _ => desc ? query.OrderByDescending(l => l.Timestamp) : query.OrderBy(l => l.Timestamp),
-        };
-
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(l => new ActivityLogDto
-            {
-                UserId = l.UserId,
-                Action = l.Action,
-                Target = l.Target,
-                TargetId = l.TargetId,
-                Timestamp = l.Timestamp
-            })
-            .ToListAsync();
-
-        return new PagedResult<ActivityLogDto>
-        {
-            Items = items,
-            TotalCount = total
-        };
+        filter = filter.ToLower();
+        query = query.Where(l =>
+            l.UserId.ToLower().Contains(filter) ||
+            l.Action.ToLower().Contains(filter) ||
+            l.Target.ToLower().Contains(filter) ||
+            (l.TargetName != null && l.TargetName.ToLower().Contains(filter)));
     }
+
+    var total = await query.CountAsync();
+
+    query = query.OrderByDescending(l => l.Timestamp); // pevné radenie
+
+    var items = await query
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .Select(l => new ActivityLogDto
+        {
+            UserId = l.UserId,
+            Action = l.Action,
+            Target = l.Target,
+            TargetId = l.TargetId,
+            TargetName = l.TargetName,
+            Timestamp = l.Timestamp
+        })
+        .ToListAsync();
+
+    return new PagedResult<ActivityLogDto>
+    {
+        Items = items,
+        TotalCount = total
+    };
+}
+
 
 }

@@ -73,7 +73,7 @@ public class TaskSetTypeService : ITaskSetTypeService
         context.TaskSetTypes.Add(entity);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "task_set_type", entity.Id);
+        await _logService.LogAsync(userId, "POST", "task_set_type", entity.Id, entity.Name);
 
         dto.Id = entity.Id;
         return dto;
@@ -108,7 +108,7 @@ public class TaskSetTypeService : ITaskSetTypeService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "UPDATE", "task_set_type", existing.Id);
+        await _logService.LogAsync(userId, "UPDATE", "task_set_type", existing.Id, existing.Name);
 
         return new TaskSetTypeDto
         {
@@ -127,7 +127,7 @@ public class TaskSetTypeService : ITaskSetTypeService
         context.TaskSetTypes.Remove(existing);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "task_set_type", id);
+        await _logService.LogAsync(userId, "DELETE", "task_set_type", id, existing.Name);
 
         return true;
     }
