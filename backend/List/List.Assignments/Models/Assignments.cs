@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using List.TaskSets.Models;
 using List.Courses.Models;
+using List.Users.Models;
 
 namespace List.Assignments.Models;
 
@@ -35,6 +36,13 @@ public class AssignmentModel
 
     [ForeignKey(nameof(CourseId))]
     public Course Course { get; set; } = null!;
+
+    [Required]
+    [Column("teacher_id")]
+    public int TeacherId { get; set; }
+
+    [ForeignKey(nameof(TeacherId))]
+    public User Teacher { get; set; } = null!;
 
     [Required]
     [Column("published")]

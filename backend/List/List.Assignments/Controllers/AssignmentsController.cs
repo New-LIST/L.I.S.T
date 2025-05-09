@@ -1,6 +1,7 @@
 using List.Assignments.Models;
 using List.Assignments.Services;
 using List.Assignments.DTOs;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
 namespace List.Assignments.Controllers;
@@ -35,6 +36,8 @@ public class AssignmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {
+        var teacherId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+        dto.TeacherId = teacherId;
         var createdAssignment = await _assignmentService.CreateAsync(dto);
         return Ok(new { id = createdAssignment.Id, name = $"Zadanie v course s course_id = {createdAssignment.CourseId}" });
     }
