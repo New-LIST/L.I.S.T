@@ -1,6 +1,8 @@
 using List.Assignments.Models;
 using List.Assignments.Services;
 using List.Assignments.DTOs;
+using List.Common.Models;
+
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +35,13 @@ public class AssignmentsController : ControllerBase
         return Ok(assignment);
     }
 
+    [HttpGet("filter")]
+    public async Task<ActionResult<PagedResult<AssignmentModel>>> GetFiltered([FromQuery] AssignmentFilterDto filter)
+    {
+        var result = await _assignmentService.GetFilteredAsync(filter);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {
@@ -47,7 +56,7 @@ public class AssignmentsController : ControllerBase
     {
         var assignment = await _assignmentService.UpdateAsync(id, dto);
         return assignment != null
-            ? Ok(new { id = assignment.Id, name = $"Zadanie v course s course_id = {assignment.CourseId}"})
+            ? Ok(new { id = assignment.Id, name = $"Zadanie v course s course_id = {assignment.CourseId}" })
             : BadRequest("Nepodarilo sa upraviť zadanie.");
     }
 
@@ -56,7 +65,7 @@ public class AssignmentsController : ControllerBase
     {
         var deleted = await _assignmentService.DeleteAsync(id);
         return deleted != null
-            ? Ok(new { id = deleted.Id, name = $"Zadanie v course s course_id = {deleted.CourseId}"})
+            ? Ok(new { id = deleted.Id, name = $"Zadanie v course s course_id = {deleted.CourseId}" })
             : BadRequest("Nepodarilo sa vymazať zadanie.");
     }
 }
