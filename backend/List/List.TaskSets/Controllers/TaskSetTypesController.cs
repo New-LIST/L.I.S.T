@@ -17,7 +17,6 @@ public class TaskSetTypesController : ControllerBase
     public TaskSetTypesController(ITaskSetTypeService service)
     {
         _service = service;
-        Console.WriteLine("TaskSetTypesController loaded");
     }
 
     [HttpGet]
@@ -40,15 +39,11 @@ public class TaskSetTypesController : ControllerBase
         try
         {
             var created = await _service.CreateAsync(dto);
-            return Ok(created);
+            return Ok(new { id = created.Id, name = created.Name });
         }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
-        }
-        catch (DbUpdateException dbEx) when (IsUniqueConstraintViolation(dbEx))
-        {
-            return Conflict(new { message = "Name or identifier already exists." });
         }
 
     }
@@ -62,18 +57,13 @@ public class TaskSetTypesController : ControllerBase
         try
         {
             var updated = await _service.UpdateAsync(dto);
-            if (updated == null)
-                return NotFound();
-
-            return Ok(updated);
+            return updated != null
+                ? Ok(new { id = updated.Id, name = updated.Name })
+                : NotFound();
         }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
-        }
-        catch (DbUpdateException dbEx) when (IsUniqueConstraintViolation(dbEx))
-        {
-            return Conflict(new { message = "Name or identifier already exists." });
         }
     }
 
@@ -82,11 +72,10 @@ public class TaskSetTypesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var success = await _service.DeleteAsync(id);
-        if (!success)
-            return NotFound();
-
-        return NoContent();
+        var deleted = await _service.DeleteAsync(id);
+        return deleted != null
+            ? Ok(new { id = deleted.Id, name = deleted.Name })
+            : NotFound();
     }
 
     private static bool IsUniqueConstraintViolation(DbUpdateException ex)

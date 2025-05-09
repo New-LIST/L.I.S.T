@@ -31,6 +31,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\List.Common\List.Common.csproj" />
+      <ProjectReference Include="..\List.Logs\List.Logs.csproj" />
     </ItemGroup>
 
 </Project>

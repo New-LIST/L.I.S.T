@@ -1,11 +1,20 @@
 using List.Tasks.Data;
 using List.Tasks.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Tasks.Services;
 
-public class TaskService(TasksDbContext context) : ITaskService
+public class TaskService : ITaskService
 {
+
+    private readonly TasksDbContext context;
+
+    public TaskService(TasksDbContext context)
+    {
+        this.context = context;
+    }
+
     public async Task<IEnumerable<TaskModel>> GetAllTasksAsync()
     {
         return await context.Tasks
@@ -20,17 +29,18 @@ public class TaskService(TasksDbContext context) : ITaskService
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
-    public async Task<bool> AddTaskAsync(TaskModel task)
+    public async Task<TaskModel?> AddTaskAsync(TaskModel task)
     {
         context.Tasks.Add(task);
         await context.SaveChangesAsync();
-        return true;
+
+        return task;
     }
 
-    public async Task<bool> UpdateTaskAsync(int id, TaskModel updatedTask)
+    public async Task<TaskModel?> UpdateTaskAsync(int id, TaskModel updatedTask)
     {
         var existingTask = await context.Tasks.FindAsync(id);
-        if (existingTask is null) return false;
+        if (existingTask is null) return null;
 
         existingTask.Name = updatedTask.Name;
         existingTask.Text = updatedTask.Text;
@@ -38,17 +48,20 @@ public class TaskService(TasksDbContext context) : ITaskService
         existingTask.Updated = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
-        return true;
+
+        return existingTask;
     }
 
-    public async Task<bool> DeleteTaskAsync(int id)
+    public async Task<TaskModel?> DeleteTaskAsync(int id)
     {
         var task = await context.Tasks.FindAsync(id);
-        if (task is null) return false;
+        if (task is null) return null;
 
         context.Tasks.Remove(task);
         await context.SaveChangesAsync();
-        return true;
+
+        
+        return task;
     }
 
     public async Task<IEnumerable<TaskModel>> FilterTasksAsync(string? name, string? author, string? categoryFilter)

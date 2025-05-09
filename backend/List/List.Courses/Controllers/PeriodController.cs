@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using List.Courses.Data;
 using List.Courses.DTOs;
 using List.Courses.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,6 +17,7 @@ namespace List.Courses.Controllers
         public PeriodController(CoursesDbContext context)
         {
             _context = context;
+
         }
 
         [HttpGet]
@@ -40,7 +42,8 @@ namespace List.Courses.Controllers
             var period = new Period { Name = dto.Name };
             _context.Periods.Add(period);
             await _context.SaveChangesAsync();
-            return Ok(period);
+
+            return Ok(new { id = period.Id, name = period.Name });
         }
 
         [HttpDelete("{id}")]
@@ -52,7 +55,8 @@ namespace List.Courses.Controllers
 
             _context.Periods.Remove(period);
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { id = period.Id, name = period.Name });
         }
 
 
@@ -67,7 +71,7 @@ namespace List.Courses.Controllers
             period.Name = dto.Name;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { id = period.Id, name = period.Name });
         }
     }
 }

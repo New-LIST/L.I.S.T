@@ -36,24 +36,24 @@ public class AssignmentsController : ControllerBase
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {
         var createdAssignment = await _assignmentService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = createdAssignment.Id }, createdAssignment);
+        return Ok(new { id = createdAssignment.Id, name = $"Zadanie v course s course_id = {createdAssignment.CourseId}" });
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<AssignmentModel>> Update(int id, CreateAssignmentDto dto)
     {
         var assignment = await _assignmentService.UpdateAsync(id, dto);
-        if (assignment == null)
-            return NotFound();
-        return Ok(assignment);
+        return assignment != null
+            ? Ok(new { id = assignment.Id, name = $"Zadanie v course s course_id = {assignment.CourseId}"})
+            : BadRequest("Nepodarilo sa upraviť zadanie.");
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
         var deleted = await _assignmentService.DeleteAsync(id);
-        if (!deleted)
-            return NotFound();
-        return NoContent();
+        return deleted != null
+            ? Ok(new { id = deleted.Id, name = $"Zadanie v course s course_id = {deleted.CourseId}"})
+            : BadRequest("Nepodarilo sa vymazať zadanie.");
     }
 }

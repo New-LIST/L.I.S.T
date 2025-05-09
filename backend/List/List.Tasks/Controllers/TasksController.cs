@@ -58,7 +58,6 @@ public class TasksController(ITaskService taskService) : ControllerBase
     public async Task<IActionResult> FilterTasks([FromQuery] string? name, [FromQuery] string? author, [FromQuery] string? categoryFilter)
     {
         var tasks = await taskService.FilterTasksAsync(name, author, categoryFilter);
-        Console.WriteLine("FILTERED");
 
         var taskDtos = tasks.Select(t => new TaskResponseDto
         {
@@ -71,7 +70,6 @@ public class TasksController(ITaskService taskService) : ControllerBase
             AuthorFullname = t.Author?.Fullname ?? "Unknown"
         });
 
-        Console.WriteLine("FILTERED2");
 
         return Ok(taskDtos);
     }
@@ -97,8 +95,10 @@ public class TasksController(ITaskService taskService) : ControllerBase
             Updated = DateTime.UtcNow
         };
 
-        var added = await taskService.AddTaskAsync(task);
-        return added ? Created() : BadRequest("Failed to add task.");
+        var result = await taskService.AddTaskAsync(task);
+        return result != null
+            ? Ok(new { id = result.Id, name = result.Name })
+            : BadRequest("Failed to add task.");
     }
 
     [HttpPut("{id}")]
@@ -116,15 +116,17 @@ public class TasksController(ITaskService taskService) : ControllerBase
         existingTask.InternalComment = taskDto.InternalComment;
         existingTask.Updated = DateTime.UtcNow;
 
-        var success = await taskService.UpdateTaskAsync(id, existingTask);
-        return success ? Ok() : BadRequest("Failed to update task.");
+        return Ok(new { id = existingTask.Id, name = existingTask.Name });
+
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)
     {
-        var success = await taskService.DeleteTaskAsync(id);
-        return success ? Ok() : NotFound();
+        var deleted = await taskService.DeleteTaskAsync(id);
+        return deleted != null
+            ? Ok(new { id = deleted.Id, name = deleted.Name })
+            : NotFound();
     }
 
     [HttpPost("upload-image")]

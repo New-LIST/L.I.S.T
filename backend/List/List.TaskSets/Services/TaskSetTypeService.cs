@@ -1,12 +1,20 @@
 using List.TaskSets.Data;
 using List.TaskSets.Dtos;
 using List.TaskSets.Models;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.TaskSets.Services;
 
-public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
+public class TaskSetTypeService : ITaskSetTypeService
 {
+
+    private readonly TaskSetsDbContext context;
+
+    public TaskSetTypeService(TaskSetsDbContext context)
+    {
+        this.context = context;
+    }
 
 
     public async Task<List<TaskSetTypeDto>> GetAllAsync()
@@ -36,7 +44,7 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
             .ToListAsync();
     }
 
-    public async Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto)
+    public async Task<TaskSetTypeDto?> CreateAsync(TaskSetTypeDto dto)
     {
         // Kontrola unikátneho mena
         var existingByName = await context.TaskSetTypes
@@ -96,6 +104,7 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
 
         await context.SaveChangesAsync();
 
+
         return new TaskSetTypeDto
         {
             Id = existing.Id,
@@ -104,15 +113,22 @@ public class TaskSetTypeService(TaskSetsDbContext context) : ITaskSetTypeService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<TaskSetTypeDto?> DeleteAsync(int id)
     {
         var existing = await context.TaskSetTypes.FindAsync(id);
         if (existing == null)
-            return false;
+            return null;
 
         context.TaskSetTypes.Remove(existing);
         await context.SaveChangesAsync();
-        return true;
+
+
+        return new TaskSetTypeDto
+        {
+            Id = existing.Id,
+            Name = existing.Name,
+            Identifier = existing.Identifier
+        };
     }
 
 }

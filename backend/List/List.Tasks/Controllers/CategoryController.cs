@@ -39,23 +39,29 @@ public class CategoryController(ICategoryService categoryService) : ControllerBa
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
     {
-        var success = await _categoryService.AddCategoryAsync(dto);
-        return success ? Ok() : BadRequest("Nepodarilo sa vytvoriť kategóriu.");
+        var category = await _categoryService.AddCategoryAsync(dto);
+    return category != null
+        ? Ok(new { id = category.Id, name = category.Name })
+        : BadRequest("Nepodarilo sa vytvoriť kategóriu.");
     }
 
     [HttpPut("{id}")]
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
     {
-        var success = await _categoryService.UpdateCategoryAsync(id, dto);
-        return success ? NoContent() : BadRequest("Nepodarilo sa upraviť kategóriu.");
+        var updated = await _categoryService.UpdateCategoryAsync(id, dto);
+    return updated != null
+        ? Ok(new { id = updated.Id, name = updated.Name })
+        : BadRequest("Nepodarilo sa upraviť kategóriu.");
     }
 
     [HttpDelete("{id}")]
     //[Authorize(Roles = "Teacher")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        var success = await _categoryService.DeleteCategoryAsync(id);
-        return success ? NoContent() : NotFound();
+        var deleted = await _categoryService.DeleteCategoryAsync(id);
+    return deleted != null
+        ? Ok(new { id = deleted.Id, name = deleted.Name })
+        : NotFound();
     }
 }

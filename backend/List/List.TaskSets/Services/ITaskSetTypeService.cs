@@ -8,10 +8,10 @@ public interface ITaskSetTypeService
 
     Task<List<string>> GetIdentifiersByCourseIdAsync(int courseId);
 
-    Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto);
+    Task<TaskSetTypeDto?> CreateAsync(TaskSetTypeDto dto);
 
     Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto);
 
-    Task<bool> DeleteAsync(int id); 
+    Task<TaskSetTypeDto?> DeleteAsync(int id); 
 
 }

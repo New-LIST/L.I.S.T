@@ -1,13 +1,19 @@
 using List.Tasks.Data;
 using List.Tasks.Models;
 using List.Tasks.DTOs;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Tasks.Services;
 
-public class CategoryService(TasksDbContext context) : ICategoryService
+public class CategoryService : ICategoryService
 {
+    private readonly TasksDbContext context;
 
+    public CategoryService(TasksDbContext context)
+    {
+        this.context = context;
+    }
     private CategoryDto MapCategory(CategoryModel category)
     {
         return new CategoryDto
@@ -18,13 +24,13 @@ public class CategoryService(TasksDbContext context) : ICategoryService
         };
     }
 
-    public async Task<bool> AddCategoryAsync(CategoryDto cat)
+    public async Task<CategoryModel?> AddCategoryAsync(CategoryDto cat)
     {
         if (cat.ParentId != null)
         {
             var parentExists = await context.Categories.AnyAsync(c => c.Id == cat.ParentId);
             if (!parentExists)
-                return false;
+                return null;
         }
 
         var duplicateExists = await context.Categories.AnyAsync(c =>
@@ -32,7 +38,7 @@ public class CategoryService(TasksDbContext context) : ICategoryService
             ((c.ParentId == null && cat.ParentId == null) || c.ParentId == cat.ParentId));
 
         if (duplicateExists)
-            return false;
+            return null;
 
         var category = new CategoryModel
         {
@@ -42,18 +48,21 @@ public class CategoryService(TasksDbContext context) : ICategoryService
 
         context.Categories.Add(category);
         await context.SaveChangesAsync();
-        return true;
+
+        return category;
     }
 
-    public async Task<bool> DeleteCategoryAsync(int id)
+    public async Task<CategoryModel?> DeleteCategoryAsync(int id)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
-            return false;
+            return null;
 
         context.Categories.Remove(category);
         await context.SaveChangesAsync();
-        return true;
+
+
+        return category;
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync()
@@ -85,11 +94,11 @@ public class CategoryService(TasksDbContext context) : ICategoryService
         return await context.Categories.FindAsync(id);
     }
 
-    public async Task<bool> UpdateCategoryAsync(int id, CategoryDto upCat)
+    public async Task<CategoryModel?> UpdateCategoryAsync(int id, CategoryDto upCat)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
-            return false;
+            return null;
 
         var duplicateExists = await context.Categories.AnyAsync(c =>
             c.Id != id &&
@@ -97,11 +106,12 @@ public class CategoryService(TasksDbContext context) : ICategoryService
             ((c.ParentId == null && upCat.ParentId == null) || c.ParentId == upCat.ParentId));
 
         if (duplicateExists)
-            return false;
+            return null;
 
         category.Name = upCat.Name;
         category.ParentId = upCat.ParentId;
         await context.SaveChangesAsync();
-        return true;
+        
+        return category;
     }
 }

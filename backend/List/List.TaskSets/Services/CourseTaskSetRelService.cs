@@ -2,13 +2,21 @@ using List.TaskSets.Data;
 using List.TaskSets.Dtos;
 using List.TaskSets.Models;
 using List.TaskSets.Formula;
+using List.Logs.Services;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.TaskSets.Services;
 
-public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSetRelService
+public class CourseTaskSetRelService : ICourseTaskSetRelService
 {
+
+    private readonly TaskSetsDbContext context;
+
+    public CourseTaskSetRelService(TaskSetsDbContext context)
+    {
+        this.context = context;
+    }
 
     public async Task<List<CourseTaskSetRelDto>> GetAllAsync()
     {
@@ -69,7 +77,7 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
             .ToListAsync();
     }
 
-    public async Task<CourseTaskSetRelDto> CreateAsync(CourseTaskSetRelDto dto)
+    public async Task<CourseTaskSetRelDto?> CreateAsync(CourseTaskSetRelDto dto)
     {
         var entity = new CourseTaskSetRel
         {
@@ -109,6 +117,7 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
 
         context.CourseTaskSetRels.Add(entity);
         await context.SaveChangesAsync();
+
 
         dto.Id = entity.Id;
         return dto;
@@ -150,13 +159,14 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
 
         await context.SaveChangesAsync();
 
+        dto.Id = entity.Id;
         return dto;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<CourseTaskSetRelDto?> DeleteAsync(int id)
     {
         var entity = await context.CourseTaskSetRels.FindAsync(id);
-        if (entity == null) return false;
+        if (entity == null) return null;
 
         context.CourseTaskSetRels.Remove(entity);
 
@@ -175,27 +185,40 @@ public class CourseTaskSetRelService(TaskSetsDbContext context) : ICourseTaskSet
         }
 
         await context.SaveChangesAsync();
-        return true;
+
+
+        return new CourseTaskSetRelDto
+        {
+            Id = entity.Id,
+            TaskSetTypeId = entity.TaskSetTypeId,
+            CourseId = entity.CourseId,
+            Formula = entity.Formula,
+            Virtual = entity.Virtual,
+            IncludeInTotal = entity.IncludeInTotal,
+            UploadSolution = entity.UploadSolution,
+            MinPoints = entity.MinPoints,
+            MinPointsInPercentage = entity.MinPointsInPercentage
+        };
     }
 
     public async Task<int?> GetDependentCountAsync(int id)
-{
-    var entity = await context.CourseTaskSetRels.FindAsync(id);
-    if (entity == null)
-        return null;
+    {
+        var entity = await context.CourseTaskSetRels.FindAsync(id);
+        if (entity == null)
+            return null;
 
-    var taskSetType = await context.TaskSetTypes.FindAsync(entity.TaskSetTypeId);
-    if (taskSetType == null || string.IsNullOrWhiteSpace(taskSetType.Identifier))
-        return 0;
+        var taskSetType = await context.TaskSetTypes.FindAsync(entity.TaskSetTypeId);
+        if (taskSetType == null || string.IsNullOrWhiteSpace(taskSetType.Identifier))
+            return 0;
 
-    var identifier = taskSetType.Identifier;
+        var identifier = taskSetType.Identifier;
 
-    return await context.CourseTaskSetRels
-        .Where(r => r.CourseId == entity.CourseId &&
-                    r.Id != id &&
-                    r.Formula != null &&
-                    (r.Formula.Contains($"~{identifier}") || r.Formula.Contains($"${identifier}"))) 
-        .CountAsync();
-}
+        return await context.CourseTaskSetRels
+            .Where(r => r.CourseId == entity.CourseId &&
+                        r.Id != id &&
+                        r.Formula != null &&
+                        (r.Formula.Contains($"~{identifier}") || r.Formula.Contains($"${identifier}")))
+            .CountAsync();
+    }
 
 }

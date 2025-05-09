@@ -10,6 +10,6 @@ public interface IAssignmentService
     Task<AssignmentModel?> GetByIdAsync(int id);
     Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto);
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
-    Task<bool> DeleteAsync(int id);
+    Task<AssignmentModel?> DeleteAsync(int id);
 
 }

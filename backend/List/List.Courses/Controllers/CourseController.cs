@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using List.Common.Files;
+using List.Logs.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace List.Courses.Controllers
@@ -73,7 +74,11 @@ namespace List.Courses.Controllers
 
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
-            return Ok(course);
+
+
+            var userId = User.Identity?.Name ?? "anonymous";
+
+            return Ok(new { id = course.Id, name = course.Name });
         }
 
         [HttpDelete("{id}")]
@@ -85,7 +90,8 @@ namespace List.Courses.Controllers
 
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { id = course.Id, name = course.Name });
         }
 
         [HttpPut("{id}")]
@@ -105,7 +111,8 @@ namespace List.Courses.Controllers
             course.AutoAcceptStudents = dto.AutoAcceptStudents;
 
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Ok(new { id = course.Id, name = course.Name });;
         }
 
         [HttpPost("{id}/upload-image")]

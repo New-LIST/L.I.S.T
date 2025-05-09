@@ -1,6 +1,7 @@
 using List.Assignments.Data;
 using List.Assignments.Models;
 using List.Assignments.DTOs;
+using List.Logs.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Assignments.Services;
@@ -48,6 +49,8 @@ public class AssignmentService : IAssignmentService
         };
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();
+
+
         return assignment;
     }
 
@@ -71,20 +74,26 @@ public class AssignmentService : IAssignmentService
         existingAssignment.InternalComment = updatedAssignmentDto.InternalComment;
 
         await _dbContext.SaveChangesAsync();
+
+
+
         return existingAssignment;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<AssignmentModel?> DeleteAsync(int id)
     {
         var assignment = await _dbContext.Assignments.FindAsync(id);
         if (assignment == null)
         {
-            return false;
+            return null;
         }
 
         _dbContext.Assignments.Remove(assignment);
         await _dbContext.SaveChangesAsync();
-        return true;
+
+
+        
+        return assignment;
     }
 
 }
