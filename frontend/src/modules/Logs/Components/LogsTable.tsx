@@ -81,6 +81,21 @@ export default function LogsTable() {
     }
   };
 
+  const getTargetText = (target: string) => {
+    switch (target) {
+      case "courses":
+        return "course";
+      case "periods":
+        return "period";
+      case "course-task-set-rel":
+        return "zostavu v kurze";
+      case "tasks":
+        return "task";
+      default:
+        return target.toLowerCase();
+    }
+  };
+
   return (
     <Paper sx={{ p: 2 }}>
       <TextField
@@ -111,7 +126,7 @@ export default function LogsTable() {
                   <TableRow key={index}>
                     <TableCell>
                       {`${log.userId} ${getActionText(log.action)} ${
-                        log.target
+                        getTargetText(log.target)
                       } s názvom "${log.targetName ?? "(bez názvu)"}"`}
                     </TableCell>
                     <TableCell align="right">
@@ -166,6 +181,10 @@ export default function LogsTable() {
               <div>
                 <strong>Timestamp:</strong>{" "}
                 {new Date(selectedLog.timestamp).toLocaleString()}
+              </div>
+              <div>
+                <strong>IpAdress:</strong>{" "}
+                {selectedLog.ipAdress ?? "unknown"}
               </div>
             </DialogContentText>
           )}
