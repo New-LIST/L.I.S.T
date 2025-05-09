@@ -8,7 +8,7 @@ namespace List.Logs.Services;
 
 public class LogService(LogsDbContext context) : ILogService
 {
-    public async Task LogAsync(string userId, string action, string target, int targetId, string? targetName = null)
+    public async Task LogAsync(string userId, string action, string target, int targetId, string? targetName = null, string? ip = null)
     {
         var log = new ActivityLog
         {
@@ -17,7 +17,8 @@ public class LogService(LogsDbContext context) : ILogService
             Target = target,
             TargetId = targetId,
             Timestamp = DateTime.UtcNow,
-            TargetName = targetName
+            TargetName = targetName,
+            IpAdress = ip
         };
 
         context.ActivityLogs.Add(log);
@@ -35,7 +36,8 @@ public class LogService(LogsDbContext context) : ILogService
                 Target = l.Target,
                 TargetId = l.TargetId,
                 TargetName = l.TargetName,
-                Timestamp = l.Timestamp
+                Timestamp = l.Timestamp,
+                IpAdress = l.IpAdress
             })
             .ToListAsync();
     }
@@ -68,7 +70,8 @@ public class LogService(LogsDbContext context) : ILogService
             Target = l.Target,
             TargetId = l.TargetId,
             TargetName = l.TargetName,
-            Timestamp = l.Timestamp
+            Timestamp = l.Timestamp,
+            IpAdress = l.IpAdress
         })
         .ToListAsync();
 

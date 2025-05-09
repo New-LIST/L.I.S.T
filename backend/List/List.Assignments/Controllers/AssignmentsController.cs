@@ -35,25 +35,25 @@ public class AssignmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {
-        var createdAssignment = await _assignmentService.CreateAsync(dto, User.Identity?.Name ?? "anonymous");
-        return CreatedAtAction(nameof(GetById), new { id = createdAssignment.Id }, createdAssignment);
+        var createdAssignment = await _assignmentService.CreateAsync(dto);
+        return Ok(new { id = createdAssignment.Id, name = $"Zadanie v course s course_id = {createdAssignment.CourseId}" });
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<AssignmentModel>> Update(int id, CreateAssignmentDto dto)
     {
-        var assignment = await _assignmentService.UpdateAsync(id, dto, User.Identity?.Name ?? "anonymous");
-        if (assignment == null)
-            return NotFound();
-        return Ok(assignment);
+        var assignment = await _assignmentService.UpdateAsync(id, dto);
+        return assignment != null
+            ? Ok(new { id = assignment.Id, name = $"Zadanie v course s course_id = {assignment.CourseId}"})
+            : BadRequest("Nepodarilo sa upraviť zadanie.");
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var deleted = await _assignmentService.DeleteAsync(id, User.Identity?.Name ?? "anonymous");
-        if (!deleted)
-            return NotFound();
-        return NoContent();
+        var deleted = await _assignmentService.DeleteAsync(id);
+        return deleted != null
+            ? Ok(new { id = deleted.Id, name = $"Zadanie v course s course_id = {deleted.CourseId}"})
+            : BadRequest("Nepodarilo sa vymazať zadanie.");
     }
 }

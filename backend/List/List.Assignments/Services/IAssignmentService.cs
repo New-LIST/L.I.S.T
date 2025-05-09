@@ -8,8 +8,8 @@ public interface IAssignmentService
 {
     Task<List<AssignmentModel>> GetAllAsync();
     Task<AssignmentModel?> GetByIdAsync(int id);
-    Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, string userId);
-    Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto, string userId);
-    Task<bool> DeleteAsync(int id, string userId);
+    Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto);
+    Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
+    Task<AssignmentModel?> DeleteAsync(int id);
 
 }

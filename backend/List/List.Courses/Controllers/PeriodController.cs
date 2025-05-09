@@ -13,12 +13,11 @@ namespace List.Courses.Controllers
     public class PeriodController : ControllerBase
     {
         private readonly CoursesDbContext _context;
-        private readonly ILogService _logService;
 
-        public PeriodController(CoursesDbContext context, ILogService logService)
+        public PeriodController(CoursesDbContext context)
         {
             _context = context;
-            _logService = logService;
+
         }
 
         [HttpGet]
@@ -44,9 +43,7 @@ namespace List.Courses.Controllers
             _context.Periods.Add(period);
             await _context.SaveChangesAsync();
 
-            var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "POST", "period", period.Id, period.Name);
-            return Ok(period);
+            return Ok(new { id = period.Id, name = period.Name });
         }
 
         [HttpDelete("{id}")]
@@ -59,10 +56,7 @@ namespace List.Courses.Controllers
             _context.Periods.Remove(period);
             await _context.SaveChangesAsync();
 
-            var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "DELETE", "period", period.Id, period.Name);
-
-            return NoContent();
+            return Ok(new { id = period.Id, name = period.Name });
         }
 
 
@@ -77,10 +71,7 @@ namespace List.Courses.Controllers
             period.Name = dto.Name;
             await _context.SaveChangesAsync();
 
-            var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "UPDATE", "period", period.Id, period.Name);
-
-            return NoContent();
+            return Ok(new { id = period.Id, name = period.Name });
         }
     }
 }

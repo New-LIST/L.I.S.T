@@ -39,8 +39,10 @@ public class CourseTaskSetRelController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CourseTaskSetRelDto>> Create(CourseTaskSetRelDto dto)
     {
-        var created = await _service.CreateAsync(dto, User.Identity?.Name ?? "anonymous");
-        return Ok(created);
+        var created = await _service.CreateAsync(dto);
+        return created != null
+        ? Ok(new { id = created.Id, name = $"Zostava v course s id = {created.CourseId} s task_set_type_id = {created.TaskSetTypeId}" })
+        : NotFound();
     }
 
     [HttpPut("{id}")]
@@ -48,18 +50,19 @@ public class CourseTaskSetRelController : ControllerBase
     {
         if (id != dto.Id) return BadRequest("ID mismatch");
 
-        var updated = await _service.UpdateAsync(id, dto, User.Identity?.Name ?? "anonymous");
-        if (updated == null) return NotFound();
-
-        return Ok(updated);
+        var updated = await _service.UpdateAsync(id, dto);
+        return updated != null
+            ? Ok(new { id = updated.Id, name = $"Zostava v course s id = {updated.CourseId} s task_set_type_id = {updated.TaskSetTypeId}" })
+            : NotFound();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id, User.Identity?.Name ?? "anonymous");
-        if (!deleted) return NotFound();
-        return Ok();
+        var deleted = await _service.DeleteAsync(id);
+        return deleted != null
+            ? Ok(new { id = deleted.Id, name = $"Zostava v course s id = {deleted.CourseId} s task_set_type_id = {deleted.TaskSetTypeId}" })
+            : NotFound();
     }
 
     [HttpGet("{id}/dependent-count")]

@@ -24,6 +24,9 @@ public class ActivityLog
     [Column("target_name")]
     public string? TargetName { get; set; }
 
+    [Column("ip")]
+    public string? IpAdress { get; set; }
+
     [Column("created")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }

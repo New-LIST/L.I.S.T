@@ -10,12 +10,10 @@ public class TaskSetTypeService : ITaskSetTypeService
 {
 
     private readonly TaskSetsDbContext context;
-    private readonly ILogService _logService;
 
-    public TaskSetTypeService(TaskSetsDbContext context, ILogService logService)
+    public TaskSetTypeService(TaskSetsDbContext context)
     {
         this.context = context;
-        _logService = logService;
     }
 
 
@@ -46,7 +44,7 @@ public class TaskSetTypeService : ITaskSetTypeService
             .ToListAsync();
     }
 
-    public async Task<TaskSetTypeDto> CreateAsync(TaskSetTypeDto dto, string userId)
+    public async Task<TaskSetTypeDto?> CreateAsync(TaskSetTypeDto dto)
     {
         // Kontrola unikátneho mena
         var existingByName = await context.TaskSetTypes
@@ -73,13 +71,11 @@ public class TaskSetTypeService : ITaskSetTypeService
         context.TaskSetTypes.Add(entity);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "task_set_type", entity.Id, entity.Name);
-
         dto.Id = entity.Id;
         return dto;
     }
 
-    public async Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto, string userId)
+    public async Task<TaskSetTypeDto?> UpdateAsync(TaskSetTypeDto dto)
     {
         var existing = await context.TaskSetTypes.FindAsync(dto.Id);
         if (existing == null)
@@ -108,7 +104,6 @@ public class TaskSetTypeService : ITaskSetTypeService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "UPDATE", "task_set_type", existing.Id, existing.Name);
 
         return new TaskSetTypeDto
         {
@@ -118,18 +113,22 @@ public class TaskSetTypeService : ITaskSetTypeService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id, string userId)
+    public async Task<TaskSetTypeDto?> DeleteAsync(int id)
     {
         var existing = await context.TaskSetTypes.FindAsync(id);
         if (existing == null)
-            return false;
+            return null;
 
         context.TaskSetTypes.Remove(existing);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "task_set_type", id, existing.Name);
 
-        return true;
+        return new TaskSetTypeDto
+        {
+            Id = existing.Id,
+            Name = existing.Name,
+            Identifier = existing.Identifier
+        };
     }
 
 }

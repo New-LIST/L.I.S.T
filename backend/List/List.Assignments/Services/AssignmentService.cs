@@ -9,12 +9,10 @@ namespace List.Assignments.Services;
 public class AssignmentService : IAssignmentService
 {
     private readonly AssignmentsDbContext _dbContext;
-    private readonly ILogService _logService;
 
-    public AssignmentService(AssignmentsDbContext dbContext, ILogService logService)
+    public AssignmentService(AssignmentsDbContext dbContext)
     {
         _dbContext = dbContext;
-        _logService = logService;
     }
 
     public async Task<List<AssignmentModel>> GetAllAsync()
@@ -33,7 +31,7 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, string userId)
+    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto)
     {
         var assignment = new AssignmentModel
         {
@@ -52,12 +50,11 @@ public class AssignmentService : IAssignmentService
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "assignment", assignment.Id, assignmentDto.Name);
 
         return assignment;
     }
 
-    public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto, string userId)
+    public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto)
     {
         var existingAssignment = await _dbContext.Assignments.FindAsync(id);
         if (existingAssignment == null)
@@ -79,26 +76,24 @@ public class AssignmentService : IAssignmentService
         await _dbContext.SaveChangesAsync();
 
 
-        await _logService.LogAsync(userId, "UPDATE", "assignment", existingAssignment.Id, existingAssignment.Name);
 
         return existingAssignment;
     }
 
-    public async Task<bool> DeleteAsync(int id, string userId)
+    public async Task<AssignmentModel?> DeleteAsync(int id)
     {
         var assignment = await _dbContext.Assignments.FindAsync(id);
         if (assignment == null)
         {
-            return false;
+            return null;
         }
 
         _dbContext.Assignments.Remove(assignment);
         await _dbContext.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "assignment", assignment.Id, assignment.Name);
 
         
-        return true;
+        return assignment;
     }
 
 }

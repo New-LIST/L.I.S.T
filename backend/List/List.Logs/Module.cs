@@ -16,6 +16,7 @@ public class Module : IModule
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<ILogService, LogService>();
+        services.AddScoped<ActivityLoggingFilter>();
         
     }
 

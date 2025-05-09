@@ -16,12 +16,10 @@ namespace List.Courses.Controllers
     public class CourseController : ControllerBase
     {
         private readonly CoursesDbContext _context;
-        private readonly ILogService _logService;
 
-        public CourseController(CoursesDbContext context, ILogService logService)
+        public CourseController(CoursesDbContext context)
         {
             _context = context;
-            _logService = logService;
         }
 
         [HttpGet]
@@ -79,9 +77,8 @@ namespace List.Courses.Controllers
 
 
             var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "POST", "course", course.Id, course.Name);
 
-            return Ok(course);
+            return Ok(new { id = course.Id, name = course.Name });
         }
 
         [HttpDelete("{id}")]
@@ -94,10 +91,7 @@ namespace List.Courses.Controllers
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
 
-            var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "DELETE", "course", course.Id, course.Name);
-
-            return NoContent();
+            return Ok(new { id = course.Id, name = course.Name });
         }
 
         [HttpPut("{id}")]
@@ -118,10 +112,7 @@ namespace List.Courses.Controllers
 
             await _context.SaveChangesAsync();
 
-            var userId = User.Identity?.Name ?? "anonymous";
-            await _logService.LogAsync(userId, "UPDATE", "course", course.Id, course.Name);
-
-            return NoContent();
+            return Ok(new { id = course.Id, name = course.Name });;
         }
 
         [HttpPost("{id}/upload-image")]

@@ -12,12 +12,10 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
 {
 
     private readonly TaskSetsDbContext context;
-    private readonly ILogService _logService;
 
-    public CourseTaskSetRelService(TaskSetsDbContext context, ILogService logService)
+    public CourseTaskSetRelService(TaskSetsDbContext context)
     {
         this.context = context;
-        _logService = logService;
     }
 
     public async Task<List<CourseTaskSetRelDto>> GetAllAsync()
@@ -79,7 +77,7 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
             .ToListAsync();
     }
 
-    public async Task<CourseTaskSetRelDto> CreateAsync(CourseTaskSetRelDto dto, string userId)
+    public async Task<CourseTaskSetRelDto?> CreateAsync(CourseTaskSetRelDto dto)
     {
         var entity = new CourseTaskSetRel
         {
@@ -120,13 +118,12 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
         context.CourseTaskSetRels.Add(entity);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "task_set", entity.Id, null);
 
         dto.Id = entity.Id;
         return dto;
     }
 
-    public async Task<CourseTaskSetRelDto?> UpdateAsync(int id, CourseTaskSetRelDto dto, string userId)
+    public async Task<CourseTaskSetRelDto?> UpdateAsync(int id, CourseTaskSetRelDto dto)
     {
         var entity = await context.CourseTaskSetRels.FindAsync(id);
         if (entity == null) return null;
@@ -162,15 +159,14 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "UPDATE", "task_set", entity.Id, null);
-
+        dto.Id = entity.Id;
         return dto;
     }
 
-    public async Task<bool> DeleteAsync(int id, string userId)
+    public async Task<CourseTaskSetRelDto?> DeleteAsync(int id)
     {
         var entity = await context.CourseTaskSetRels.FindAsync(id);
-        if (entity == null) return false;
+        if (entity == null) return null;
 
         context.CourseTaskSetRels.Remove(entity);
 
@@ -190,9 +186,19 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
 
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "task_set", entity.Id, null);
 
-        return true;
+        return new CourseTaskSetRelDto
+        {
+            Id = entity.Id,
+            TaskSetTypeId = entity.TaskSetTypeId,
+            CourseId = entity.CourseId,
+            Formula = entity.Formula,
+            Virtual = entity.Virtual,
+            IncludeInTotal = entity.IncludeInTotal,
+            UploadSolution = entity.UploadSolution,
+            MinPoints = entity.MinPoints,
+            MinPointsInPercentage = entity.MinPointsInPercentage
+        };
     }
 
     public async Task<int?> GetDependentCountAsync(int id)

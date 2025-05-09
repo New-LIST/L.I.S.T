@@ -9,12 +9,10 @@ namespace List.Tasks.Services;
 public class CategoryService : ICategoryService
 {
     private readonly TasksDbContext context;
-    private readonly ILogService _logService;
 
-    public CategoryService(TasksDbContext context, ILogService logService)
+    public CategoryService(TasksDbContext context)
     {
         this.context = context;
-        _logService = logService;
     }
     private CategoryDto MapCategory(CategoryModel category)
     {
@@ -26,13 +24,13 @@ public class CategoryService : ICategoryService
         };
     }
 
-    public async Task<bool> AddCategoryAsync(CategoryDto cat, string userId)
+    public async Task<CategoryModel?> AddCategoryAsync(CategoryDto cat)
     {
         if (cat.ParentId != null)
         {
             var parentExists = await context.Categories.AnyAsync(c => c.Id == cat.ParentId);
             if (!parentExists)
-                return false;
+                return null;
         }
 
         var duplicateExists = await context.Categories.AnyAsync(c =>
@@ -40,7 +38,7 @@ public class CategoryService : ICategoryService
             ((c.ParentId == null && cat.ParentId == null) || c.ParentId == cat.ParentId));
 
         if (duplicateExists)
-            return false;
+            return null;
 
         var category = new CategoryModel
         {
@@ -51,23 +49,20 @@ public class CategoryService : ICategoryService
         context.Categories.Add(category);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "POST", "category", category.Id, category.Name);
-
-        return true;
+        return category;
     }
 
-    public async Task<bool> DeleteCategoryAsync(int id, string userId)
+    public async Task<CategoryModel?> DeleteCategoryAsync(int id)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
-            return false;
+            return null;
 
         context.Categories.Remove(category);
         await context.SaveChangesAsync();
 
-        await _logService.LogAsync(userId, "DELETE", "category", id, category.Name);
 
-        return true;
+        return category;
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync()
@@ -99,11 +94,11 @@ public class CategoryService : ICategoryService
         return await context.Categories.FindAsync(id);
     }
 
-    public async Task<bool> UpdateCategoryAsync(int id, CategoryDto upCat, string userId)
+    public async Task<CategoryModel?> UpdateCategoryAsync(int id, CategoryDto upCat)
     {
         var category = await context.Categories.FindAsync(id);
         if (category == null)
-            return false;
+            return null;
 
         var duplicateExists = await context.Categories.AnyAsync(c =>
             c.Id != id &&
@@ -111,15 +106,12 @@ public class CategoryService : ICategoryService
             ((c.ParentId == null && upCat.ParentId == null) || c.ParentId == upCat.ParentId));
 
         if (duplicateExists)
-            return false;
+            return null;
 
         category.Name = upCat.Name;
         category.ParentId = upCat.ParentId;
         await context.SaveChangesAsync();
-
-
-        await _logService.LogAsync(userId, "UPDATE", "category", category.Id, category.Name);
         
-        return true;
+        return category;
     }
 }
