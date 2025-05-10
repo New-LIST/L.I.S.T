@@ -19,6 +19,12 @@ public class UsersController(IUserService userService) : ControllerBase
         return await userService.GetUsersAsync();
     }
 
+    [HttpGet("teachers")]
+    public async Task<IEnumerable<User>> GetTeachersAsync()
+    {
+        return await userService.GetTeachersAsync();
+    }
+
     [HttpPost]
     public async Task<IActionResult> AddUserAsync(UserDto userDto)
     {
