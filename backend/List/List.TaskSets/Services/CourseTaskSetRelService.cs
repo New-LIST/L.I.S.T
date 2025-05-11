@@ -77,6 +77,16 @@ public class CourseTaskSetRelService : ICourseTaskSetRelService
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<TaskSetType>> GetTypesForCourseAsync(int courseId)
+{
+    return await context.CourseTaskSetRels
+        .Where(r => r.CourseId == courseId)
+        .Select(r => r.TaskSetType)
+        .Distinct()
+        .ToListAsync();
+}
+
+
     public async Task<CourseTaskSetRelDto?> CreateAsync(CourseTaskSetRelDto dto)
     {
         var entity = new CourseTaskSetRel
