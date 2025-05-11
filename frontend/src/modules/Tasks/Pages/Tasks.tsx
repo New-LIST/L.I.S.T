@@ -19,7 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Task } from "../Types/Task";
 import api from "../../../services/api";
 import { useNotification } from "../../../shared/components/NotificationContext";
-import ConfirmDeleteDialog from "../Components/ConfirmDeleteTaskDialog.tsx";
+import ConfirmDeleteTaskDialog from "../Components/ConfirmDeleteTaskDialog.tsx";
 import { useNavigate } from "react-router-dom";
 import TaskFilterBar from "../Components/TaskFilterBar";
 import { CategoryFilterBlock } from "../Types/CategoryFilterBlock";
@@ -33,7 +33,6 @@ const Tasks = () => {
   const [filters, setFilters] = useState({
     name: "",
     author: "",
-    comment: "",
     categoryBlocks: [] as CategoryFilterBlock[],
   });
 
@@ -146,7 +145,7 @@ const Tasks = () => {
       </Card>
 
       {taskToDelete && (
-        <ConfirmDeleteDialog
+        <ConfirmDeleteTaskDialog
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleDelete}

@@ -4,7 +4,7 @@ import api from '../../../services/api.ts';
 import CategoryTree from '../components/CategoryTree';
 import { Category } from '../types/Category';
 import CategoryDialog from '../components/CategoryDialog';
-import ConfirmDialog from '../components/ConfirmDialog';
+import ConfirmDialog from '../../../shared/components/ConfirmDialog.tsx';
 import { useNotification } from "../../../shared/components/NotificationContext.tsx";
 
 
