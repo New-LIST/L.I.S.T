@@ -9,4 +9,8 @@ export type Course = {
     autoAcceptStudents: boolean;
     imageUrl?: string;
     teacherName: string;
+
+    isMine?: boolean;
+    allowed?: boolean;
+    currentEnrollment: number;
   };
