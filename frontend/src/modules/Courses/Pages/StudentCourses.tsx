@@ -11,123 +11,75 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CourseCard from '../components/StudentCourseCard';
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Course} from "../Types/Course.ts";
 import {Period} from "../../Periods/Types/Period.ts";
 import EmptyState from "../../../shared/components/EmptyState.tsx";
+import api from "../../../services/api.ts";
+import { useNotification } from "../../../shared/components/NotificationContext.tsx";
 
-const yourCourses: Course[] = [
-    {
-        id: 1,
-        name: 'Operating Systems',
-        periodName: 'Fall 2024/2025',
-        capacity: 30,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: true,
-        teacher: 'Pavel Petrovič',
-        imageUrl: '/physics.jpg',
-    },
-    {
-        id: 2,
-        name: 'Database Systems',
-        periodName: 'Fall 2024/2025',
-        capacity: 25,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: false,
-        teacher: 'Maria Kováč',
-        imageUrl: '/math.jpg',
-    },
-    {
-        id: 3,
-        name: 'Web Development',
-        periodName: 'Summer 2023/2024',
-        capacity: 40,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: true,
-        teacher: 'Jan Novák',
-        imageUrl: '/java.jpg',
-    },
-];
-
-const otherCourses: Course[] = [
-    {
-        id: 4,
-        name: 'Software Engineering',
-        periodName: 'Winter 2024/2025',
-        capacity: 50,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: false,
-        teacher: 'Jan Novák',
-        imageUrl: '/list.png',
-    },
-    {
-        id: 5,
-        name: 'Machine Learning',
-        periodName: 'Winter 2024/2025',
-        capacity: 45,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: true,
-        teacher: 'Jan Novák',
-        imageUrl: '/MachineLearning.jpg',
-    },
-    {
-        id: 6,
-        name: 'Cybersecurity',
-        periodName: 'Winter 2024/2025',
-        capacity: 35,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: true,
-        teacher: 'Jan Novák',
-        imageUrl: '/Cybersecurity.jpg',
-    },
-    {
-        id: 7,
-        name: 'Mobile Apps',
-        periodName: 'Winter 2024/2025',
-        capacity: 40,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: false,
-        teacher: 'Jan Novák',
-        imageUrl: '/java.jpg',
-    },
-    {
-        id: 8,
-        name: 'Data Structures',
-        periodName: 'Summer 2023/2024',
-        capacity: 20,
-        groupChangeDeadline: null,
-        enrollmentLimit: null,
-        hiddenInList: false,
-        autoAcceptStudents: false,
-        teacher: 'Jan Novák',
-        imageUrl: '/math.jpg',
-    },
-];
-
-const periods: Period[] = [
-    { id: 1, name: 'Summer 2023/2024', courseCount: 12 },
-    { id: 2, name: 'Fall 2024/2025', courseCount: 15 },
-    { id: 3, name: 'Winter 2024/2025', courseCount: 7 },
-];
 
 export default function StudentCourses() {
     const [selectedPeriod, setSelectedPeriod] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+    const [periods, setPeriods] = useState<Period[]>([]);
+    const [loadingPeriods, setLoadingPeriods] = useState(true);
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+    const { showNotification } = useNotification();
+
+    useEffect(() => {
+        const fetchPeriods = async () => {
+            try {
+                const response = await api.get<Period[]>('/Periods');
+                setPeriods(response.data);
+            } catch (error) {
+                console.error("Chyba pri načítaní období:", error);
+                showNotification("Nepodarilo sa načítať obdobia.", "error");
+            } finally {
+                setLoadingPeriods(false);
+            }
+        };
+        fetchPeriods();
+    }, []);
+
+    useEffect(() => {
+        const fetchCoursesAndOwnership = async () => {
+            try {
+                const [coursesRes, myCourseIdsRes] = await Promise.all([
+                    api.get<Course[]>('/courses/student-visible'),
+                    api.get<number[]>('/participants/mine')
+                ]);
+
+                const myCourseInfos = myCourseIdsRes.data;
+                const myCourseMap = new Map<number, boolean>();
+                myCourseInfos.forEach(p => myCourseMap.set(p.courseId, p.allowed));
+
+                const coursesWithOwnership = coursesRes.data.map(course => ({
+                    ...course,
+                    isMine: myCourseMap.has(course.id),
+                    allowed: myCourseMap.get(course.id),
+                }));
+                console.table(coursesWithOwnership.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    isMine: c.isMine,
+                    allowed: c.allowed,
+                })));
+
+
+                setCourses(coursesWithOwnership);
+            } catch (error) {
+                console.error("Chyba pri načítaní kurzov alebo participantov", error);
+            } finally {
+                setLoadingCourses(false);
+            }
+        };
+
+        fetchCoursesAndOwnership();
+    }, []);
+
 
     React.useEffect(() => {
         const handler = setTimeout(() => {
@@ -142,15 +94,33 @@ export default function StudentCourses() {
             const matchesPeriod = selectedPeriod === '' || course.periodName === selectedPeriod;
             const matchesSearch =
                 course.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-                course.teacher?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+                course.teacherName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
             return matchesPeriod && matchesSearch;
         });
     };
 
-    const filteredYourCourses = filterCourses(yourCourses);
-    const filteredOtherCourses = filterCourses(otherCourses);
+    const filteredYourCourses = filterCourses(courses.filter((c) => c.isMine && c.allowed === true));
+    const filteredOtherCourses = filterCourses(
+        courses
+            .filter((c) => !c.allowed || !c.isMine)
+            .sort((a, b) => {
+                const aPending = a.isMine && a.allowed === false ? 1 : 0;
+                const bPending = b.isMine && b.allowed === false ? 1 : 0;
+                return bPending - aPending;
+            })
+    );
 
+
+    const handleJoinUpdate = (courseId: number) => {
+        setCourses(prev =>
+            prev.map(c =>
+                c.id === courseId
+                    ? { ...c, isMine: true, allowed: false }
+                    : c
+            )
+        );
+    };
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -185,7 +155,7 @@ export default function StudentCourses() {
                     }}
                 />
 
-                <FormControl sx={{ minWidth: 200 }}>
+                <FormControl sx={{ minWidth: 200 }} disabled={loadingPeriods}>
                     <InputLabel id="period-select-label">Obdobie</InputLabel>
                     <Select
                         labelId="period-select-label"
@@ -212,7 +182,7 @@ export default function StudentCourses() {
                 <Grid container spacing={3} mb={6}>
                     {filteredYourCourses.map((course) => (
                         <Grid item key={course.id}>
-                            <CourseCard {...course} isMine />
+                            <CourseCard {...course} />
                         </Grid>
                     ))}
                 </Grid>
@@ -232,7 +202,7 @@ export default function StudentCourses() {
                 <Grid container spacing={3}>
                     {filteredOtherCourses.map((course) => (
                         <Grid item key={course.id}>
-                            <CourseCard {...course} isMine={false} />
+                            <CourseCard {...course} onJoined={handleJoinUpdate}/>
                         </Grid>
                     ))}
                 </Grid>

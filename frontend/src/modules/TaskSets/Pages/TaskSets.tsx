@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   Container,
@@ -46,6 +46,10 @@ const TaskSets = () => {
   const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [affectedCount, setAffectedCount] = useState<number>(0);
+
+  const location = useLocation();
+  const courseName = location.state?.courseName ?? '';
+  const periodName = location.state?.periodName ?? '';
 
   const usedTypeIds = new Set(taskSets.map((rel) => rel.taskSetTypeId));
   const availableTypes = types.filter(
@@ -177,7 +181,7 @@ const TaskSets = () => {
     <Container maxWidth={false} sx={{ mt: 5 }}>
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
         <Typography variant="h4" gutterBottom>
-          Zostavy úloh pre kurz
+          Zostavy úloh pre kurz – {courseName} ({periodName})
         </Typography>
 
         <Box display="flex" flexDirection="column" gap={2} mb={4}>

@@ -18,6 +18,7 @@ import RootRedirect from "./RootRedirect";
 import Tasks from "../../Tasks/Pages/Tasks.tsx";
 import TaskEditor from "../../Tasks/Pages/TaskEditor.tsx";
 import LogsPage from "../../Logs/Pages/LogsPage.tsx";
+import Participants from "../../Courses/Pages/Participants.tsx";
 
 const AppRoutes = () => {
   return (
@@ -46,6 +47,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="courses" replace />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
+          <Route path="courses/:id/participants" element={<Participants />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />

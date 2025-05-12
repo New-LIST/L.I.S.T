@@ -55,6 +55,42 @@ namespace List.Courses.Controllers
             return Ok(rawCourses);
         }
 
+        [HttpGet("student-visible")]
+        public async Task<IActionResult> GetVisibleToStudents()
+        {
+            var visibleCourses = await _context.Courses
+                .Where(c => !c.HiddenInList)
+                .Include(c => c.Period)
+                .Include(c => c.Teacher)
+                .Select(c => new CourseReadDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    PeriodName = c.Period != null ? c.Period.Name : "—",
+                    Capacity = c.Capacity,
+                    GroupChangeDeadline = c.GroupChangeDeadline,
+                    EnrollmentLimit = c.EnrollmentLimit,
+                    HiddenInList = c.HiddenInList,
+                    AutoAcceptStudents = c.AutoAcceptStudents,
+                    TeacherName = c.Teacher.Fullname,
+                    ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
+                    CurrentEnrollment = c.Participants.Count(p => p.Allowed)
+                })
+                .ToListAsync();
+
+            foreach (var c in visibleCourses)
+            {
+                if (c.GroupChangeDeadline.HasValue)
+                    c.GroupChangeDeadline = DateTime.SpecifyKind(c.GroupChangeDeadline.Value, DateTimeKind.Utc);
+
+                if (c.EnrollmentLimit.HasValue)
+                    c.EnrollmentLimit = DateTime.SpecifyKind(c.EnrollmentLimit.Value, DateTimeKind.Utc);
+            }
+
+            return Ok(visibleCourses);
+        }
+
+
         [HttpPost]
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Create(CourseCreateDto dto)
