@@ -20,6 +20,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AssignmentIcon  from "@mui/icons-material/Assignment";
 import api from "../../../services/api";
+import GroupIcon from '@mui/icons-material/Group';
 import { Course } from "../Types/Course";
 import { Period } from "../../Periods/Types/Period";
 import CreateCourseDialog from "../Components/CreateCourseDialog";
@@ -350,11 +351,28 @@ const Courses = () => {
                           <DeleteIcon />
                         </IconButton>
                         <IconButton
-                          onClick={() =>
-                            navigate(`/dash/courses/${course.id}/tasksets`)
-                          }
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/tasksets`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
                         >
                           <AssignmentIcon />
+                        </IconButton>
+                        <IconButton
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/participants`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
+                        >
+                          <GroupIcon />
                         </IconButton>
                       </Box>
                     </TableCell>
