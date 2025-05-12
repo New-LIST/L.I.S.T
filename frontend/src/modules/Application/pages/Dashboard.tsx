@@ -12,7 +12,9 @@ const sidebarItems = [
     { label: 'Používatelia', path: 'users' },
     { label: 'Typy Zostav', path: 'task set types' },
     { label: 'Úlohy', path: 'tasks' },
+    { label: 'Zadania', path: 'assignments'},
     { label: 'Logy', path: 'logs'},
+    
 ];
 const drawerWidth = 240;
 

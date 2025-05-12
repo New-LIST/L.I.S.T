@@ -39,4 +39,11 @@ public class UserService(UsersDbContext context) : IUserService
     {
         return context.Users.AnyAsync(u => u.Id == user.Id || u.Email == user.Email);
     }
+
+    public async Task<IEnumerable<User>> GetTeachersAsync()
+    {
+        return await context.Users
+        .Where(u => u.Role == 0)
+        .ToListAsync();
+    }
 }

@@ -50,6 +50,7 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("Users", t => t.ExcludeFromMigrations());
+            entity.HasKey(e => e.Id);
         });
 
         modelBuilder.Entity<Period>(entity =>
@@ -92,6 +93,12 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             .HasOne(a => a.Course)
             .WithMany()
             .HasForeignKey(a => a.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AssignmentModel>()
+            .HasOne(a => a.Teacher)
+            .WithMany()
+            .HasForeignKey(a => a.TeacherId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<AssignmentModel>()

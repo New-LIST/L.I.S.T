@@ -1,5 +1,6 @@
 using List.TaskSets.Dtos;
 using List.TaskSets.Services;
+using List.TaskSets.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace List.TaskSets.Controllers;
@@ -73,6 +74,13 @@ public class CourseTaskSetRelController : ControllerBase
             return NotFound();
 
         return Ok(count);
+    }
+
+    [HttpGet("{courseId}/types")]
+    public async Task<ActionResult<IEnumerable<TaskSetType>>> GetTypesForCourse(int courseId)
+    {
+        var types = await _service.GetTypesForCourseAsync(courseId);
+        return Ok(types);
     }
 
 }

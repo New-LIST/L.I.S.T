@@ -19,10 +19,8 @@ public class ActivityLoggingFilter : IActionFilter
 
     public void OnActionExecuted(ActionExecutedContext context)
     {
-        Console.WriteLine("🔥 ActivityLoggingFilter: OnActionExecuted called");
 
         var method = context.HttpContext.Request.Method;
-        Console.WriteLine($"🔥 HTTP Method: {method}");
         if (method != "POST" && method != "PUT" && method != "DELETE") return;
 
         if (context.Result is not ObjectResult result || result.Value is null) return;
