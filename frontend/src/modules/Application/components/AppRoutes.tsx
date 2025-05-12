@@ -22,6 +22,7 @@ import AssignmentsPage from "../../Assignments/pages/AssignmentsPage.tsx";
 import CreateAssignmentPage from "../../Assignments/pages/CreateAssignmentPage.tsx";
 import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
+import Participants from "../../Courses/Pages/Participants.tsx";
 
 const AppRoutes = () => {
   return (
@@ -50,6 +51,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="courses" replace />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
+          <Route path="courses/:id/participants" element={<Participants />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />

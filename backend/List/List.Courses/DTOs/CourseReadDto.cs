@@ -14,4 +14,6 @@ public class CourseReadDto
 
     public string TeacherName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+
+    public int CurrentEnrollment { get; set; }
 }
