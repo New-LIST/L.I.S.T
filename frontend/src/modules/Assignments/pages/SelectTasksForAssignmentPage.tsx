@@ -1,0 +1,227 @@
+import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  IconButton,
+  CircularProgress,
+} from "@mui/material";
+import axios from "axios";
+import PreviewIcon from "@mui/icons-material/Visibility";
+import AddIcon from "@mui/icons-material/Add";
+import { Task } from "../../Tasks/Types/Task";
+import api from "../../../services/api";
+import { useNotification } from "../../../shared/components/NotificationContext";
+import { useNavigate, useParams } from "react-router-dom";
+import TaskFilterBar from "../../Tasks/Components/TaskFilterBar";
+import { CategoryFilterBlock } from "../../Tasks/Types/CategoryFilterBlock";
+import AddTaskDialog from "../components/AddTaskDialog";
+import PreviewDialog from "../components/PreviewDialog";
+
+const SelectTasksForAssignmentPage = () => {
+  const { id: assignmentId } = useParams<{ id: string }>();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { showNotification } = useNotification();
+  const [filters, setFilters] = useState({
+    name: "",
+    author: "",
+    categoryBlocks: [] as CategoryFilterBlock[],
+  });
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    name: string;
+    text: string;
+    comment: string;
+    authorName: string;
+  } | null>(null);
+
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addTaskId, setAddTaskId] = useState<number | null>(null);
+
+  const navigate = useNavigate();
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string | undefined> = {
+        name: filters.name,
+        author: filters.author,
+      };
+
+      if (filters.categoryBlocks.length > 0) {
+        params.categoryFilter = filters.categoryBlocks
+          .map((b) => {
+            const hasInclude = b.include.length > 0;
+            const hasExclude = b.exclude.length > 0;
+
+            if (!hasInclude && !hasExclude) return null;
+
+            let part = hasInclude ? b.include.join(",") : "";
+            if (hasExclude) part += `;!${b.exclude.join(",")}`;
+            return part;
+          })
+          .filter(Boolean)
+          .join("|");
+      }
+
+      const response = await api.get("/tasks/filter", { params });
+      setTasks(response.data);
+    } catch {
+      showNotification("Nepodarilo sa načítať úlohy.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // otvorenie dialógu na pridanie
+  const handleOpenAdd = async (taskId: number) => {
+    setAddTaskId(taskId);
+    try {
+      const res = await api.get(`/tasks/${taskId}`);
+      const t = res.data;
+      setPreviewData({
+        name: t.name,
+        text: t.text,
+        comment: t.internalComment,
+        authorName: t.authorFullname,
+      });
+      setAddDialogOpen(true);
+    } catch {
+      showNotification("Chyba pri načítaní detailu úlohy.", "error");
+    }
+  };
+
+  // potvrdenie pridania s parametrami z formulára
+  const handleConfirmAdd = async (data: {
+  pointsTotal: number;
+  bonusTask: boolean;
+  internalComment: string;
+}) => {
+  if (!assignmentId || addTaskId == null) return;
+  try {
+    await api.post("/assignment-task-rel", {
+      assignmentId: Number(assignmentId),
+      taskId: addTaskId,
+      pointsTotal: data.pointsTotal,
+      bonusTask: data.bonusTask,
+      internalComment: data.internalComment,
+    });
+    showNotification("Úloha pridaná do zostavy", "success");
+    setAddDialogOpen(false);
+    // prípadne refetch…
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 409) {
+        // server nám povedal „Conflict“ – už existuje
+        showNotification("Táto úloha je už v tejto zostave", "error");
+      } else {
+        showNotification(
+          `Nepodarilo sa pridať úlohu (${status || "?"})`,
+          "error"
+        );
+      }
+    } else {
+      showNotification("Neznáma chyba pri pridávaní úlohy", "error");
+    }
+  }
+};
+
+  const handleCloseAdd = () => {
+    setAddDialogOpen(false);
+    setAddTaskId(null);
+  };
+
+  const handlePreview = async (taskId: number) => {
+    try {
+      const res = await api.get(`/tasks/${taskId}`);
+      const t = res.data;
+      setPreviewData({
+        name: t.name,
+        text: t.text,
+        comment: t.internalComment,
+        authorName: t.authorFullname,
+      });
+      setPreviewOpen(true);
+    } catch {
+      showNotification("Chyba pri načítaní detailu úlohy.", "error");
+    }
+  };
+  const closePreview = () => setPreviewOpen(false);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [filters]);
+
+  return (
+    <Container maxWidth="md" sx={{ mt: 5 }}>
+      <Typography variant="h4" gutterBottom>
+        Úlohy
+      </Typography>
+      <Button variant="outlined" sx={{ mb: 2 }} onClick={() => navigate(-1)}>
+        Späť
+      </Button>
+      <TaskFilterBar onFilterChange={(f) => setFilters(f)} />
+      <Card>
+        <CardContent>
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Názov</TableCell>
+                  <TableCell>Autor</TableCell>
+                  <TableCell>Vnútorný komentár</TableCell>
+                  <TableCell>Akcie</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>{task.name}</TableCell>
+                    <TableCell>{task.authorFullname}</TableCell>
+                    <TableCell>{task.internalComment}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handlePreview(task.id)}>
+                        <PreviewIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleOpenAdd(task.id)}>
+                        <AddIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <AddTaskDialog
+        open={addDialogOpen}
+        onClose={handleCloseAdd}
+        onConfirm={handleConfirmAdd}
+        data={previewData}
+      />
+
+      {/* preview dialog */}
+      <PreviewDialog
+      open={previewOpen}
+      onClose={() => closePreview()}
+      data={previewData}
+    />
+    </Container>
+  );
+};
+
+export default SelectTasksForAssignmentPage;

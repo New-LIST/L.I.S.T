@@ -6,6 +6,8 @@ import { User } from "../../Users/types/User";
 export type Assignment = {
   id: number,
   name: string;
+  created: string;
+  updated: string;
   taskSetTypeId: number;
   taskSetType: TaskSetType;
   courseId: number;

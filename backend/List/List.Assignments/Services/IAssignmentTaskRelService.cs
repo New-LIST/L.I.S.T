@@ -10,5 +10,8 @@ public interface IAssignmentTaskRelService
 
     Task<List<AssignmentTaskRelModel>> GetAllAsync();
     Task<List<AssignmentTaskRelModel>> GetByAssignmentIdAsync(int assignmentId);
+    Task<AssignmentTaskRelModel?> UpdateAsync(CreateAssignmentTaskRelDto dto);
+    Task<List<AssignmentTaskRelSlimDto>> GetSlimByAssignmentIdAsync(int assignmentId);
+
     Task<List<AssignmentTaskRelModel>> GetByTaskIdAsync(int taskId);
 }

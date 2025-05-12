@@ -19,6 +19,9 @@ import Tasks from "../../Tasks/Pages/Tasks.tsx";
 import TaskEditor from "../../Tasks/Pages/TaskEditor.tsx";
 import LogsPage from "../../Logs/Pages/LogsPage.tsx";
 import AssignmentsPage from "../../Assignments/pages/AssignmentsPage.tsx";
+import CreateAssignmentPage from "../../Assignments/pages/CreateAssignmentPage.tsx";
+import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
+import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 
 const AppRoutes = () => {
   return (
@@ -56,6 +59,10 @@ const AppRoutes = () => {
           <Route path="tasks/:id/edit" element={<TaskEditor />} />
         <Route path="logs" element={<LogsPage/>}/>
         <Route path="assignments" element={<AssignmentsPage/>}/>
+          <Route path="assignments/create" element={<CreateAssignmentPage />} />
+          <Route path="assignments/edit/:id" element={<EditAssignmentPage />} />
+          <Route path="assignments/:id/tasks" element={<SelectTasksForAssignmentPage />}
+/>
       </Route>
 
       {/* fallback na root */}
