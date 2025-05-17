@@ -35,17 +35,9 @@ public class ActivityLoggingFilter : IActionFilter
         if (id is null || string.IsNullOrEmpty(name)) return;
 
         var userId = context.HttpContext.User.Identity?.Name ?? "anonymous";
-        var ipAddress = context.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-
-        if (string.IsNullOrEmpty(ipAddress))
-        {
-            var remoteIp = context.HttpContext.Connection.RemoteIpAddress;
-
-            if (remoteIp != null && remoteIp.IsIPv4MappedToIPv6)
-                ipAddress = remoteIp.MapToIPv4().ToString();
-            else
-                ipAddress = remoteIp?.ToString();
-        }
+        var remoteIp = context.HttpContext.Connection.RemoteIpAddress;
+        var ipAddress = remoteIp != null ? remoteIp.MapToIPv4().ToString() : "0.0.0.0";
+        Console.WriteLine("IP adress" + ipAddress);
 
 
         var pathSegments = context.HttpContext.Request.Path.ToString().ToLower().Split('/');
