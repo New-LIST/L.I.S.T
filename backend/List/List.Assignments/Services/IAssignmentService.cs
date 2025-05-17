@@ -11,6 +11,7 @@ public interface IAssignmentService
     Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter);
     Task<AssignmentModel?> GetByIdAsync(int id);
     Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto);
+    Task<AssignmentModel> CloneAsync(int id);
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
     Task<AssignmentModel?> DeleteAsync(int id);
 

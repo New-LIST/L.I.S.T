@@ -101,6 +101,55 @@ public class AssignmentService : IAssignmentService
         return assignment;
     }
 
+    public async Task<AssignmentModel> CloneAsync(int id)
+    {
+        // 1) Načítať pôvodné zadanie
+        var original = await _dbContext.Assignments
+            .FirstOrDefaultAsync(a => a.Id == id);
+        if (original == null)
+            throw new KeyNotFoundException($"Assignment {id} not found");
+
+        // 2) Vytvoriť nový AssignmentModel s rovnakými poľami (okrem Id, Created/Updated)
+        var clone = new AssignmentModel
+        {
+            Name = original.Name,
+            TaskSetTypeId = original.TaskSetTypeId,
+            CourseId = original.CourseId,
+            Published = original.Published,
+            PublishStartTime = original.PublishStartTime,
+            UploadEndTime = original.UploadEndTime,
+            Instructions = original.Instructions,
+            PointsOverride = original.PointsOverride,
+            InternalComment = original.InternalComment,
+            TeacherId = original.TeacherId,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        };
+        _dbContext.Assignments.Add(clone);
+        await _dbContext.SaveChangesAsync();
+
+        // 3) Naklonovať väzby úloh (AssignmentTaskRels)
+        var rels = await _dbContext.AssignmentTaskRels
+            .Where(r => r.AssignmentId == id)
+            .ToListAsync();
+
+        foreach (var r in rels)
+        {
+            var newRel = new AssignmentTaskRelModel
+            {
+                AssignmentId = clone.Id,
+                TaskId = r.TaskId,
+                PointsTotal = r.PointsTotal,
+                BonusTask = r.BonusTask,
+                InternalComment = r.InternalComment
+            };
+            _dbContext.AssignmentTaskRels.Add(newRel);
+        }
+        await _dbContext.SaveChangesAsync();
+
+        return clone;
+    }
+
     public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto)
     {
         var existingAssignment = await _dbContext.Assignments.FindAsync(id);
