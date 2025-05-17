@@ -17,6 +17,8 @@ public class Module : IModule
 
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<IAssignmentTaskRelService, AssignmentTaskRelService>();
+        services.AddScoped<ISubmissionService, SubmissionService>();
+
     }
 
     public void UseServices(IApplicationBuilder app)
