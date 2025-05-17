@@ -45,8 +45,11 @@ public class AssignmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {
-        var teacherId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
-        dto.TeacherId = teacherId;
+        var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (claim == null)
+            return BadRequest("Chýba identifikátor učiteľa.");
+        var teacherId = int.Parse(claim.Value);
+
         var createdAssignment = await _assignmentService.CreateAsync(dto);
         return Ok(new { id = createdAssignment.Id, name = createdAssignment.Name });
     }

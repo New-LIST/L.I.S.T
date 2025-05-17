@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, Tab, Box } from "@mui/material";
 import AssignmentFormInfo from "./AssignmentFormInfo";
 import AssignmentFormTasks from "./AssignmentFormTasks";
+import AssignmentPreview from "./AssignmentPreview";
 import { Assignment } from "../types/Assignment";
 import { useNotification } from "../../../shared/components/NotificationContext";
 
@@ -34,7 +35,7 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    if (assignmentId === null && newValue === 1) {
+    if (assignmentId === null && newValue > 0) {
       showNotification("Najprv ulož základné informácie", "warning");
       return;
     }
@@ -46,6 +47,7 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
       <Tabs value={activeTab} onChange={handleTabChange} centered>
         <Tab label="Info" />
         <Tab label="Úlohy" />
+        <Tab label="Prehľad" />
       </Tabs>
 
       <Box mt={3}>
@@ -57,6 +59,9 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
         )}
         {activeTab === 1 && assignmentId !== null && (
           <AssignmentFormTasks assignmentId={assignmentId} />
+        )}
+        {activeTab === 2 && assignmentId !== null && (
+          <AssignmentPreview assignmentId={assignmentId} />
         )}
       </Box>
     </Box>
