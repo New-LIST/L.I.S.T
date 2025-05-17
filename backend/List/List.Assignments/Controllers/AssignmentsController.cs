@@ -54,6 +54,20 @@ public class AssignmentsController : ControllerBase
         return Ok(new { id = createdAssignment.Id, name = createdAssignment.Name });
     }
 
+    [HttpPost("{id}/clone")]
+    public async Task<ActionResult> Clone(int id)
+    {
+        try
+        {
+            var cloned = await _assignmentService.CloneAsync(id);
+            return Ok(new { id = cloned.Id, name = cloned.Name });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound($"Zadanie s ID {id} neexistuje.");
+        }
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<AssignmentModel>> Update(int id, CreateAssignmentDto dto)
     {
