@@ -35,13 +35,22 @@ public class ActivityLoggingFilter : IActionFilter
         if (id is null || string.IsNullOrEmpty(name)) return;
 
         var userId = context.HttpContext.User.Identity?.Name ?? "anonymous";
-        var ip = context.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
-              ?? context.HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = context.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+        if (string.IsNullOrEmpty(ipAddress))
+        {
+            var remoteIp = context.HttpContext.Connection.RemoteIpAddress;
+
+            if (remoteIp != null && remoteIp.IsIPv4MappedToIPv6)
+                ipAddress = remoteIp.MapToIPv4().ToString();
+            else
+                ipAddress = remoteIp?.ToString();
+        }
 
 
         var pathSegments = context.HttpContext.Request.Path.ToString().ToLower().Split('/');
         var target = pathSegments.LastOrDefault(s => !string.IsNullOrWhiteSpace(s) && !int.TryParse(s, out _)) ?? "unknown";
 
-        _ = _logService.LogAsync(userId, method == "PUT" ? "UPDATE" : method, target, id.Value, name, ip);
+        _ = _logService.LogAsync(userId, method == "PUT" ? "UPDATE" : method, target, id.Value, name, ipAddress);
     }
 }
