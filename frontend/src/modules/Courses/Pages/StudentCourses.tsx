@@ -10,7 +10,7 @@ import {
     FormControl, Select
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import CourseCard from '../components/StudentCourseCard';
+import CourseCard from '../Components/StudentCourseCard';
 import React, {useEffect, useState} from "react";
 import {Course} from "../Types/Course.ts";
 import {Period} from "../../Periods/Types/Period.ts";
