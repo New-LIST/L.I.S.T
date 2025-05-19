@@ -89,6 +89,7 @@ builder.Services.AddModule<List.BackgroundTasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Tasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Assignments.Module>(builder.Configuration);
 builder.Services.AddModule<List.Logs.Module>(builder.Configuration);
+builder.Services.AddModule<List.Tests.Module>(builder.Configuration);
 
 
 var app = builder.Build();
@@ -110,6 +111,7 @@ app.UseModule<List.BackgroundTasks.Module>();
 app.UseModule<List.Tasks.Module>();
 app.UseModule<List.Assignments.Module>();
 app.UseModule<List.Logs.Module>();
+app.UseModule<List.Tasks.Module>();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {

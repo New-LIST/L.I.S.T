@@ -32,6 +32,7 @@
       <ProjectReference Include="..\List.BackgroundTasks\List.BackgroundTasks.csproj" />
       <ProjectReference Include="..\List.Common\List.Common.csproj" />
       <ProjectReference Include="..\List.Courses\List.Courses.csproj" />
+      <ProjectReference Include="..\List.Tests\List.Tests.csproj" />
       <ProjectReference Include="..\List.Users\List.Users.csproj" />
       <ProjectReference Include="..\List.TaskSets\List.TaskSets.csproj" />
 		<ProjectReference Include="..\List.Tasks\List.Tasks.csproj" />

@@ -17,10 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.TaskSets", "List.TaskS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.BackgroundTasks", "List.BackgroundTasks\List.BackgroundTasks.csproj", "{37EC16A2-F7AC-413C-AFA2-661733535692}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.Logs", "List.Logs\List.Logs.csproj", "{502ECA4D-1880-412E-8E8A-C71EB61DD1B6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.Assignments", "List.Assignments\List.Assignments.csproj", "{07EB8877-B784-43FD-B2C1-6C926FA53487}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,14 +51,6 @@ Global
 		{0DB9DF1F-FBA2-48A5-9F56-3FB8378A2AF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DB9DF1F-FBA2-48A5-9F56-3FB8378A2AF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DB9DF1F-FBA2-48A5-9F56-3FB8378A2AF9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{502ECA4D-1880-412E-8E8A-C71EB61DD1B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{502ECA4D-1880-412E-8E8A-C71EB61DD1B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{502ECA4D-1880-412E-8E8A-C71EB61DD1B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{502ECA4D-1880-412E-8E8A-C71EB61DD1B6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07EB8877-B784-43FD-B2C1-6C926FA53487}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07EB8877-B784-43FD-B2C1-6C926FA53487}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07EB8877-B784-43FD-B2C1-6C926FA53487}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07EB8877-B784-43FD-B2C1-6C926FA53487}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
