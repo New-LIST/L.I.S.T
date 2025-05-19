@@ -16,4 +16,5 @@ public class CourseCreateDto
     public bool HiddenInList { get; set; }
     [Required]
     public bool AutoAcceptStudents { get; set; }
+    public string? Description { get; set; }
 }
