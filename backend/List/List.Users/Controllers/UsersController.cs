@@ -1,4 +1,5 @@
 using System.Text;
+using List.Common.Models;
 using List.Users.DTOs;
 using List.Users.Models;
 using List.Users.Services;
@@ -13,16 +14,16 @@ namespace List.Users.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IEnumerable<User>> GetUsersAsync()
-    {
-        return await userService.GetUsersAsync();
-    }
-
     [HttpGet("teachers")]
     public async Task<IEnumerable<User>> GetTeachersAsync()
     {
         return await userService.GetTeachersAsync();
+    }
+
+    [HttpGet]
+    public async Task<PagedResult<User>> GetUserPageAsync(int page = 0, int pageSize = 100, string search = "")
+    {
+        return await userService.GetUsersByAsync(null, page, pageSize, search);
     }
 
     [HttpPost]
@@ -75,10 +76,7 @@ public class UsersController(IUserService userService) : ControllerBase
                 addedUsers.Add(user);
         }
         
-        if (addedUsers.Count > 0)
-            return Created();
-        
-        return BadRequest("Failed to import users");
+        return Ok($"Created {addedUsers.Count} new users");
     }
 
     private static User UserMapFromDto(UserDto userDto) => new()
