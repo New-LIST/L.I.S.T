@@ -107,18 +107,21 @@ public class TasksController(ITaskService taskService) : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var existingTask = await taskService.GetTaskAsync(id);
-        if (existingTask == null)
+        var updatedTask = new TaskModel
+        {
+            Name = taskDto.Name,
+            Text = taskDto.Text,
+            InternalComment = taskDto.InternalComment
+        };
+
+        var result = await taskService.UpdateTaskAsync(id, updatedTask);
+
+        if (result == null)
             return NotFound();
 
-        existingTask.Name = taskDto.Name;
-        existingTask.Text = taskDto.Text;
-        existingTask.InternalComment = taskDto.InternalComment;
-        existingTask.Updated = DateTime.UtcNow;
-
-        return Ok(new { id = existingTask.Id, name = existingTask.Name });
-
+        return Ok(new { id = result.Id, name = result.Name });
     }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)

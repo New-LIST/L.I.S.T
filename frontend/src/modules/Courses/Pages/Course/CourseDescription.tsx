@@ -5,8 +5,11 @@ import api from "../../../../services/api";
 import { useNotification } from "../../../../shared/components/NotificationContext";
 import { Course } from "../../Types/Course.ts";
 
+type Props = {
+    overrideDescription?: string;
+};
 
-const CourseDescription = () => {
+const CourseDescription = ({ overrideDescription }: Props) => {
     const { id } = useParams();
     const { showNotification } = useNotification();
     const [course, setCourse] = useState<Course | null>(null);
@@ -48,7 +51,12 @@ const CourseDescription = () => {
                     </Typography>
                     <Box
                         sx={{ mt: 1 }}
-                        dangerouslySetInnerHTML={{ __html: course.description ?? "<p>Žiadny popis nebol zadaný.</p>" }}
+                        dangerouslySetInnerHTML={{
+                            __html:
+                                overrideDescription ??
+                                course.description ??
+                                "<p>Žiadny popis nebol zadaný.</p>",
+                        }}
                     />
 
                     <Divider sx={{ my: 3 }} />
