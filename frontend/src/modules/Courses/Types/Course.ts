@@ -13,4 +13,5 @@ export type Course = {
     isMine?: boolean;
     allowed?: boolean;
     currentEnrollment: number;
+    description?: string;
   };

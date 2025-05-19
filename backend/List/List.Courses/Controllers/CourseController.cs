@@ -40,6 +40,7 @@ namespace List.Courses.Controllers
                     AutoAcceptStudents = c.AutoAcceptStudents,
                     TeacherName = c.Teacher.Fullname,
                     ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
+                    Description = c.Description
                 })
                 .ToListAsync();
 
@@ -74,7 +75,8 @@ namespace List.Courses.Controllers
                     AutoAcceptStudents = c.AutoAcceptStudents,
                     TeacherName = c.Teacher.Fullname,
                     ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
-                    CurrentEnrollment = c.Participants.Count(p => p.Allowed)
+                    CurrentEnrollment = c.Participants.Count(p => p.Allowed),
+                    Description = c.Description
                 })
                 .ToListAsync();
 
@@ -89,6 +91,42 @@ namespace List.Courses.Controllers
 
             return Ok(visibleCourses);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var course = await _context.Courses
+                .Include(c => c.Period)
+                .Include(c => c.Teacher)
+                .Where(c => c.Id == id)
+                .Select(c => new CourseReadDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    PeriodName = c.Period != null ? c.Period.Name : "—",
+                    Capacity = c.Capacity,
+                    GroupChangeDeadline = c.GroupChangeDeadline,
+                    EnrollmentLimit = c.EnrollmentLimit,
+                    HiddenInList = c.HiddenInList,
+                    AutoAcceptStudents = c.AutoAcceptStudents,
+                    TeacherName = c.Teacher.Fullname,
+                    ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
+                    Description = c.Description
+                })
+                .FirstOrDefaultAsync();
+
+            if (course == null)
+                return NotFound();
+
+            if (course.GroupChangeDeadline.HasValue)
+                course.GroupChangeDeadline = DateTime.SpecifyKind(course.GroupChangeDeadline.Value, DateTimeKind.Utc);
+
+            if (course.EnrollmentLimit.HasValue)
+                course.EnrollmentLimit = DateTime.SpecifyKind(course.EnrollmentLimit.Value, DateTimeKind.Utc);
+
+            return Ok(course);
+        }
+
 
 
         [HttpPost]
@@ -105,7 +143,8 @@ namespace List.Courses.Controllers
                 EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime(),
                 HiddenInList = dto.HiddenInList,
                 AutoAcceptStudents = dto.AutoAcceptStudents,
-                TeacherId = teacherId
+                TeacherId = teacherId,
+                Description = dto.Description
             };
 
             _context.Courses.Add(course);
@@ -145,6 +184,7 @@ namespace List.Courses.Controllers
             course.EnrollmentLimit = dto.EnrollmentLimit?.ToUniversalTime();
             course.HiddenInList = dto.HiddenInList;
             course.AutoAcceptStudents = dto.AutoAcceptStudents;
+            course.Description = dto.Description;
 
             await _context.SaveChangesAsync();
 
@@ -177,6 +217,19 @@ namespace List.Courses.Controllers
             var fullUrl = $"{baseUrl}/{course.ImageUrl}";
 
             return Ok(new { imageUrl = fullUrl });
+        }
+
+        [HttpPut("{id}/description")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> UpdateDescription(int id, [FromBody] CourseDescriptionDto dto)
+        {
+            var course = await _context.Courses.FindAsync(id);
+            if (course == null) return NotFound();
+
+            course.Description = dto.Description;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
     }

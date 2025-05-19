@@ -44,5 +44,9 @@ public class Course
     [Column("image_url")]
     public string? ImageUrl { get; set; }
 
+    [Column("description")]
+    public string? Description { get; set; }
+
+
     public ICollection<Participant> Participants { get; set; } = new List<Participant>();
 }

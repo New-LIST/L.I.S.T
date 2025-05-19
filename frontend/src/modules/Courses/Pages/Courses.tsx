@@ -28,6 +28,7 @@ import EditCourseDialog from "../Components/EditCourseDialog";
 
 import ConfirmDeleteCourseDialog from "../Components/ConfirmDeleteCourseDialog";
 import { useNotification } from "../../../shared/components/NotificationContext";
+import InfoIcon from "@mui/icons-material/Info";
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -278,7 +279,7 @@ const Courses = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 5 }}>
+    <Container maxWidth="lg" sx={{ mt: 5 }}>
       <Typography variant="h4" gutterBottom>
         Kurzy
       </Typography>
@@ -373,6 +374,19 @@ const Courses = () => {
                             }
                         >
                           <GroupIcon />
+                        </IconButton>
+
+                        <IconButton
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/description`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
+                        >
+                          <InfoIcon />
                         </IconButton>
                       </Box>
                     </TableCell>

@@ -23,6 +23,7 @@ import CreateAssignmentPage from "../../Assignments/pages/CreateAssignmentPage.t
 import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 import Participants from "../../Courses/Pages/Participants.tsx";
+import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
 
 const AppRoutes = () => {
   return (
@@ -52,6 +53,7 @@ const AppRoutes = () => {
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
           <Route path="courses/:id/participants" element={<Participants />} />
+          <Route path="courses/:id/description" element={<CourseDescriptionEditor />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />
