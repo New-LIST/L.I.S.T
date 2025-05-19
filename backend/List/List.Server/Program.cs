@@ -111,7 +111,7 @@ app.UseModule<List.BackgroundTasks.Module>();
 app.UseModule<List.Tasks.Module>();
 app.UseModule<List.Assignments.Module>();
 app.UseModule<List.Logs.Module>();
-app.UseModule<List.Tasks.Module>();
+app.UseModule<List.Tests.Module>();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
