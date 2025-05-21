@@ -24,6 +24,7 @@ import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 import Participants from "../../Courses/Pages/Participants.tsx";
 import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
+import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer.tsx";
 
 const AppRoutes = () => {
   return (
@@ -36,6 +37,7 @@ const AppRoutes = () => {
                 <Route index element={<CourseDescription />} />
                 <Route path="description" element={<CourseDescription />} />
                 <Route path="assignments" element={<Assignments />} />
+                <Route path="assignments/:assignmentId/tasks" element={<AssignmentTasksViewer />} />
                 <Route path="overview" element={<Overview />} />
                 <Route path="projects" element={<Projects />} />
             </Route>

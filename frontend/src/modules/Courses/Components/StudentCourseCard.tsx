@@ -27,15 +27,15 @@ export default function CourseCard({ id, name, teacherName, imageUrl, isMine, pe
 
     return (
         <Card
-            onClick={handleClick}
+            onClick={isMine && allowed ? handleClick : undefined}
             sx={{
                 width: 250,
                 borderRadius: 2,
                 boxShadow: 2,
                 overflow: 'hidden',
                 transition: 'all 0.2s ease',
-                cursor: isMine ? 'pointer' : 'default',
-                '&:hover': isMine
+                cursor: isMine && allowed ? 'pointer' : 'default',
+                '&:hover': isMine && allowed
                     ? {
                         boxShadow: 4,
                         transform: 'translateY(-2px)',
