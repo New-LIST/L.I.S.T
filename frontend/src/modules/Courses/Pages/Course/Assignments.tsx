@@ -9,15 +9,13 @@ import {
     TableCell,
     TableBody,
     Chip,
-    Button, Stack
+    Button, Stack,
+    CircularProgress
 } from '@mui/material';
-import {useState} from "react";
-
-const assignmentTypes = [
-    { id: 'homework', label: 'Domáce úlohy' },
-    { id: 'exam', label: 'Midtermy' },
-    { id: 'project', label: 'Projekty' },
-];
+import {useState, useEffect} from "react";
+import api from "../../../../services/api";
+import {useNotification} from "../../../../shared/components/NotificationContext.tsx";
+import {useNavigate, useParams} from "react-router-dom";
 
 const statusLabels: Record<string, string> = {
     graded: 'Ohodnotené',
@@ -26,22 +24,6 @@ const statusLabels: Record<string, string> = {
     late: 'Odovzdané neskoro',
     missing: 'Neodovzdané',
 };
-
-const mockAssignments = [
-    { id: 'K01', name: 'Introduction', type: 'homework', deadline: 'Čas vypršal', points: 11, maxPoints: 18, status: 'graded' },
-    { id: 'K02', name: 'Scheduling', type: 'homework', deadline: 'Čas vypršal', points: 18, maxPoints: 22, status: 'graded' },
-    { id: 'K03', name: 'Lock Analyzer', type: 'homework', deadline: 'Čas vypršal', points: null, maxPoints: 25, status: 'submitted' },
-    { id: 'K04', name: 'Memory', type: 'homework', deadline: 'Čas vypršal', points: null, maxPoints: 20, status: 'late' },
-    { id: 'K05', name: 'Paging and TLB', type: 'homework', deadline: 'Čas vypršal', points: null, maxPoints: 18, status: 'missing' },
-    { id: 'K06', name: 'Multi-level feedback', type: 'homework', deadline: 'Due in 3 days', points: null, maxPoints: 20, status: 'open' },
-
-    { id: 'M01', name: 'Midterm Exam', type: 'exam', deadline: 'Due in 21 days', points: null, maxPoints: 40, status: 'open' },
-    { id: 'F01', name: 'Final Exam', type: 'exam', deadline: 'Due in 45 days', points: null, maxPoints: 50, status: 'open' },
-
-    { id: 'P01', name: 'Memory Simulator', type: 'project', deadline: 'Čas vypršal', points: 17, maxPoints: 20, status: 'graded' },
-    { id: 'P02', name: 'Thread Management', type: 'project', deadline: 'Due in 7 days', points: null, maxPoints: 35, status: 'open' },
-];
-
 const getStatusChip = (status: string) => {
     const colorMap = {
         graded: 'success',
@@ -60,26 +42,62 @@ const getStatusChip = (status: string) => {
     );
 };
 
-const getDeadlineColor = (deadline: string) => {
-    if (deadline.includes('passed')) return 'text.secondary';
-    if (deadline.includes('3 days')) return 'error.main';
-    if (deadline.includes('7 days')) return 'warning.main';
+const getDeadlineColor = (deadline: Date) => {
+    const now = new Date();
+    const diffMs = deadline.getTime() - now.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffDays < 0) return 'text.secondary';
+    if (diffDays < 2) return 'error.main';
+    if (diffDays < 7) return 'warning.main';
     return 'primary.main';
 };
 
 export default function Assignments() {
 
+    const { id } = useParams();
+    const { showNotification } = useNotification();
+    const [assignments, setAssignments] = useState<any[]>([]);
     const [statusFilter, setStatusFilter] = useState<string | 'all'>('all');
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchAssignments = async () => {
+            try {
+                const response = await api.get(`/assignments/filter?courseId=${id}`);
+                setAssignments(response.data.items);
+                console.log("Načítané assignments:", response.data.items);
+                console.log("Prvý assignment:", response.data.items[0]);
+            } catch (error) {
+                console.error(error);
+                showNotification("Nepodarilo sa načítať zadania", "error");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAssignments();
+    }, [id]);
+
     const filteredAssignments = statusFilter === 'all'
-        ? mockAssignments
-        : mockAssignments.filter(a => a.status === statusFilter);
+        ? assignments
+        : assignments.filter(() => true);
+
+    const assignmentTypes = Array.from(
+        new Map(
+            assignments.map((a) => [a.taskSetType.identifier, a.taskSetType.name])
+        ).entries()
+    ).map(([id, label]) => ({ id, label }));
+
+    if (loading) {
+        return <CircularProgress sx={{ mt: 4 }} />;
+    }
     return (
         <Box>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
                 Zadania
             </Typography>
 
-            {/* FILTER BAR */}
             <Box
                 sx={{
                     backgroundColor: '#f0f4ff',
@@ -111,11 +129,17 @@ export default function Assignments() {
             </Box>
 
             {assignmentTypes.map((type) => {
-                const assignments = filteredAssignments.filter((a) => a.type === type.id);
-                if (assignments.length === 0) return null;
+                const assignmentsOfType = filteredAssignments.filter(
+                    (a) => a.taskSetType.identifier === type.id
+                );
 
-                const totalPoints = assignments.reduce((sum, a) => sum + (a.points || 0), 0);
-                const maxPoints = assignments.reduce((sum, a) => sum + a.maxPoints, 0);
+                if (assignmentsOfType.length === 0) return null;
+
+                const totalPoints = 0; // mock
+                const maxPoints = assignmentsOfType.reduce(
+                    (sum, a) => sum + (a.pointsOverride ?? 0),
+                    0
+                );
 
                 return (
                     <Box key={type.id} mb={4}>
@@ -140,16 +164,29 @@ export default function Assignments() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {assignments.map((a) => (
-                                            <TableRow key={a.id} hover>
-                                                <TableCell>{`${a.id} - ${a.name}`}</TableCell>
-                                                <TableCell sx={{ color: getDeadlineColor(a.deadline) }}>{a.deadline}</TableCell>
-                                                <TableCell>
-                                                    {a.points !== null ? `${a.points} / ${a.maxPoints}` : `- / ${a.maxPoints}`}
-                                                </TableCell>
-                                                <TableCell>{getStatusChip(a.status)}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {assignmentsOfType.map((a) => {
+                                            const deadline = a.uploadEndTime ? new Date(a.uploadEndTime) : null;
+
+                                            return (
+                                                <TableRow
+                                                    key={a.id}
+                                                    hover
+                                                    sx={{ cursor: 'pointer' }}
+                                                    onClick={() => navigate(`/student/courses/${id}/assignments/${a.id}/tasks`)}
+                                                >
+                                                    <TableCell>{a.name}</TableCell>
+
+                                                    <TableCell sx={{ color: deadline ? getDeadlineColor(deadline) : undefined }}>
+                                                        {deadline ? deadline.toLocaleString() : '—'}
+                                                    </TableCell>
+
+                                                    <TableCell>
+                                                        - / {a.pointsOverride !== null && a.pointsOverride !== undefined ? a.pointsOverride : '—'}
+                                                    </TableCell>
+                                                    <TableCell>{getStatusChip('open')}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
                             </CardContent>
