@@ -101,6 +101,14 @@ public class AssignmentService : IAssignmentService
         return assignment;
     }
 
+    public async Task<List<AssignmentModel>> GetByCourseAsync(int courseId)
+    {
+        return await _dbContext.Assignments
+            .Where(a => a.CourseId == courseId)
+           .Include(a => a.TaskSetType)
+           .ToListAsync();
+    }
+
     public async Task<AssignmentModel> CloneAsync(int id)
     {
         // 1) Načítať pôvodné zadanie
