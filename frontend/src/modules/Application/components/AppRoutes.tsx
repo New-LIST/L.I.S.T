@@ -23,22 +23,36 @@ import CreateAssignmentPage from "../../Assignments/pages/CreateAssignmentPage.t
 import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 import Participants from "../../Courses/Pages/Participants.tsx";
+import TestUpload from "../../Assignments/pages/TestUpload.tsx";
+import TeacherCourses from "../../Assignments/pages/TeacherCourses.tsx";
+import GradeAssignments from "../../Assignments/pages/GradeAssignments.tsx";
+import BulkGrade from "../../Assignments/pages/BulkGrade.tsx";
+import GradeSolutions from "../../Assignments/pages/GradeSolutions.tsx";
+import SolutionDetail from "../../Assignments/pages/SolutionDetail.tsx";
 
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/signin" element={<SignIn />} />
-        <Route path="/student" element={<RequireAuth><Dashboard /></RequireAuth>}>
-            <Route index element={<StudentCourses />} />
-            <Route path="courses/:id" element={<CourseDetail />}>
-                <Route index element={<CourseDescription />} />
-                <Route path="description" element={<CourseDescription />} />
-                <Route path="assignments" element={<Assignments />} />
-                <Route path="overview" element={<Overview />} />
-                <Route path="projects" element={<Projects />} />
-            </Route>
+      <Route
+        path="/student"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      >
+        <Route index element={<StudentCourses />} />
+        <Route path="courses/:id" element={<CourseDetail />}>
+          <Route index element={<CourseDescription />} />
+          <Route path="description" element={<CourseDescription />} />
+          <Route path="assignments" element={<Assignments />} />
+          <Route path="overview" element={<Overview />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="test" element={<TestUpload />} />
         </Route>
+      </Route>
       <Route
         path="/dash"
         element={
@@ -51,20 +65,24 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="courses" replace />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
-          <Route path="courses/:id/participants" element={<Participants />} />
+        <Route path="courses/:id/participants" element={<Participants />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />
         <Route path="users" element={<Users />} />
         <Route path="tasks" element={<Tasks />} />
-          <Route path="tasks/new" element={<TaskEditor />} />
-          <Route path="tasks/:id/edit" element={<TaskEditor />} />
-        <Route path="logs" element={<LogsPage/>}/>
-        <Route path="assignments" element={<AssignmentsPage/>}/>
-          <Route path="assignments/create" element={<CreateAssignmentPage />} />
-          <Route path="assignments/edit/:id" element={<EditAssignmentPage />} />
-          <Route path="assignments/:id/tasks" element={<SelectTasksForAssignmentPage />}
-/>
+        <Route path="tasks/new" element={<TaskEditor />} />
+        <Route path="tasks/:id/edit" element={<TaskEditor />} />
+        <Route path="logs" element={<LogsPage />} />
+        <Route path="assignments" element={<AssignmentsPage />} />
+        <Route path="assignments/create" element={<CreateAssignmentPage />} />
+        <Route path="assignments/edit/:id" element={<EditAssignmentPage />} />
+        <Route path="assignments/:id/tasks" element={<SelectTasksForAssignmentPage />}/>
+        <Route path="grade" element={<TeacherCourses />} />
+          <Route path="grade/course/:courseId" element={<GradeAssignments />} />
+            <Route path="grade/course/:courseId/assignments/:assignmentId/bulk-grade" element={<BulkGrade />}/>
+            <Route path="grade/course/:courseId/assignments/:assignmentId/grade-solutions" element={<GradeSolutions />}/>
+            <Route path="grade/course/:courseId/assignments/:assignmentId/solutions/:solutionId/evaluate" element={<SolutionDetail />}/>
       </Route>
 
       {/* fallback na root */}

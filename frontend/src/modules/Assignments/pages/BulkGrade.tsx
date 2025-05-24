@@ -1,0 +1,112 @@
+import React, { useEffect, useState } from 'react';
+import { useParams }         from 'react-router-dom';
+import {
+  TableContainer,
+  Table, TableHead, TableRow, TableCell, TableBody,
+  Paper, Typography, Box, TextField, Button
+} from '@mui/material';
+import api from '../../../services/api';
+
+interface BulkGradeItem {
+  studentId: number;
+  fullName:  string;
+  email:     string;
+  points:    number | null;
+}
+
+const BulkGrade: React.FC = () => {
+  const { assignmentId } = useParams<{ assignmentId: string }>();
+  const [items, setItems]   = useState<BulkGradeItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving]   = useState(false);
+
+  useEffect(() => {
+    if (!assignmentId) return;
+    setLoading(true);
+    api.get<BulkGradeItem[]>(`/assignments/${assignmentId}/solutions/bulk`)
+      .then(res => setItems(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, [assignmentId]);
+
+  const onChange = (idx: number, val: string) => {
+    const copy = [...items];
+    copy[idx].points = val === '' ? null : Number(val);
+    setItems(copy);
+  };
+
+  const onSave = async () => {
+    if (!assignmentId) return;
+    setSaving(true);
+    const payload = items.map(i => ({
+      studentId: i.studentId,
+      points:    i.points
+    }));
+    try {
+      await api.post(
+        `/assignments/${assignmentId}/solutions/bulk`,
+        payload
+      );
+      alert('Body uložené');
+    } catch (e) {
+      console.error(e);
+      alert('Chyba pri ukládání');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box p={3}>
+      <Typography variant="h5" gutterBottom>
+        Hromadné hodnotenie zadania {assignmentId}
+      </Typography>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Meno</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Body</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  Načítavam…
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && items.map((it, idx) => (
+              <TableRow key={it.studentId}>
+                <TableCell>{it.fullName}</TableCell>
+                <TableCell>{it.email}</TableCell>
+                <TableCell>
+                  <TextField
+                    type="number"
+                    value={it.points ?? ''}
+                    onChange={e => onChange(idx, e.target.value)}
+                    size="small"
+                    placeholder="—"
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box mt={2} textAlign="right">
+        <Button
+          variant="contained"
+          disabled={saving}
+          onClick={onSave}
+        >
+          {saving ? 'Ukladám…' : 'Uložiť zmeny'}
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+export default BulkGrade;

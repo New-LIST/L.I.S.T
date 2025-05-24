@@ -14,6 +14,7 @@ const sidebarItems = [
     { label: 'Úlohy', path: 'tasks' },
     { label: 'Zadania', path: 'assignments'},
     { label: 'Logy', path: 'logs'},
+    { label: 'Hodnotenie', path: 'grade'}
     
 ];
 const drawerWidth = 240;
