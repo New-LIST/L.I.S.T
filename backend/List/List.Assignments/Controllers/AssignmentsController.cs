@@ -42,6 +42,23 @@ public class AssignmentsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("course/{courseId}")]
+    public async Task<IActionResult> GetByCourse(int courseId)
+    {
+        var list = await _assignmentService.GetByCourseAsync(courseId);
+
+        // mapovanie len na potrebné polia
+        var dto = list.Select(a => new
+        {
+            a.Id,
+            a.Name,
+            taskSetTypeName = a.TaskSetType.Name,
+            uploadEndTime = a.UploadEndTime
+        });
+
+        return Ok(dto);
+    }
+
     [HttpPost]
     public async Task<ActionResult<AssignmentModel>> Create(CreateAssignmentDto dto)
     {

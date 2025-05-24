@@ -2,7 +2,7 @@ using List.Assignments.Models;
 using List.Assignments.Services;
 using List.Assignments.DTOs;
 using List.Common.Models;
-
+using List.Common.Utils;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -29,26 +29,20 @@ public class SubmissionController : ControllerBase
     )
     {
 
-        if (!file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-        {
-            return BadRequest("Prosím nahrajte súbor vo formáte ZIP.");
-        }
         // môžeš kontrolovať, či assignmentId zodpovedá solution.AssignmentId
         var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         if (claim == null)
             return BadRequest("Chýba identifikátor študenta.");
         var studentId = int.Parse(claim.Value);
 
-        string ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
-          ?? HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString()
-          ?? "0.0.0.0";
+        var remoteIp = HttpContext.GetClientIpAddress();
 
 
         var version = await _svc.AddVersionAsync(
             assignmentId,
             studentId,
             file,
-            ip,
+            remoteIp,
             comment
         );
         return Ok(new
@@ -75,5 +69,82 @@ public class SubmissionController : ControllerBase
         // voliteľne overenie: riešenie patrí pod assignment
         var versions = await _svc.GetVersionsBySolutionIdAsync(solutionId);
         return Ok(versions);
+    }
+
+    [HttpGet("download-all")]
+    public async Task<IActionResult> DownloadAll(int assignmentId)
+    {
+        var zipStream = await _svc.DownloadAllSolutionsAsync(assignmentId);
+        var fileName = $"assignment_{assignmentId}_all_solutions.zip";
+        return File(zipStream, "application/zip", fileName);
+    }
+
+    [HttpGet("bulk")]
+    public async Task<IActionResult> GetBulkGrades(int assignmentId)
+    {
+        // vrátí seznam { studentId, fullName, email, points }
+        var items = await _svc.GetBulkGradeItemsAsync(assignmentId);
+        return Ok(items);
+    }
+
+    [HttpPost("bulk")]
+    public async Task<IActionResult> SaveBulkGrades(
+        int assignmentId,
+        [FromBody] List<BulkGradeSaveDto> items)
+    {
+        // uloží nebo aktualizuje points pro každý item
+        await _svc.SaveBulkGradesAsync(assignmentId, items);
+        return Ok();
+    }
+
+
+    [HttpGet("grade")]
+    public async Task<IActionResult> GetSolutionsForGrading(int assignmentId)
+    {
+        var list = await _svc.GetSubmissionOverviewsAsync(assignmentId);
+        return Ok(list);
+    }
+
+
+    [HttpGet("{solutionId}/header")]
+    public async Task<IActionResult> GetInfo(int assignmentId, int solutionId)
+    {
+        var header = await _svc.GetEvaluationHeaderAsync(assignmentId, solutionId);
+        return Ok(header);
+    }
+
+    // GET /api/assignments/{assignmentId}/solutions/{solutionId}/evaluate
+    [HttpGet("{solutionId}/evaluate")]
+    public async Task<IActionResult> GetEvaluate(int assignmentId, int solutionId)
+    {
+        var info = await _svc.GetSolutionInfoAsync(assignmentId, solutionId);
+        return Ok(info);
+    }
+
+    [HttpPost("{solutionId}/evaluate")]
+    public async Task<IActionResult> UpdateEvaluate(
+            int assignmentId,
+            int solutionId,
+            [FromBody] SolutionInfoDto dto)
+    {
+        await _svc.UpdateSolutionInfoAsync(assignmentId, solutionId, dto);
+        return Ok();
+    }
+
+    [HttpGet("{solutionId}/versions/{version}/files")]
+    public async Task<IActionResult> ListFiles(int assignmentId, int solutionId, int version)
+    {
+        var names = await _svc.GetFilesListAsync(solutionId, version);
+        if (names == null) return NotFound();
+        return Ok(names);
+    }
+
+    [HttpGet("{solutionId}/versions/{version}/files/{*filePath}")]
+    public async Task<IActionResult> GetFile(
+        int assignmentId, int solutionId, int version, string filePath)
+    {
+        var content = await _svc.GetFileContentAsync(solutionId, version, filePath);
+        if (content == null) return NotFound();
+        return File(content, "text/plain");
     }
 }
