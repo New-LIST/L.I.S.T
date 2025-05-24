@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using List.Logs.Services;
+using List.Common.Utils;
 using System.Reflection;
 using System.Text.Json;
 
@@ -35,9 +36,7 @@ public class ActivityLoggingFilter : IActionFilter
         if (id is null || string.IsNullOrEmpty(name)) return;
 
         var userId = context.HttpContext.User.Identity?.Name ?? "anonymous";
-        var remoteIp = context.HttpContext.Connection.RemoteIpAddress;
-        var ipAddress = remoteIp != null ? remoteIp.MapToIPv4().ToString() : "0.0.0.0";
-        Console.WriteLine("IP adress" + ipAddress);
+        var ipAddress = context.HttpContext.GetClientIpAddress();
 
 
         var pathSegments = context.HttpContext.Request.Path.ToString().ToLower().Split('/');
