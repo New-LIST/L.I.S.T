@@ -54,4 +54,29 @@ public class FileStorageService : IFileStorageService
         }
         return Task.CompletedTask;
     }
+
+    public Task<Stream> GetFileStreamAsync(string relativePath)
+    {
+        // zložíme absolutnú cestu
+        var segments = relativePath.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // 2) combine WebRootPath + all those segments
+        var fullPath = Path.Combine(
+            new[] { _env.WebRootPath }
+            .Concat(segments)
+            .ToArray()
+        );
+
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"File not found at path: {fullPath}");
+
+        // 3) open as read‐only stream
+        Stream stream = new FileStream(
+            fullPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read
+        );
+        return Task.FromResult(stream);
+    }
 }

@@ -8,4 +8,5 @@ public interface IFileStorageService
     Task<string> SaveFileAsync(IFormFile file, string folder);
     Task DeleteFileAsync(string relativePath);
     Task<string> SaveFileAsync(IFormFile file, string folder, string fileName);
+    Task<Stream> GetFileStreamAsync(string key);
 }
