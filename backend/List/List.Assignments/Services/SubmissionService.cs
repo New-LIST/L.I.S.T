@@ -89,28 +89,41 @@ public class SubmissionService : ISubmissionService
         var rawName = solution.Student.Fullname;
         var safeName = SanitizeFileName(rawName);
         var folder = $"courses/{solution.Assignment.CourseId}/tasksets/{solution.Assignment.TaskSetTypeId}/assignments/{assignmentId}/students/{safeName}";
-        using var memStream = new MemoryStream();
-        using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, true))
+        var originalExt = Path.GetExtension(zipFile.FileName);
+        var finalFileName = $"{safeName}_{nextVer}.zip";
+        string storageKey;
+
+        if (string.Equals(originalExt, ".zip", StringComparison.OrdinalIgnoreCase))
         {
-            // v zip-e bude entry s originálnym menom a obsahom
-            var entry = archive.CreateEntry(zipFile.FileName, CompressionLevel.Optimal);
-            using var entryStream = entry.Open();
-            await zipFile.CopyToAsync(entryStream);
+            // 1) Upload už raz zipovaného súboru – uložíme ho priamo
+            //    (zabalenie do novej FormFile, aby sme mohli meniť názov)
+            using var originalStream = zipFile.OpenReadStream();
+            var directZip = new FormFile(originalStream, 0, zipFile.Length, zipFile.Name, finalFileName)
+            {
+                Headers = zipFile.Headers,
+                ContentType = zipFile.ContentType
+            };
+            storageKey = await _files.SaveFileAsync(directZip, folder, finalFileName);
         }
-        memStream.Position = 0;
-
-        // 3a) Vytvoríme nový IFormFile pre upload zipu
-        var zipFileName = $"{safeName}_{nextVer}.zip";
-        var zippedFormFile = new FormFile(memStream, 0, memStream.Length, zipFile.Name, zipFileName)
+        else
         {
-            Headers = new HeaderDictionary(new Dictionary<string, StringValues> {
-            { "Content-Type", "application/zip" }
-        }),
-            ContentType = "application/zip"
-        };
+            // 2) Upload ne-zip súboru – zabalenie do ZIP
+            using var memStream = new MemoryStream();
+            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, true))
+            {
+                var entry = archive.CreateEntry(zipFile.FileName, CompressionLevel.Optimal);
+                using var entryStream = entry.Open();
+                await zipFile.CopyToAsync(entryStream);
+            }
+            memStream.Position = 0;
 
-        // 3b) Uložíme v pamäti zip pomocou FileStorageService
-        var storageKey = await _files.SaveFileAsync(zippedFormFile, folder, zipFileName);
+            var zippedFormFile = new FormFile(memStream, 0, memStream.Length, zipFile.Name, finalFileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/zip"
+            };
+            storageKey = await _files.SaveFileAsync(zippedFormFile, folder, finalFileName);
+        }
 
         // 4) Vytvoríme SolutionVersionModel
         var ver = new SolutionVersionModel
