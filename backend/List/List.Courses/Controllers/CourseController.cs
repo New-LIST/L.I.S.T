@@ -90,6 +90,24 @@ namespace List.Courses.Controllers
             return Ok(visibleCourses);
         }
 
+        [HttpGet("teacherId")]
+        public async Task<IActionResult> GetCoursesByTeacherId()
+        {
+            var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (claim == null)
+                return Unauthorized("Chýba identifikátor používateľa.");
+            var teacherId = int.Parse(claim.Value);
+            var courses = await _context.Courses
+                .Where(c => c.TeacherId == teacherId)
+                .Select(c => new {
+                    c.Id,
+                    c.Name,
+                })
+                .ToListAsync();
+
+            return Ok(courses);
+        }
+
 
         [HttpPost]
         [Authorize(Roles = "Teacher")]
