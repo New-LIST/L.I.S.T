@@ -388,7 +388,7 @@ public class SubmissionService : ISubmissionService
         {
             TestsPoints = sol.TestsPoints,
             Points = sol.Points,
-            Comment = latest?.Comment,
+            Comment = sol.Comment,
             Revalidate = sol.NotConsidered,
             DisableEvaluationByTests = sol.DisableEvaluationByTests
         };
@@ -408,6 +408,7 @@ public class SubmissionService : ISubmissionService
 
         // aktualizace bodů
         sol.Points = dto.Points;
+        sol.Comment = dto.Comment;
         // (další pole, pokud bys chtěl)
         sol.NotConsidered = dto.Revalidate;
         sol.DisableEvaluationByTests = dto.DisableEvaluationByTests;
