@@ -10,6 +10,8 @@ public interface IAssignmentService
     Task<List<AssignmentModel>> GetAllAsync();
     Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter);
     Task<AssignmentModel?> GetByIdAsync(int id);
+
+    Task<AssignmentNameDto?> GetAssignmentNameAsync(int assignmentId);
     Task<List<AssignmentModel>> GetByCourseAsync(int courseId);
     Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto);
     Task<AssignmentModel> CloneAsync(int id);

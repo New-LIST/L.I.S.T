@@ -33,6 +33,19 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<AssignmentNameDto?> GetAssignmentNameAsync(int assignmentId)
+        {
+            return await _dbContext.Assignments
+                .AsNoTracking()
+                .Where(a => a.Id == assignmentId)
+                .Select(a => new AssignmentNameDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                })
+                .FirstOrDefaultAsync();
+        }
+
     public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter)
     {
         var query = _dbContext.Assignments

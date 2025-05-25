@@ -52,6 +52,7 @@ public class AssignmentsController : ControllerBase
         {
             a.Id,
             a.Name,
+            taskSetTypeId = a.TaskSetType.Id,
             taskSetTypeName = a.TaskSetType.Name,
             uploadEndTime = a.UploadEndTime
         });
@@ -101,5 +102,13 @@ public class AssignmentsController : ControllerBase
         return deleted != null
             ? Ok(new { id = deleted.Id, name = deleted.Name })
             : BadRequest("Nepodarilo sa vymazať zadanie.");
+    }
+
+    [HttpGet("{assignmentId}/assignmentName")]
+    public async Task<IActionResult> GetAssignmentName(int assignmentId)
+    {
+        var dto = await _assignmentService.GetAssignmentNameAsync(assignmentId);
+        if (dto == null) return NotFound();
+        return Ok(dto);
     }
 }
