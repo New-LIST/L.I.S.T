@@ -35,6 +35,12 @@ const GradeSolutions: React.FC = () => {
   const [data, setData] = useState<SubmissionOverview[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [assignmentName, setAssignmentName] = useState<string>();
+  
+  useEffect(() => {
+    api.get<{ name: string }>(`/assignments/${assignmentId}/assignmentName`)
+      .then(r => setAssignmentName(r.data.name));
+  }, [assignmentId]);
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -57,7 +63,7 @@ const GradeSolutions: React.FC = () => {
   return (
     <Box p={3}>
       <Typography variant="h5" gutterBottom>
-        Hodnotenie riešení – zadanie #{assignmentId}
+        Hodnotenie riešení – zadanie {assignmentName ?? assignmentId}
       </Typography>
       <TableContainer component={Paper}>
         <Table>

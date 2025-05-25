@@ -9,7 +9,9 @@ import {
   Checkbox,
   Button
 } from '@mui/material';
-import api from '../../../../services/api';
+import api from '../../../services/api';
+import { useNotification } from "../../../shared/components/NotificationContext";
+
 
 interface InfoTabProps {
   assignmentId: number;
@@ -27,6 +29,8 @@ export interface SolutionInfoDto {
 const InfoTab: React.FC<InfoTabProps> = ({ assignmentId, solutionId }) => {
   const [data, setData] = useState<SolutionInfoDto | null>(null);
   const [saving, setSaving] = useState(false);
+  const { showNotification } = useNotification();
+  
 
   useEffect(() => {
     api
@@ -45,10 +49,10 @@ const InfoTab: React.FC<InfoTabProps> = ({ assignmentId, solutionId }) => {
         `/assignments/${assignmentId}/solutions/${solutionId}/evaluate`,
         data
       );
-      alert('Zmeny boli uložené');
+      showNotification("Úspešne ohodnotné", "success");
     } catch (err) {
       console.error(err);
-      alert('Chyba pri ukladaní');
+      showNotification("Chyba pri ukladaní hodnotenia", "error");
     } finally {
       setSaving(false);
     }

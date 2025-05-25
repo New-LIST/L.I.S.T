@@ -24,11 +24,11 @@ import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 import Participants from "../../Courses/Pages/Participants.tsx";
 import TestUpload from "../../Assignments/pages/TestUpload.tsx";
-import TeacherCourses from "../../Assignments/pages/TeacherCourses.tsx";
-import GradeAssignments from "../../Assignments/pages/GradeAssignments.tsx";
-import BulkGrade from "../../Assignments/pages/BulkGrade.tsx";
-import GradeSolutions from "../../Assignments/pages/GradeSolutions.tsx";
-import SolutionDetail from "../../Assignments/pages/SolutionDetail.tsx";
+import TeacherCourses from "../../Grading/pages/TeacherCourses.tsx";
+import GradeAssignments from "../../Grading/pages/GradeAssignments.tsx";
+import BulkGrade from "../../Grading/pages/BulkGrade.tsx";
+import GradeSolutions from "../../Grading/pages/GradeSolutions.tsx";
+import SolutionDetail from "../../Grading/pages/SolutionDetail.tsx";
 
 const AppRoutes = () => {
   return (

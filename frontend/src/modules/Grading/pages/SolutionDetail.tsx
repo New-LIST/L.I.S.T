@@ -11,10 +11,10 @@ import { useParams, useNavigate } from 'react-router-dom';import {
   Button
 } from '@mui/material';
 import api from '../../../services/api';
-import InfoTab from '../components/solution-tabs/InfoTab';
-import FilesTab from '../components/solution-tabs/FilesTab';
-import TestsTab from '../components/solution-tabs/TestsTab';
-import AssignmentPreview from '../components/AssignmentPreview';
+import InfoTab from '../components/InfoTab';
+import FilesTab from '../components/FilesTab';
+import TestsTab from '../components/TestsTab';
+import AssignmentPreview from '../../Assignments/components/AssignmentPreview';
 
 interface EvaluationHeader {
   assignmentName: string;
@@ -56,7 +56,7 @@ const SolutionDetail: React.FC = () => {
         }}
       >
         <Typography variant="h6">
-          {info.assignmentName} &mdash; {info.courseName}
+          {info.assignmentName} - {info.courseName}
         </Typography>
         <Typography color="text.secondary">
           {info.studentFullName} ({info.studentEmail})

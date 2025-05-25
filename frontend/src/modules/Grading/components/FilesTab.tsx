@@ -10,7 +10,8 @@ import {
 } from '@mui/material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import api from '../../../../services/api';
+import api from '../../../services/api';
+import EmptyState from '../../../shared/components/EmptyState'
 
 interface FilesTabProps {
   assignmentId: number;
@@ -31,7 +32,6 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
     code: false
   });
 
-  // A) Načteme seznam verzí (čísla)
   useEffect(() => {
     setLoading(l => ({ ...l, versions: true }));
     api.get<{ version: number }[]>(`/assignments/${assignmentId}/solutions/${solutionId}/versions`)
@@ -44,7 +44,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
       .finally(() => setLoading(l => ({ ...l, versions: false })));
   }, [assignmentId, solutionId]);
 
-  // B) Po výběru `version` načteme soubory
+
   useEffect(() => {
     if (version == null) return;
     setLoading(l => ({ ...l, files: true }));
@@ -57,7 +57,6 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
       .finally(() => setLoading(l => ({ ...l, files: false })));
   }, [assignmentId, solutionId, version]);
 
-  // C) Po výběru `file` načteme obsah
   useEffect(() => {
     if (version == null || !file) return;
     setLoading(l => ({ ...l, code: true }));
@@ -69,6 +68,14 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
       .catch(console.error)
       .finally(() => setLoading(l => ({ ...l, code: false })));
   }, [assignmentId, solutionId, version, file]);
+
+  if (!loading.versions && versions.length === 0) {
+    return (
+      <EmptyState
+        message="Študent neodovzdal žiadne súbory"
+      />
+    );
+  }
 
   return (
     <Box display="grid" gap={2}>

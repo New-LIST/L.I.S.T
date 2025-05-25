@@ -6,6 +6,7 @@ import {
   Paper, Typography, Box, TextField, Button
 } from '@mui/material';
 import api from '../../../services/api';
+import { useNotification } from '../../../shared/components/NotificationContext';
 
 interface BulkGradeItem {
   studentId: number;
@@ -19,6 +20,14 @@ const BulkGrade: React.FC = () => {
   const [items, setItems]   = useState<BulkGradeItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving]   = useState(false);
+  const {showNotification} = useNotification();
+  const [assignmentName, setAssignmentName] = useState<string>();
+
+
+  useEffect(() => {
+    api.get<{ name: string }>(`/assignments/${assignmentId}/assignmentName`)
+      .then(r => setAssignmentName(r.data.name));
+  }, [assignmentId]);
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -47,10 +56,10 @@ const BulkGrade: React.FC = () => {
         `/assignments/${assignmentId}/solutions/bulk`,
         payload
       );
-      alert('Body uložené');
+      showNotification("Úspešne ohodnotené", "success");
     } catch (e) {
       console.error(e);
-      alert('Chyba pri ukládání');
+      showNotification("Nastala chyba pri hodnotení", "error");
     } finally {
       setSaving(false);
     }
@@ -59,7 +68,7 @@ const BulkGrade: React.FC = () => {
   return (
     <Box p={3}>
       <Typography variant="h5" gutterBottom>
-        Hromadné hodnotenie zadania {assignmentId}
+        Hromadné hodnotenie zadania {assignmentName ?? assignmentId}
       </Typography>
       <TableContainer component={Paper}>
         <Table>

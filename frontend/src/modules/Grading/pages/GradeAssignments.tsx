@@ -24,6 +24,7 @@ import GroupWorkIcon from "@mui/icons-material/GroupWork";
 interface AssignmentItem {
   id: number;
   name: string;
+  taskSetTypeId: number;
   taskSetTypeName: string;
   uploadEndTime: string | null;
 }
@@ -33,6 +34,12 @@ const GradeAssignments: React.FC = () => {
   const [assignments, setAssignments] = useState<AssignmentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const [courseName, setCourseName] = useState<string>();
+  useEffect(() => {
+    api.get<{ name: string }>(`/courses/${courseId}/courseName`)
+      .then(r => setCourseName(r.data.name));
+  }, [courseId]);
 
   useEffect(() => {
     console.log(courseId);
@@ -79,7 +86,7 @@ const GradeAssignments: React.FC = () => {
   return (
     <Box p={3}>
       <Typography variant="h5" gutterBottom>
-        Zadania pre kurz {courseId}
+        Zadania pre kurz {courseName ?? courseId}
       </Typography>
       <TableContainer component={Paper}>
         <Table>
