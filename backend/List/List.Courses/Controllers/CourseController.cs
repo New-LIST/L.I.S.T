@@ -108,6 +108,17 @@ namespace List.Courses.Controllers
             return Ok(courses);
         }
 
+        [HttpGet("{courseId}/courseName")]
+        public async Task<IActionResult> GetCourseName(int courseId)
+        {
+            var c = await _context.Courses
+                .Where(x => x.Id == courseId)
+                .Select(x => new { x.Id, x.Name })
+                .FirstOrDefaultAsync();
+            if (c == null) return NotFound();
+            return Ok(c);
+        }
+
 
         [HttpPost]
         [Authorize(Roles = "Teacher")]
