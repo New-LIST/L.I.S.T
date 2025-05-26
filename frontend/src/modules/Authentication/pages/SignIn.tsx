@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api.ts';
 import axios from "axios";
 import {removeStoredAuth} from "../utils/auth.ts";
+import AssistantRoleSelector from "../components/AssistantRoleSelector.tsx";
 
 export default function SignIn() {
     const [emailError, setEmailError] = React.useState(false);
@@ -27,6 +28,7 @@ export default function SignIn() {
     const [generalError, setGeneralError] = React.useState('');
     const [isForgotPasswordDialogOpen, setIsForgotPasswordDialogOpen] = React.useState(false);
     const [rememberMe, setRememberMe] = React.useState(false);
+    const [showRoleSelector, setShowRoleSelector] = React.useState(false);
 
     const navigate = useNavigate();
 
@@ -45,12 +47,20 @@ export default function SignIn() {
         try {
             const response = await api.post('/auth/login', { email, password });
             console.log('Login successful:', response.data);
+            const user = response.data.user;
+            const token = response.data.token;
 
             const storage = rememberMe ? localStorage : sessionStorage;
-            storage.setItem('token', response.data.token);
-            storage.setItem('user', JSON.stringify(response.data.user));
+            storage.setItem('token', token);
+            storage.setItem('user', JSON.stringify(user));
 
-            navigate('/');
+            if (user.role === 'Assistant') {
+                setShowRoleSelector(true);
+            } else if (user.role === 'Student') {
+                navigate('/student');
+            } else {
+                navigate('/dash');
+            }
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response) {
                 const serverMessage = error.response.data;
@@ -157,6 +167,18 @@ export default function SignIn() {
                     </Link>
                 </Box>
             </Card>
+
+            <AssistantRoleSelector
+                open={showRoleSelector}
+                onSelectStudent={() => {
+                    setShowRoleSelector(false);
+                    navigate('/student');
+                }}
+                onSelectTeacher={() => {
+                    setShowRoleSelector(false);
+                    navigate('/dash');
+                }}
+            />
 
             <ForgotPassword
                 open={isForgotPasswordDialogOpen}

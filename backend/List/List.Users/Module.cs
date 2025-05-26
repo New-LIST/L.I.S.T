@@ -16,6 +16,7 @@ public class Module : IModule
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAssistantPermissionService, AssistantPermissionService>();
     }
 
     public void UseServices(IApplicationBuilder app)

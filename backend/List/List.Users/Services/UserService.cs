@@ -73,4 +73,18 @@ public class UserService(UsersDbContext context) : IUserService
         .Where(u => u.Role == 0)
         .ToListAsync();
     }
+
+    public async Task<bool> UpdateUserAsync(User user)
+    {
+        try
+        {
+            context.Users.Update(user);
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
