@@ -25,6 +25,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import {PagedResult} from "../../../shared/Interfaces/PagedResult.ts";
 import {ImportUsersDialog} from "../components/ImportUsersDialog.tsx";
 import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import { AssistantScopeDialog } from "../components/AssistantScopeDialog.tsx";
+import {EditUserDialog} from "../components/EditUserDialog.tsx";
 
 const Users = () => {
     const { showNotification } = useNotification();
@@ -34,29 +38,41 @@ const Users = () => {
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [searchString, setSearchString] = useState("");
-    
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+    const [isScopeDialogOpen, setScopeDialogOpen] = useState(false);
+
+    const [selectedAssistant, setSelectedAssistant] = useState<User | null>(null);
+
     const { users, loading, reload } = getUsers(page, pageSize, searchString);
+
     
     const AddUser = async (user: User) => {
         await api.post('/users', user)
             .then((response: AxiosResponse<User>) => {
+                showNotification("Používateľ bol úspešne pridaný", "success");
                 reload();
+
+                if (response.data.role === "Assistant") {
+                    setSelectedAssistant(response.data);
+                    setScopeDialogOpen(true);
+                }
                 console.log(response);
             })
             .catch((error: AxiosError) => {
                 console.error(error);
-                showNotification("Nepodarilo sa pridať použivateľ", "error");
+                showNotification("Nepodarilo sa pridať použivateľa", "error");
             });
     }
     
     const DeleteUser = async (user: User) => {
         await api.delete(`/users/${user.id}`)
             .then(() => {
-                showNotification("User deleted successfully", "success");
+                showNotification("Použivateľ bol vymazaný", "success");
             })
             .catch((error: AxiosError) => {
                 console.error(error);
-                showNotification("User was not deleted", "error");
+                showNotification("Nepodarilo sa vymazať použivateľa ", "error");
             })
             .finally(() => {
                 reload();
@@ -91,7 +107,7 @@ const Users = () => {
                             variant="contained"
                             onClick={() => { setAddDialogOpen(true); }}
                         >
-                            Pridať Použivateľ
+                            Pridať Použivateľa
                         </Button>
                         <Button
                             variant="contained"
@@ -126,6 +142,22 @@ const Users = () => {
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>{user.role}</TableCell>
                                     <TableCell align="right">
+                                        {user.role === "Assistant" && (
+                                            <IconButton onClick={() => {
+                                                setSelectedAssistant(user);
+                                                setScopeDialogOpen(true);
+                                            }}>
+                                                <ManageAccountsIcon />
+                                            </IconButton>
+                                        )}
+
+                                        <IconButton onClick={() => {
+                                            setSelectedUser(user);
+                                            setEditDialogOpen(true);
+                                        }}>
+                                            <EditIcon />
+                                        </IconButton>
+
                                         <IconButton
                                             onClick={() => { DeleteUser(user) }}
                                         >
@@ -160,6 +192,41 @@ const Users = () => {
                                    setImportUsersDialogOpen(false);
                                    reload();
                                }} />
+            <EditUserDialog
+                isOpen={isEditDialogOpen}
+                user={selectedUser}
+                onSubmit={async (updatedUser) => {
+                    try {
+                        await api.put(`/users/${updatedUser.id}`, {
+                            fullName: updatedUser.fullname,
+                            email: updatedUser.email,
+                            role: updatedUser.role
+                        });
+                        showNotification("Zmeny boli uložené", "success");
+
+                        if (updatedUser.role === "Assistant") {
+                            setSelectedAssistant(updatedUser);
+                            setScopeDialogOpen(true);
+                        }
+
+                        reload();
+                    } catch (error) {
+                        showNotification("Nepodarilo sa uložiť zmeny", "error");
+                    }
+                }}
+
+                onClose={() => setEditDialogOpen(false)}
+            />
+
+            <AssistantScopeDialog
+                open={isScopeDialogOpen}
+                user={selectedAssistant}
+                onClose={() => {
+                    setScopeDialogOpen(false);
+                    setSelectedAssistant(null);
+                }}
+            />
+
         </>
     );
 }

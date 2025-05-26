@@ -7,6 +7,8 @@ namespace List.Users.Data;
 public class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<AssistantPermissions> AssistantPermissions { get; set; }
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
