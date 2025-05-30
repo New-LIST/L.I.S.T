@@ -74,7 +74,9 @@ const TeacherCourses: React.FC = () => {
                   <Tooltip title="Tabuľka hodnotení">
                     <IconButton
                       size="small"
-                      disabled
+                      onClick={() =>
+                        navigate(`/dash/grade/course/${course.id}/matrix`)
+                      }
                     >
                       <TableChartIcon />
                     </IconButton>
