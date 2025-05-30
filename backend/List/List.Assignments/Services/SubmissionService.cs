@@ -31,7 +31,7 @@ public class SubmissionService : ISubmissionService
         _files = files;
     }
 
-    public async Task<SolutionVersionModel> AddVersionAsync(
+    public async Task<SolutionVersionDto> AddVersionAsync(
         int assignmentId,
         int studentId,
         IFormFile zipFile,
@@ -144,12 +144,155 @@ public class SubmissionService : ISubmissionService
         solution.Updated = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return ver;
+        return new SolutionVersionDto
+        {
+            Id = ver.Id,
+            Version = ver.Version,
+            StorageKey = ver.StorageKey
+        };
     }
-    public async Task<List<SolutionModel>> GetAllSolutionsAsync()
+
+    public async Task<SolutionVersionDto> AddVersionToSolutionAsync(
+            int solutionId,
+            IFormFile zipFile
+        )
+    {
+        // 1) Načítame solution vrátane student + assignment
+        var solution = await _db.Solutions
+            .Include(s => s.Versions)
+            .Include(s => s.Student)
+            .Include(s => s.Assignment)
+            .FirstOrDefaultAsync(s => s.Id == solutionId)
+            ?? throw new KeyNotFoundException($"Solution {solutionId} not found.");
+
+        // 2) Spočítame next verzia
+        var nextVer = solution.Versions.Any()
+            ? solution.Versions.Max(v => v.Version) + 1
+            : 1;
+
+        // 3) Pripravíme priečinok/názov
+        var rawName = solution.Student.Fullname;
+        var safeName = SanitizeFileName(rawName);
+        var a = solution.Assignment;
+        var folder = $"courses/{a.CourseId}/tasksets/{a.TaskSetTypeId}/assignments/{a.Id}/students/{safeName}";
+        var finalName = $"{safeName}_{nextVer}.zip";
+
+        // 4) Uložíme obsah ZIP (rovnako ako v AddVersionAsync)
+        string storageKey;
+        if (Path.GetExtension(zipFile.FileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            // priamo uložiť
+            using var orig = zipFile.OpenReadStream();
+            var direct = new FormFile(orig, 0, zipFile.Length, zipFile.Name, finalName)
+            {
+                Headers = zipFile.Headers,
+                ContentType = zipFile.ContentType
+            };
+            storageKey = await _files.SaveFileAsync(direct, folder, finalName);
+        }
+        else
+        {
+            // zabalíme do nového zipu
+            using var ms = new MemoryStream();
+            using (var arch = new ZipArchive(ms, ZipArchiveMode.Create, true))
+            {
+                var entry = arch.CreateEntry(zipFile.FileName, CompressionLevel.Fastest);
+                using var es = entry.Open();
+                await zipFile.CopyToAsync(es);
+            }
+            ms.Position = 0;
+            var wrapped = new FormFile(ms, 0, ms.Length, zipFile.Name, finalName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/zip"
+            };
+            storageKey = await _files.SaveFileAsync(wrapped, folder, finalName);
+        }
+
+        // 5) Vytvoríme SolutionVersionModel
+        var ver = new SolutionVersionModel
+        {
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow,
+            SolutionId = solution.Id,
+            Version = nextVer,
+            DownloadLock = false,
+            IpAddress = null,
+            Comment = null,
+            StorageKey = storageKey
+        };
+        _db.SolutionVersions.Add(ver);
+
+        // 6) Aktualizujeme best-version a updated
+        solution.BestVersion = nextVer;
+        solution.Updated = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return new SolutionVersionDto
+        {
+            Id = ver.Id,
+            Version = ver.Version,
+            StorageKey = ver.StorageKey
+        };
+    }
+
+
+    public async Task<SolutionSummaryDto> CreateManualSolutionAsync(
+            int assignmentId,
+            int studentId
+        )
+    {
+        // 1) Načítame assignment pre teacherId
+        var assignment = await _db.Assignments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == assignmentId)
+            ?? throw new KeyNotFoundException($"Assignment {assignmentId} not found.");
+
+        // 2) Overíme, že riešenie ešte neexistuje
+        var exists = await _db.Solutions
+            .AnyAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId);
+        if (exists)
+            throw new InvalidOperationException("Riešenie pre tohto študenta už existuje.");
+
+        // 3) Vytvoríme nový záznam SolutionModel
+        var sol = new SolutionModel
+        {
+            AssignmentId = assignmentId,
+            StudentId = studentId,
+            TeacherId = assignment.TeacherId,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow,
+            TestsPoints = 0,
+            Points = null,
+            Comment = null,
+            Revalidate = false,
+            NotConsidered = false,
+            DisableEvaluationByTests = true,
+            BestVersion = 0,
+            IpAddress = null
+        };
+
+        _db.Solutions.Add(sol);
+        await _db.SaveChangesAsync();
+
+        return new SolutionSummaryDto
+        {
+            Id = sol.Id,
+            StudentId = sol.StudentId
+        };
+    }
+
+    public async Task<List<SolutionSummaryDto>> GetSolutionSummariesAsync(int assignmentId)
     {
         return await _db.Solutions
-            .Include(s => s.Student)       // ak chceš poslať meno študenta
+            .AsNoTracking()
+            .Where(s => s.AssignmentId == assignmentId)
+            .Select(s => new SolutionSummaryDto
+            {
+                Id = s.Id,
+                StudentId = s.StudentId
+            })
             .ToListAsync();
     }
 
@@ -222,6 +365,45 @@ public class SubmissionService : ISubmissionService
         }
 
         // 6) Posuň pozíciu na začiatok pre čítanie
+        zipStream.Position = 0;
+        return zipStream;
+    }
+
+    public async Task<MemoryStream> DownloadAllVersionsAsync(int solutionId)
+    {
+        // 1) Načítame všetky verzie pre zadané solutionId
+        var versions = await _db.SolutionVersions
+            .Include(v => v.Solution)
+                .ThenInclude(s => s.Student)
+            .Where(v => v.SolutionId == solutionId)
+            .ToListAsync();
+
+        // 2) Vytvoríme ZIP v pamäti
+        var zipStream = new MemoryStream();
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var v in versions)
+            {
+                try
+                {
+                    using var fileStream = await _files.GetFileStreamAsync(v.StorageKey);
+
+                    var rawName = v.Solution.Student.Fullname;
+                    var safeName = SanitizeFileName(rawName);
+                    var ext = Path.GetExtension(v.StorageKey);
+                    var entryName = $"{safeName}_{v.Version}{ext}";
+
+                    var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+                    using var entryStream = entry.Open();
+                    await fileStream.CopyToAsync(entryStream);
+                }
+                catch (FileNotFoundException ex)
+                {
+                    Console.WriteLine($"Chýba súbor {v.StorageKey}, preskakujem: {ex.Message}");
+                }
+            }
+        }
+
         zipStream.Position = 0;
         return zipStream;
     }

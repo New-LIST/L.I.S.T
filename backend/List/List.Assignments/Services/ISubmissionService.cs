@@ -7,7 +7,7 @@ namespace List.Assignments.Services;
 
 public interface ISubmissionService
 {
-    Task<SolutionVersionModel> AddVersionAsync(
+    Task<SolutionVersionDto> AddVersionAsync(
         int assignmentId,
         int studentId,
         IFormFile zipFile,
@@ -15,9 +15,20 @@ public interface ISubmissionService
         string? comment = null
         );
 
-    Task<List<SolutionModel>> GetAllSolutionsAsync();
+    Task<SolutionVersionDto> AddVersionToSolutionAsync(
+            int solutionId,
+            IFormFile zipFile
+        );
+
+    Task<SolutionSummaryDto> CreateManualSolutionAsync(
+            int assignmentId,
+            int studentId
+        );
+
+    Task<List<SolutionSummaryDto>> GetSolutionSummariesAsync(int assignmentId);
     Task<List<SolutionVersionModel>> GetVersionsBySolutionIdAsync(int solutionId);
     Task<MemoryStream> DownloadAllSolutionsAsync(int assignmentId);
+    Task<MemoryStream> DownloadAllVersionsAsync(int solutionId);
     Task UpdateSolutionInfoAsync(int assignmentId, int solutionId, SolutionInfoDto dto);
     Task<List<BulkGradeItemDto>> GetBulkGradeItemsAsync(int assignmentId);
     Task SaveBulkGradesAsync(int assignmentId, List<BulkGradeSaveDto> items);

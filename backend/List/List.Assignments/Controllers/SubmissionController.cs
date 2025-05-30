@@ -45,19 +45,29 @@ public class SubmissionController : ControllerBase
             remoteIp,
             comment
         );
-        return Ok(new
-        {
-            version.Id,
-            version.Version,
-            version.StorageKey
-        });
+        return Ok(version);
+    }
+
+    [HttpPost("{solutionId}/versions")]
+    public async Task<IActionResult> UploadVersionForSolution(
+            int assignmentId,
+            int solutionId,
+            [FromForm] IFormFile file
+        )
+    {
+
+        var dto = await _svc.AddVersionToSolutionAsync(
+            solutionId,
+            file
+        );
+        return Ok(dto);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllSolutions(int assignmentId)
+    public async Task<IActionResult> GetSummaries(int assignmentId)
     {
-        var solutions = await _svc.GetAllSolutionsAsync();
-        return Ok(solutions);
+        var list = await _svc.GetSolutionSummariesAsync(assignmentId);
+        return Ok(list);
     }
 
     // GET  /api/assignments/{assignmentId}/solutions/{solutionId}/versions
@@ -79,6 +89,17 @@ public class SubmissionController : ControllerBase
         return File(zipStream, "application/zip", fileName);
     }
 
+    [HttpGet("{solutionId}/download-all-versions")]
+    public async Task<IActionResult> DownloadAllVersions(int assignmentId, int solutionId)
+    {
+        var ms = await _svc.DownloadAllVersionsAsync(solutionId);
+        return File(
+            ms,
+            "application/zip",
+            $"solution_{solutionId}_all_versions.zip"
+        );
+    }
+
     [HttpGet("bulk")]
     public async Task<IActionResult> GetBulkGrades(int assignmentId)
     {
@@ -95,6 +116,19 @@ public class SubmissionController : ControllerBase
         // uloží nebo aktualizuje points pro každý item
         await _svc.SaveBulkGradesAsync(assignmentId, items);
         return Ok();
+    }
+
+    [HttpPost("manual")]
+    public async Task<IActionResult> CreateManual(
+            int assignmentId,
+            [FromBody] ManualSolutionRequest req)
+    {
+        var summary = await _svc.CreateManualSolutionAsync(
+            assignmentId,
+            req.StudentId
+        );
+
+        return Ok(summary);
     }
 
 
