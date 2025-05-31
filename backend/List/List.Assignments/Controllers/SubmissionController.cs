@@ -50,6 +50,7 @@ public class SubmissionController : ControllerBase
     }
 
     [HttpPost("{solutionId}/versions")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadVersionForSolution(
             int assignmentId,
             int solutionId,

@@ -17,5 +17,6 @@ public interface IAssignmentService
     Task<AssignmentModel> CloneAsync(int id);
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
     Task<AssignmentModel?> DeleteAsync(int id);
+    Task<bool> CanUploadSolutionAsync(int assignmentId);
 
 }

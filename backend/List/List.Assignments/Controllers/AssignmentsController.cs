@@ -111,4 +111,19 @@ public class AssignmentsController : ControllerBase
         if (dto == null) return NotFound();
         return Ok(dto);
     }
+
+    [HttpGet("{id}/canUpload")]
+        public async Task<IActionResult> CanUpload(int id)
+        {
+            // Najprv overíme, či existuje také zadanie (môžeme použiť službu GetByIdAsync, alebo CanUploadSolutionAsync rovno vráti false, ak neexistuje)
+            var assignment = await _assignmentService.GetByIdAsync(id);
+            if (assignment == null)
+            {
+                return NotFound($"Zadanie s ID {id} neexistuje.");
+            }
+
+            // Potom vrátime hodnotu UploadSolution (true/false)
+            var canUpload = await _assignmentService.CanUploadSolutionAsync(id);
+            return Ok(new { canUpload });
+        }
 }
