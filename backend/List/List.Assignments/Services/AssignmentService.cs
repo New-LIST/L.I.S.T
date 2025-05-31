@@ -33,6 +33,19 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<AssignmentNameDto?> GetAssignmentNameAsync(int assignmentId)
+    {
+        return await _dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Select(a => new AssignmentNameDto
+            {
+                Id = a.Id,
+                Name = a.Name,
+            })
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter)
     {
         var query = _dbContext.Assignments
@@ -101,6 +114,63 @@ public class AssignmentService : IAssignmentService
         return assignment;
     }
 
+    public async Task<List<AssignmentModel>> GetByCourseAsync(int courseId)
+    {
+        return await _dbContext.Assignments
+            .Where(a => a.CourseId == courseId)
+           .Include(a => a.TaskSetType)
+           .ToListAsync();
+    }
+
+    public async Task<AssignmentModel> CloneAsync(int id)
+    {
+        // 1) Načítať pôvodné zadanie
+        var original = await _dbContext.Assignments
+            .FirstOrDefaultAsync(a => a.Id == id);
+        if (original == null)
+            throw new KeyNotFoundException($"Assignment {id} not found");
+
+        // 2) Vytvoriť nový AssignmentModel s rovnakými poľami (okrem Id, Created/Updated)
+        var clone = new AssignmentModel
+        {
+            Name = original.Name,
+            TaskSetTypeId = original.TaskSetTypeId,
+            CourseId = original.CourseId,
+            Published = original.Published,
+            PublishStartTime = original.PublishStartTime,
+            UploadEndTime = original.UploadEndTime,
+            Instructions = original.Instructions,
+            PointsOverride = original.PointsOverride,
+            InternalComment = original.InternalComment,
+            TeacherId = original.TeacherId,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow
+        };
+        _dbContext.Assignments.Add(clone);
+        await _dbContext.SaveChangesAsync();
+
+        // 3) Naklonovať väzby úloh (AssignmentTaskRels)
+        var rels = await _dbContext.AssignmentTaskRels
+            .Where(r => r.AssignmentId == id)
+            .ToListAsync();
+
+        foreach (var r in rels)
+        {
+            var newRel = new AssignmentTaskRelModel
+            {
+                AssignmentId = clone.Id,
+                TaskId = r.TaskId,
+                PointsTotal = r.PointsTotal,
+                BonusTask = r.BonusTask,
+                InternalComment = r.InternalComment
+            };
+            _dbContext.AssignmentTaskRels.Add(newRel);
+        }
+        await _dbContext.SaveChangesAsync();
+
+        return clone;
+    }
+
     public async Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto)
     {
         var existingAssignment = await _dbContext.Assignments.FindAsync(id);
@@ -143,4 +213,56 @@ public class AssignmentService : IAssignmentService
         return assignment;
     }
 
+    public async Task<bool> CanUploadSolutionAsync(int assignmentId)
+    {
+        // Vyberieme len stĺpec UploadSolution
+        var assignmentWithRel = await _dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Include(a => a.CourseTaskSetRel)    // načítame väzbu, ktorá obsahuje UploadSolution
+            .Select(a => new
+            {
+                a.Id,
+                UploadSolution = a.CourseTaskSetRel.UploadSolution
+            })
+            .FirstOrDefaultAsync();
+
+        if (assignmentWithRel == null)
+        {
+            // Dané zadanie (assignmentId) neexistuje
+            return false;
+        }
+
+        return assignmentWithRel.UploadSolution;
+    }
+
+    public async Task<double?> CalculateMaxPoints(int assignmentId)
+    {
+        var assignment = await _dbContext.Assignments
+                .AsNoTracking()
+                .Where(a => a.Id == assignmentId)
+                .Select(a => new
+                {
+                    a.PointsOverride
+                })
+                .FirstOrDefaultAsync();
+
+        if (assignment == null)
+        {
+            return null;
+        }
+
+        if (assignment.PointsOverride.HasValue)
+        {
+            return assignment.PointsOverride.Value;
+        }
+
+        var sumPointsNullable = await _dbContext.AssignmentTaskRels
+                .AsNoTracking()
+                .Where(r => r.AssignmentId == assignmentId && !r.BonusTask)
+                .Select(r => (double?)r.PointsTotal)
+                .SumAsync();
+
+        return sumPointsNullable;
+    }
 }

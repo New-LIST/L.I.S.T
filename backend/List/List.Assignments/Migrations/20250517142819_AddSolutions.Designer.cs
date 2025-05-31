@@ -3,6 +3,7 @@ using System;
 using List.Assignments.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Assignments.Migrations
 {
     [DbContext(typeof(AssignmentsDbContext))]
-    partial class AssignmentsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250517142819_AddSolutions")]
+    partial class AddSolutions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

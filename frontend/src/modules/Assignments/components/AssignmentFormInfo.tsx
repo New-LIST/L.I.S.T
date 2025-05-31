@@ -96,8 +96,8 @@ const AssignmentFormInfo = ({ onCreated, defaultValues }: Props) => {
         ? new Date(uploadEndTime).toISOString()
         : null,
       pointsOverride,
-      instructions,
-      internalComment,
+      instructions: instructions.trim() ? instructions : null,
+      internalComment: internalComment.trim() ? internalComment : null,
     };
 
     if (defaultValues?.id) {

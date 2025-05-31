@@ -64,4 +64,7 @@ public class AssignmentModel
     public string? InternalComment { get; set; }
 
     public CourseTaskSetRel CourseTaskSetRel { get; set; } = null!;
+
+    [InverseProperty(nameof(SolutionModel.Assignment))]
+    public ICollection<SolutionModel> Solutions { get; set; } = new List<SolutionModel>();
 }

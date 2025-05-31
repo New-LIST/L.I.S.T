@@ -11,6 +11,8 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
 {
     public DbSet<AssignmentModel> Assignments { get; set; }
     public DbSet<AssignmentTaskRelModel> AssignmentTaskRels { get; set; }
+    public DbSet<SolutionModel> Solutions { get; set; }
+    public DbSet<SolutionVersionModel> SolutionVersions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,5 +109,32 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             .HasForeignKey(a => new { a.CourseId, a.TaskSetTypeId })
             .HasPrincipalKey(c => new { c.CourseId, c.TaskSetTypeId })
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolutionModel>()
+            .HasOne(s => s.Assignment)
+            .WithMany(a => a.Solutions)
+            .HasForeignKey(s => s.AssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SolutionModel>()
+            .HasOne(s => s.Student)
+            .WithMany()
+            .HasForeignKey(s => s.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolutionModel>()
+            .HasOne(s => s.Teacher)
+            .WithMany()
+            .HasForeignKey(s => s.TeacherId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SolutionModel>()
+            .HasMany(s => s.Versions)
+            .WithOne(v => v.Solution)
+            .HasForeignKey(v => v.SolutionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SolutionVersionModel>()
+            .HasKey(v => v.Id);
     }
 }

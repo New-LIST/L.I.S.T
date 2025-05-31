@@ -92,6 +92,35 @@ namespace List.Courses.Controllers
             return Ok(visibleCourses);
         }
 
+        [HttpGet("teacherId")]
+        public async Task<IActionResult> GetCoursesByTeacherId()
+        {
+            var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (claim == null)
+                return Unauthorized("Chýba identifikátor používateľa.");
+            var teacherId = int.Parse(claim.Value);
+            var courses = await _context.Courses
+                .Where(c => c.TeacherId == teacherId)
+                .Select(c => new {
+                    c.Id,
+                    c.Name,
+                })
+                .ToListAsync();
+
+            return Ok(courses);
+        }
+
+        [HttpGet("{courseId}/courseName")]
+        public async Task<IActionResult> GetCourseName(int courseId)
+        {
+            var c = await _context.Courses
+                .Where(x => x.Id == courseId)
+                .Select(x => new { x.Id, x.Name })
+                .FirstOrDefaultAsync();
+            if (c == null) return NotFound();
+            return Ok(c);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -188,7 +217,7 @@ namespace List.Courses.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { id = course.Id, name = course.Name });;
+            return Ok(new { id = course.Id, name = course.Name }); ;
         }
 
         [HttpPost("{id}/upload-image")]
@@ -232,5 +261,7 @@ namespace List.Courses.Controllers
             return NoContent();
         }
 
+
+                
     }
 }

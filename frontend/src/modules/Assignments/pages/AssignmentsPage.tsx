@@ -21,10 +21,15 @@ import { Assignment } from "../types/Assignment";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PreviewIcon from "@mui/icons-material/Visibility";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import AssignmentFilterPanel from "../components/AssignmentFilterPanel";
+import AssignmentPreview from "../components/AssignmentPreview";
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import api from "../../../services/api"; // pridali sme import API
 
@@ -62,6 +67,13 @@ const AssignmentsPage = () => {
   const { showNotification } = useNotification();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
+
+  const [previewAssignmentId, setPreviewAssignmentId] = useState<number | null>(
+    null
+  );
+
+  const handleOpenPreview = (id: number) => setPreviewAssignmentId(id);
+  const handleClosePreview = () => setPreviewAssignmentId(null);
 
   const open = Boolean(anchorEl);
   const { data, loading, refetch } = useAssignments({
@@ -138,6 +150,17 @@ const AssignmentsPage = () => {
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
+
+  const handleClone = async (id: number) => {
+  try {
+    const res = await api.post<{ id: number }>(`/assignments/${id}/clone`);
+    showNotification("Zostava sklonovaná", "success");
+    navigate(`/dash/assignments/edit/${res.data.id}`);
+  } catch (err) {
+    console.error("Chyba pri klonovaní:", err);
+    showNotification("Chyba pri klonovaní zostavy", "error");
+  }
+};
 
   return (
     <Box p={3}>
@@ -269,6 +292,9 @@ const AssignmentsPage = () => {
                     </TableCell>
                   )}
                   <TableCell align="right">
+                    <IconButton onClick={() => handleOpenPreview(assignment.id)}>
+                      <PreviewIcon/>
+                    </IconButton>
                     <IconButton onClick={() => handleEdit(assignment.id)}>
                       <EditIcon />
                     </IconButton>
@@ -276,6 +302,9 @@ const AssignmentsPage = () => {
                       onClick={() => handleDeleteClick(assignment.id)}
                     >
                       <DeleteIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleClone(assignment.id)}>
+                      <FileCopyIcon/>
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -302,6 +331,34 @@ const AssignmentsPage = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />
+      <Dialog
+        open={previewAssignmentId !== null}
+        onClose={handleClosePreview}
+        fullWidth
+        maxWidth="lg"
+      >
+        <DialogTitle sx={{ m: 0, p: 2 }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6">Preview zadania</Typography>
+            <IconButton
+              aria-label="close"
+              onClick={handleClosePreview}
+              size="small"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          {previewAssignmentId && (
+            <AssignmentPreview assignmentId={previewAssignmentId} />
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

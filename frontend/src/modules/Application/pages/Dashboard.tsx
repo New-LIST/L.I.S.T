@@ -24,6 +24,7 @@ export default function Dashboard() {
         { label: t('Tasks'), path: 'tasks' },
         { label: t('Assignments'), path: 'assignments'},
         { label: t('Logs'), path: 'logs'},
+        { label: t('Grading'), path: 'grade'},
 
     ];
 

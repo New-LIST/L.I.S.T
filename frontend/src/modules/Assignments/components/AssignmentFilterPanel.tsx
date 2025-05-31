@@ -25,7 +25,6 @@ const AssignmentFilterPanel = ({ onClose, onFilter }: Props) => {
       courseId,
       userId
     });
-    onClose();
   };
 
   return (
