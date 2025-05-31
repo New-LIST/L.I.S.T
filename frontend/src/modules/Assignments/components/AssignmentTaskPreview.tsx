@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Divider } from '@mui/material';
+import { Box, Typography, Divider, Paper } from '@mui/material';
 
 
 type Props = {
@@ -17,7 +17,15 @@ const AssignmentTaskPreview: React.FC<Props> = ({
   bonus,
   authorName,
 }) => (
-  <Box sx={{ mb: 3 }}>
+  <Paper
+            elevation={2}
+            sx={{
+                p: 3,
+                mb: 3,
+                borderRadius: 2,
+                backgroundColor: '#fff',
+            }}
+        >
             <Typography variant="h5" fontWeight="bold" gutterBottom>
                 {name}
             </Typography>
@@ -35,14 +43,14 @@ const AssignmentTaskPreview: React.FC<Props> = ({
 
             <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <Typography variant="h6" fontWeight="bold">
-                    {bonus ? 'Bonus' : `${pointsTotal} bodov`}
+                    {bonus ? `Bonus ${pointsTotal} bodov` : `${pointsTotal} bodov`}
                 </Typography>
                 <Typography variant="subtitle2" color="text.secondary">
                     Author: {authorName}
                 </Typography>
             </Box>
             <Divider sx={{ mb: 4 }} />
-        </Box>
+        </Paper>
 );
 
 export default AssignmentTaskPreview;

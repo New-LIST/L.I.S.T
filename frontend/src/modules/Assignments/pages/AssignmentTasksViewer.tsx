@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import api from "../../../services/api.ts";
 import TaskCard from "../../Tasks/Components/TaskCard.tsx";
+import AssignmentTaskPreview from "../components/AssignmentTaskPreview.tsx";
 import { AssignmentTaskRelSlim } from "../types/AssignmentTaskRelSlim.ts";
 
 type AssignmentDetail = {
@@ -76,11 +77,13 @@ const AssignmentTasksViewer = () => {
                         <Typography variant="body2">Žiadne úlohy.</Typography>
                     ) : (
                         tasks.map((rel) => (
-                            <TaskCard
+                            <AssignmentTaskPreview
                                 key={rel.taskId}
                                 name={rel.task.name}
                                 text={rel.task.text}
                                 authorName={rel.task.authorName || "Neznámy autor"}
+                                pointsTotal={rel.pointsTotal}
+                                bonus={rel.bonusTask}
                             />
                         ))
                     )}
