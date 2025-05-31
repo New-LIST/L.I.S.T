@@ -123,7 +123,7 @@ const GradeSolutions: React.FC = () => {
     try {
       // responseType: 'blob' ensures we get binary data
       const res = await api.get<Blob>(
-        `/assignments/${assignmentId}/solutions/${solutionId}/download-all-versions`,
+        `/solutions/${solutionId}/download-all-versions`,
         { responseType: "blob" }
       );
       // create a blob URL

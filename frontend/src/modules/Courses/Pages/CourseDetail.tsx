@@ -8,7 +8,6 @@ const courseSidebarItems = [
     { label: 'Úlohy', path: 'assignments' },
     { label: 'Prehľad', path: 'overview' },
     { label: 'Projekty', path: 'projects' },
-    { label: 'TEST', path: 'test' },
 ];
 const drawerWidth = 240;
 export default function CourseDetail() {

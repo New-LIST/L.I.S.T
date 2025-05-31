@@ -43,7 +43,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
 
   const [fileURL, setFileURL] = useState<string>("");
 
-  const rawUrl = `/assignments/${assignmentId}/solutions/${solutionId}/versions/${version}/files/${encodeURIComponent(
+  const rawUrl = `/solutions/${solutionId}/versions/${version}/files/${encodeURIComponent(
     file
   )}`;
 
@@ -51,7 +51,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
     setLoading((l) => ({ ...l, versions: true }));
     api
       .get<VersionItem[]>(
-        `/assignments/${assignmentId}/solutions/${solutionId}/versions`
+        `/solutions/${solutionId}/versions`
       )
       .then((res) => {
         setVersions(res.data);
@@ -74,7 +74,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ assignmentId, solutionId }) => {
 
     api
       .get<string[]>(
-        `/assignments/${assignmentId}/solutions/${solutionId}/versions/${version}/files`
+        `/solutions/${solutionId}/versions/${version}/files`
       )
       .then((res) => {
         setFiles(res.data);
