@@ -627,7 +627,6 @@ public class SubmissionService : ISubmissionService
         var entry = zip.Entries.FirstOrDefault(e => e.FullName == filePath);
         if (entry == null) return null;
 
-        // Stream musí být vrácen otevřený; musíme ho zkopírovat do nového MemoryStream
         var ms = new MemoryStream();
         using var es = entry.Open();
         await es.CopyToAsync(ms);

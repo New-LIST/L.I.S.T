@@ -49,7 +49,7 @@ const SolutionDetail: React.FC = () => {
        <Paper
         sx={{
           p: 2,
-          mb: 3,
+          mb: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -78,7 +78,7 @@ const SolutionDetail: React.FC = () => {
         <Tab label="Prehľad zadania" />
       </Tabs>
 
-      <Box mt={2}>
+      <Box mt={1}>
         {tab === 0 && <InfoTab assignmentId={+assignmentId!} solutionId={+solutionId!} />}
         {tab === 1 && <FilesTab assignmentId={+assignmentId!} solutionId={+solutionId!} />}
         {tab === 2 && <TestsTab assignmentId={+assignmentId!} solutionId={+solutionId!} />}

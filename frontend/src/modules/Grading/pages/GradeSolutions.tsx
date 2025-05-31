@@ -152,7 +152,12 @@ const GradeSolutions: React.FC = () => {
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Manuálne vytvoriť riešenie</Typography>
         </AccordionSummary>
-        <AccordionDetails sx={{ px: 2 }}>
+        <AccordionDetails sx={{ py: 1, px: 2 }}>
+  {availableStudents.length === 0 ? (
+    <Typography variant="body2" color="textSecondary">
+      Všetci študenti už majú odovzdané riešenie.
+    </Typography>
+  ) : (
           <Box
             display="flex"
             alignItems="center"
@@ -187,6 +192,7 @@ const GradeSolutions: React.FC = () => {
               Vytvoriť
             </Button>
           </Box>
+          )}
         </AccordionDetails>
       </Accordion>
       <TableContainer component={Paper} sx={{ mt: 1 }}>

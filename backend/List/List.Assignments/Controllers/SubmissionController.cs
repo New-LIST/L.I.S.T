@@ -6,6 +6,7 @@ using List.Common.Utils;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.StaticFiles;
 
 
 namespace List.Assignments.Controllers;
@@ -179,6 +180,13 @@ public class SubmissionController : ControllerBase
     {
         var content = await _svc.GetFileContentAsync(solutionId, version, filePath);
         if (content == null) return NotFound();
-        return File(content, "text/plain");
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(filePath, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+
+        // Teraz pošleme stream spolu s určeným contentType
+        return File(content, contentType);
     }
 }
