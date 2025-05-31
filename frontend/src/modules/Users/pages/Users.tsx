@@ -1,74 +1,165 @@
-import AddUserForm from "../components/AddUserForm.tsx";
-import ImportUsers from "../components/ImportUsers.tsx"
 import {
+    alpha,
+    Box,
+    Button,
     Card,
-    CardContent,
-    Container, IconButton,
+    IconButton,
+    InputBase,
+    styled,
     Table,
     TableBody,
     TableCell,
+    TableContainer,
     TableHead,
-    TableRow
+    TablePagination,
+    TableRow,
+    Typography
 } from "@mui/material";
 import api from "../../../services/api.ts";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {User} from "../types/User.ts";
+import {AddUserDialog} from "../components/AddUserDialog.tsx";
+import {AxiosError, AxiosResponse} from "axios";
+import { useNotification } from "../../../shared/components/NotificationContext"
 import DeleteIcon from "@mui/icons-material/Delete";
+import {PagedResult} from "../../../shared/Interfaces/PagedResult.ts";
+import {ImportUsersDialog} from "../components/ImportUsersDialog.tsx";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import { AssistantScopeDialog } from "../components/AssistantScopeDialog.tsx";
+import {EditUserDialog} from "../components/EditUserDialog.tsx";
 
 const Users = () => {
-    const [users, setUsers] = useState<User[]>([]);
-    const getUsers = async () => {
-        await api.get<User[]>('/users')
-            .then(res => {
-                setUsers(res.data);
+    const { showNotification } = useNotification();
+    
+    const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+    const [isImportUsersDialogOpen, setImportUsersDialogOpen] = useState(false);
+    const [page, setPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchString, setSearchString] = useState("");
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+    const [isScopeDialogOpen, setScopeDialogOpen] = useState(false);
+
+    const [selectedAssistant, setSelectedAssistant] = useState<User | null>(null);
+
+    const { users, loading, reload } = getUsers(page, pageSize, searchString);
+
+    
+    const AddUser = async (user: User) => {
+        await api.post('/users', user)
+            .then((response: AxiosResponse<User>) => {
+                showNotification("Používateľ bol úspešne pridaný", "success");
+                reload();
+
+                if (response.data.role === "Assistant") {
+                    setSelectedAssistant(response.data);
+                    setScopeDialogOpen(true);
+                }
+                console.log(response);
             })
-            .catch(e => {
-                console.error(e);
-            })
-            .finally(() => {});
+            .catch((error: AxiosError) => {
+                console.error(error);
+                showNotification("Nepodarilo sa pridať použivateľa", "error");
+            });
     }
     
-    const deleteUser = async (id: number) => {
-        console.log(id);
-        await api.delete('/users/' + id)
-            .then(res => {
-                console.log(res);
-                getUsers();
+    const DeleteUser = async (user: User) => {
+        await api.delete(`/users/${user.id}`)
+            .then(() => {
+                showNotification("Použivateľ bol vymazaný", "success");
             })
-            .catch(e => {
-                console.error(e);
+            .catch((error: AxiosError) => {
+                console.error(error);
+                showNotification("Nepodarilo sa vymazať použivateľa ", "error");
+            })
+            .finally(() => {
+                reload();
             })
     }
-    
-    useEffect(() => {
-        getUsers();
-    })
     
     return (
-        <Container maxWidth="md" sx={{ mt: 5 }}>
-            <h4>
-                Users
-            </h4>
-            <Card>
-                <CardContent>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Meno a priezvisko</TableCell>
-                                <TableCell>E-mail</TableCell>
-                                <TableCell align="right">Akcie</TableCell>
-                            </TableRow>
-                        </TableHead>
+        <>
+            <Box p={3}>
+                <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                >
+                    <Typography variant="h5">Použivatelia</Typography>
+                    <Search>
+                        <SearchIconWrapper>
+                            <SearchIcon />
+                        </SearchIconWrapper>
+                        <StyledInputBase
+                            placeholder="Search…"
+                            inputProps={{ 'aria-label': 'search' }}
+                            onChange={(e) => {
+                                setSearchString(e.target.value);
+                                reload();
+                            }}
+                        />
+                    </Search>
+                    <Box display="flex" gap={1}>
+                        <Button
+                            variant="contained"
+                            onClick={() => { setAddDialogOpen(true); }}
+                        >
+                            Pridať Použivateľa
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={() => { setImportUsersDialogOpen(true); }}
+                        >
+                            Import CSV
+                        </Button>
+                    </Box>
+                </Box>
+            </Box>
+            <TableContainer component={Card}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Názov</TableCell>
+                            <TableCell>Email</TableCell>
+                            <TableCell>Role</TableCell>
+                            <TableCell align="right">Akcie</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    {loading ? (
                         <TableBody>
-                            {users.map((user) => (
+                            <TableRow>
+                                <TableCell colSpan={10}>Načítavam...</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    ) : (
+                        <TableBody>
+                            {users.items.map((user: User) => (
                                 <TableRow key={user.id}>
                                     <TableCell>{user.fullname}</TableCell>
                                     <TableCell>{user.email}</TableCell>
+                                    <TableCell>{user.role}</TableCell>
                                     <TableCell align="right">
+                                        {user.role === "Assistant" && (
+                                            <IconButton onClick={() => {
+                                                setSelectedAssistant(user);
+                                                setScopeDialogOpen(true);
+                                            }}>
+                                                <ManageAccountsIcon />
+                                            </IconButton>
+                                        )}
+
+                                        <IconButton onClick={() => {
+                                            setSelectedUser(user);
+                                            setEditDialogOpen(true);
+                                        }}>
+                                            <EditIcon />
+                                        </IconButton>
+
                                         <IconButton
-                                            onClick={() => {
-                                                deleteUser(user.id)
-                                            }}
+                                            onClick={() => { DeleteUser(user) }}
                                         >
                                             <DeleteIcon />
                                         </IconButton>
@@ -76,21 +167,130 @@ const Users = () => {
                                 </TableRow>
                             ))}
                         </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-            
-            <h4>
-                Add Users
-            </h4>
-            <AddUserForm />
-            
-            <h4>
-                Import Users from CSV
-            </h4>
-            <ImportUsers />
-        </Container>
+                    )}
+                </Table>
+                <TablePagination
+                    component="div"
+                    count={users.totalCount}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    rowsPerPage={pageSize}
+                    onRowsPerPageChange={(e) => {
+                        setPageSize(parseInt(e.target.value, 10));
+                        setPage(0);
+                    }}
+                />
+            </TableContainer>
+            <AddUserDialog isOpen={isAddDialogOpen}
+                           onClose={()=> {
+                               setAddDialogOpen(false);
+                               reload();
+                           }}
+                           onSubmit={AddUser} />
+            <ImportUsersDialog isOpen={isImportUsersDialogOpen}
+                               onClose={()=> {
+                                   setImportUsersDialogOpen(false);
+                                   reload();
+                               }} />
+            <EditUserDialog
+                isOpen={isEditDialogOpen}
+                user={selectedUser}
+                onSubmit={async (updatedUser) => {
+                    try {
+                        await api.put(`/users/${updatedUser.id}`, {
+                            fullName: updatedUser.fullname,
+                            email: updatedUser.email,
+                            role: updatedUser.role
+                        });
+                        showNotification("Zmeny boli uložené", "success");
+
+                        if (updatedUser.role === "Assistant") {
+                            setSelectedAssistant(updatedUser);
+                            setScopeDialogOpen(true);
+                        }
+
+                        reload();
+                    } catch (error) {
+                        showNotification("Nepodarilo sa uložiť zmeny", "error");
+                    }
+                }}
+
+                onClose={() => setEditDialogOpen(false)}
+            />
+
+            <AssistantScopeDialog
+                open={isScopeDialogOpen}
+                user={selectedAssistant}
+                onClose={() => {
+                    setScopeDialogOpen(false);
+                    setSelectedAssistant(null);
+                }}
+            />
+
+        </>
     );
 }
 
 export default Users;
+
+const getUsers = (page: number, pageSize: number, search: string) => {
+    const [users, setUsers] = useState<PagedResult<User>>({ items: [], totalCount: 0 });
+    const [loading, setLoading] = useState(false);
+    
+    const getUsers = useCallback(async () => {
+        setLoading(true);
+        await api.get<PagedResult<User>>('/users', { params: { page: page, pageSize, search } })
+            .then(res => {
+                setUsers(res.data);
+            })
+            .catch(e => {
+                console.error(e);
+            })
+            .finally(() => setLoading(false));
+    }, [JSON.stringify({page: page, pageSize, search})]);
+    
+    useEffect(() => { getUsers(); }, [getUsers]);
+    
+    return { users, loading, reload: getUsers };
+}
+
+const Search = styled('div')(({ theme }) => ({
+    position: 'relative',
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    '&:hover': {
+        backgroundColor: alpha(theme.palette.common.white, 0.25),
+    },
+    marginRight: theme.spacing(2),
+    border: '1px solid #000000',
+    marginLeft: 0,
+    width: '100%',
+    [theme.breakpoints.up('sm')]: {
+        marginLeft: theme.spacing(3),
+        width: 'auto',
+    },
+}));
+
+const SearchIconWrapper = styled('div')(({ theme }) => ({
+    padding: theme.spacing(0, 2),
+    height: '100%',
+    position: 'absolute',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+    color: 'inherit',
+    '& .MuiInputBase-input': {
+        padding: theme.spacing(1, 1, 1, 0),
+        // vertical padding + font size from searchIcon
+        paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+        transition: theme.transitions.create('width'),
+        width: '100%',
+        [theme.breakpoints.up('md')]: {
+            width: '20ch',
+        },
+    },
+}));

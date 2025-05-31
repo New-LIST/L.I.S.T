@@ -1,62 +1,82 @@
-import { Box, Card, CardContent, Typography, Divider } from '@mui/material';
+import { Box, Card, CardContent, Typography, Divider, CircularProgress } from '@mui/material';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import api from "../../../../services/api";
+import { useNotification } from "../../../../shared/components/NotificationContext";
+import { Course } from "../../Types/Course.ts";
 
-const CourseDescription = () => {
-    const courseName = 'Operating Systems';
-    const term = 'Summer 2023/2024';
+type Props = {
+    overrideDescription?: string;
+};
+
+const CourseDescription = ({ overrideDescription }: Props) => {
+    const { id } = useParams();
+    const { showNotification } = useNotification();
+    const [course, setCourse] = useState<Course | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadCourse = async () => {
+            try {
+                const res = await api.get<Course>(`/courses/${id}`);
+                setCourse(res.data);
+            } catch {
+                showNotification("Nepodarilo sa načítať kurz.", "error");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadCourse();
+    }, [id]);
+
+    if (loading || !course) {
+        return <CircularProgress sx={{ mt: 4 }} />;
+    }
 
     return (
         <Box>
-            {}
             <Card sx={{ mb: 4 }}>
                 <CardContent>
                     <Typography variant="h5" fontWeight="bold">
-                        {courseName} / {term}
+                        {course.name} / {course.periodName}
                     </Typography>
                 </CardContent>
             </Card>
 
-            {}
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Course Description
+                        Popis kurzu
                     </Typography>
-                    <Typography paragraph>
-                        This course covers the fundamental concepts of operating systems design and implementation.
-                    </Typography>
-                    <Typography paragraph>
-                        Students will learn about process management, scheduling algorithms, memory management, file systems, and security.
-                    </Typography>
-
-                    <Divider sx={{ my: 2 }} />
-
-                    <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                        Course Information
-                    </Typography>
-                    <Box display="grid" gridTemplateColumns="1fr 2fr" rowGap={1}>
-                        <Typography color="text.secondary">Instructor:</Typography>
-                        <Typography>Pavel Petrovic</Typography>
-                        <Typography color="text.secondary">Credits:</Typography>
-                        <Typography>6</Typography>
-                        <Typography color="text.secondary">Semester:</Typography>
-                        <Typography>Summer 2023/2024</Typography>
-                        <Typography color="text.secondary">Schedule:</Typography>
-                        <Typography>Mon 10:00–11:30, Wed 14:00–15:30</Typography>
-                        <Typography color="text.secondary">Location:</Typography>
-                        <Typography>Building A, Room 305</Typography>
-                    </Box>
+                    <Box
+                        sx={{ mt: 1 }}
+                        dangerouslySetInnerHTML={{
+                            __html:
+                                overrideDescription ??
+                                course.description ??
+                                "<p>Žiadny popis nebol zadaný.</p>",
+                        }}
+                    />
 
                     <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                        Learning Outcomes
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        color="primary"
+                        gutterBottom
+                    >
+                        Informácie o kurze
                     </Typography>
-                    <ul style={{ paddingLeft: '1.5rem', marginTop: 0 }}>
-                        <li><Typography>Understand core OS concepts and principles</Typography></li>
-                        <li><Typography>Analyze various OS algorithms and their tradeoffs</Typography></li>
-                        <li><Typography>Design and implement basic OS components</Typography></li>
-                        <li><Typography>Apply theoretical knowledge to practical problems</Typography></li>
-                    </ul>
+                    <Box display="grid" gridTemplateColumns="1fr 2fr" rowGap={1}>
+                        <Typography color="text.secondary">Učiteľ:</Typography>
+                        <Typography>{course.teacherName}</Typography>
+                        <Typography color="text.secondary">Obdobie:</Typography>
+                        <Typography>{course.periodName}</Typography>
+                        <Typography color="text.secondary">Kapacita:</Typography>
+                        <Typography>{course.capacity}</Typography>
+                    </Box>
                 </CardContent>
             </Card>
         </Box>

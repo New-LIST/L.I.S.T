@@ -23,35 +23,29 @@ import CreateAssignmentPage from "../../Assignments/pages/CreateAssignmentPage.t
 import EditAssignmentPage from "../../Assignments/pages/EditAssignmentPage.tsx";
 import SelectTasksForAssignmentPage from "../../Assignments/pages/SelectTasksForAssignmentPage.tsx";
 import Participants from "../../Courses/Pages/Participants.tsx";
-import TestUpload from "../../Assignments/pages/TestUpload.tsx";
 import TeacherCourses from "../../Grading/pages/TeacherCourses.tsx";
 import GradeAssignments from "../../Grading/pages/GradeAssignments.tsx";
 import BulkGrade from "../../Grading/pages/BulkGrade.tsx";
 import GradeSolutions from "../../Grading/pages/GradeSolutions.tsx";
 import SolutionDetail from "../../Grading/pages/SolutionDetail.tsx";
 import GradeTable from "../../Grading/pages/GradeTable.tsx";
+import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
+import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer.tsx";
 
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/signin" element={<SignIn />} />
-      <Route
-        path="/student"
-        element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        }
-      >
-        <Route index element={<StudentCourses />} />
-        <Route path="courses/:id" element={<CourseDetail />}>
-          <Route index element={<CourseDescription />} />
-          <Route path="description" element={<CourseDescription />} />
-          <Route path="assignments" element={<Assignments />} />
-          <Route path="overview" element={<Overview />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="test" element={<TestUpload />} />
+        <Route path="/student" element={<RequireAuth><Dashboard /></RequireAuth>}>
+            <Route index element={<StudentCourses />} />
+            <Route path="courses/:id" element={<CourseDetail />}>
+                <Route index element={<CourseDescription />} />
+                <Route path="description" element={<CourseDescription />} />
+                <Route path="assignments" element={<Assignments />} />
+                <Route path="assignments/:assignmentId/tasks" element={<AssignmentTasksViewer />} />
+                <Route path="overview" element={<Overview />} />
+                <Route path="projects" element={<Projects />} />
         </Route>
       </Route>
       <Route
@@ -67,6 +61,8 @@ const AppRoutes = () => {
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
         <Route path="courses/:id/participants" element={<Participants />} />
+          <Route path="courses/:id/participants" element={<Participants />} />
+          <Route path="courses/:id/description" element={<CourseDescriptionEditor />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />
         <Route path="categories" element={<Categories />} />

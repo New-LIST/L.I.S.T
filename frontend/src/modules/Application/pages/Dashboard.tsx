@@ -4,25 +4,29 @@ import Header from "../components/Header.tsx";
 import Sidebar from "../components/Sidebar.tsx";
 import React, { useState } from 'react';
 import {Box} from "@mui/material";
+import { useTranslation } from 'react-i18next'
 
-const sidebarItems = [
-    { label: 'Kurzy', path: 'courses' },
-    { label: 'Obdobia', path: 'periods' },
-    { label: 'Kategórie', path: 'categories' },
-    { label: 'Používatelia', path: 'users' },
-    { label: 'Typy Zostav', path: 'task set types' },
-    { label: 'Úlohy', path: 'tasks' },
-    { label: 'Zadania', path: 'assignments'},
-    { label: 'Logy', path: 'logs'},
-    { label: 'Hodnotenie', path: 'grade'}
-    
-];
 const drawerWidth = 240;
 
 export default function Dashboard() {
     const [isPermanent, setIsPermanent] = useState(false);
     const user = getStoredUser();
     if (!user) return <Navigate to="/signin" replace />;
+    
+    const { t } = useTranslation();
+    
+    const sidebarItems = [
+        { label: t('Courses'), path: 'courses' },
+        { label: t('Periods'), path: 'periods' },
+        { label: t('Categories'), path: 'categories' },
+        { label: t('Users'), path: 'users' },
+        { label: t('Task Set Types'), path: 'task set types' },
+        { label: t('Tasks'), path: 'tasks' },
+        { label: t('Assignments'), path: 'assignments'},
+        { label: t('Logs'), path: 'logs'},
+        { label: t('Grading'), path: 'grade'},
+
+    ];
 
     const role = user.role?.toLowerCase();
 

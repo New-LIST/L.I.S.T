@@ -1,4 +1,5 @@
-using System.Text;
+﻿using System.Text;
+using List.Common.Models;
 using List.Users.DTOs;
 using List.Users.Models;
 using List.Users.Services;
@@ -13,16 +14,16 @@ namespace List.Users.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IEnumerable<User>> GetUsersAsync()
-    {
-        return await userService.GetUsersAsync();
-    }
-
     [HttpGet("teachers")]
     public async Task<IEnumerable<User>> GetTeachersAsync()
     {
         return await userService.GetTeachersAsync();
+    }
+
+    [HttpGet]
+    public async Task<PagedResult<User>> GetUserPageAsync(int page = 0, int pageSize = 100, string search = "")
+    {
+        return await userService.GetUsersByAsync(null, page, pageSize, search);
     }
 
     [HttpPost]
@@ -34,19 +35,46 @@ public class UsersController(IUserService userService) : ControllerBase
         var user = UserMapFromDto(userDto);
 
         var userExists = await userService.IsUserExistsAsync(user);
-        
-        if (!userExists && await userService.AddOrUpdateUserAsync(user))
-            return Created();
-        
-        return BadRequest();
+        if (userExists)
+            return BadRequest("Používateľ už existuje.");
+
+        var success = await userService.AddOrUpdateUserAsync(user);
+        if (!success)
+            return BadRequest("Nepodarilo sa vytvoriť používateľa.");
+
+        return Ok(user);
     }
-    
+
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UserUpdateDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var existingUser = await userService.GetUserAsync(id);
+        if (existingUser == null)
+            return NotFound();
+
+        existingUser.Fullname = dto.FullName;
+        existingUser.Email = dto.Email;
+        existingUser.Role = dto.Role;
+
+        var updated = await userService.UpdateUserAsync(existingUser);
+        if (updated)
+            return Ok();
+
+        return BadRequest("Nepodarilo sa upraviť používateľa.");
+    }
+
+
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteUserAsync(int id)
     {
         if (await userService.DeleteUserAsync(id))
             return Ok();
-        
+
         return BadRequest();
     }
 
@@ -60,13 +88,13 @@ public class UsersController(IUserService userService) : ControllerBase
         var csvParser = new CsvParser<CsvUserDto>(
             new CsvParserOptions(true, ';'),
             new CsvUserMapping());
-        
+
         var users = csvParser
             .ReadFromStream(file.OpenReadStream(), Encoding.UTF8)
             .Select(res => res.Result)
             .Select(UserMapFromCsv)
             .ToList();
-        
+
         var addedUsers = new List<User>();
 
         foreach (var user in users)
@@ -74,11 +102,8 @@ public class UsersController(IUserService userService) : ControllerBase
             if (await userService.AddOrUpdateUserAsync(user))
                 addedUsers.Add(user);
         }
-        
-        if (addedUsers.Count > 0)
-            return Created();
-        
-        return BadRequest("Failed to import users");
+
+        return Ok($"Created {addedUsers.Count} new users");
     }
 
     private static User UserMapFromDto(UserDto userDto) => new()

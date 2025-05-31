@@ -16,4 +16,5 @@ public class CourseReadDto
     public string? ImageUrl { get; set; }
 
     public int CurrentEnrollment { get; set; }
+    public string? Description { get; set; }
 }

@@ -26,7 +26,7 @@ import api from "../../../services/api";
 import TaskPreview from "../../Tasks/Components/TaskPreview";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
-import EmptyState from "../../../shared/components/EmptyState";
+import EmptyState from "../../../shared/components/EmptyState.tsx";
 
 type Props = {
   assignmentId: number;
@@ -118,22 +118,22 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId }) => {
   if (error) return <Alert severity="error">{error}</Alert>;
   if (rows.length === 0)
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        mt={4}
-        gap={2} // odsadenie medzi ikonou a tlačidlom
-      >
-        <EmptyState message="V tomto zadaní nie sú žiadne úlohy" />
-
-        <Button
-          variant="contained"
-          onClick={() => navigate(`/dash/assignments/${assignmentId}/tasks`)}
+        <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            mt={4}
+            gap={2} // odsadenie medzi ikonou a tlačidlom
         >
-          Pridať ďalšie úlohy
-        </Button>
-      </Box>
+          <EmptyState message="V tomto zadaní nie sú žiadne úlohy" />
+
+          <Button
+              variant="contained"
+              onClick={() => navigate(`/dash/assignments/${assignmentId}/tasks`)}
+          >
+            Pridať ďalšie úlohy
+          </Button>
+        </Box>
     );
 
   return (

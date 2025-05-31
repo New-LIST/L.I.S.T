@@ -1,3 +1,4 @@
+using List.Common.Models;
 using List.Users.Data;
 using List.Users.Models;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,25 @@ public class UserService(UsersDbContext context) : IUserService
         return await context.Users.ToListAsync();
     }
 
+    public async Task<PagedResult<User>> GetUsersByAsync(UserRole? userRole, int page, int pageSize, string search)
+    {
+        var searchString = search.ToLower();
+        return new() { Items = await context.Users
+            .Where(u => userRole == null || u.Role == userRole)
+            .Where(user => string.IsNullOrWhiteSpace(searchString)
+                           || user.Fullname.ToLower().Contains(searchString)
+                           || user.Email.ToLower().Contains(searchString))
+            .Skip((page) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(),
+            TotalCount = await context.Users.Where(u => userRole == null || u.Role == userRole)
+            .Where(user => string.IsNullOrWhiteSpace(searchString)
+                           || user.Fullname.ToLower().Contains(searchString)
+                           || user.Email.ToLower().Contains(searchString))
+            .CountAsync() 
+        };
+    }
+
     public async Task<User?> GetUserAsync(int userId)
     {
         return await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -18,8 +38,15 @@ public class UserService(UsersDbContext context) : IUserService
 
     public async Task<bool> AddOrUpdateUserAsync(User user)
     {
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        try
+        {
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+        catch
+        {
+            return false;
+        }
         return true;
     }
 
@@ -45,5 +72,19 @@ public class UserService(UsersDbContext context) : IUserService
         return await context.Users
         .Where(u => u.Role == 0)
         .ToListAsync();
+    }
+
+    public async Task<bool> UpdateUserAsync(User user)
+    {
+        try
+        {
+            context.Users.Update(user);
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
