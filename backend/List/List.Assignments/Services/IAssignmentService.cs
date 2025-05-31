@@ -18,5 +18,6 @@ public interface IAssignmentService
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
     Task<AssignmentModel?> DeleteAsync(int id);
     Task<bool> CanUploadSolutionAsync(int assignmentId);
+    Task<double?> CalculateMaxPoints(int assignmentId);
 
 }

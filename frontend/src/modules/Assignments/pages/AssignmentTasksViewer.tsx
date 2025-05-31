@@ -9,9 +9,9 @@ import {
     Divider
 } from "@mui/material";
 import api from "../../../services/api.ts";
-import TaskCard from "../../Tasks/Components/TaskCard.tsx";
 import AssignmentTaskPreview from "../components/AssignmentTaskPreview.tsx";
 import { AssignmentTaskRelSlim } from "../types/AssignmentTaskRelSlim.ts";
+import UploadSolutionForm from "../components/UploadSolutionForm.tsx";
 
 type AssignmentDetail = {
     name: string;
@@ -26,6 +26,9 @@ const AssignmentTasksViewer = () => {
     const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [canUpload, setCanUpload] = useState<boolean>(false);
+    const [loadingCanUpload, setLoadingCanUpload] = useState<boolean>(true);
+
     useEffect(() => {
         const fetch = async () => {
             try {
@@ -36,10 +39,17 @@ const AssignmentTasksViewer = () => {
                 // Získaj detail zadania
                 const assignmentRes = await api.get(`/assignments/${assignmentIdNumber}`);
                 setAssignment(assignmentRes.data);
+
+                const canUploadRes = await api.get<{ canUpload: boolean }>(
+                    `/assignments/${assignmentIdNumber}/canUpload`
+                );
+                setCanUpload(canUploadRes.data.canUpload);
+
             } catch (e) {
                 console.error("Nepodarilo sa načítať úlohy alebo zadanie", e);
             } finally {
                 setLoading(false);
+                setLoadingCanUpload(false);
             }
         };
         fetch();
@@ -86,6 +96,29 @@ const AssignmentTasksViewer = () => {
                                 bonus={rel.bonusTask}
                             />
                         ))
+                    )}
+
+                    {loadingCanUpload ? (
+                        // Kým čakáme na odpoveď z /canUpload
+                        <Box mt={4} textAlign="center">
+                            <CircularProgress />
+                        </Box>
+                    ) : canUpload ? (
+                        // Ak sa môže uploadovať: zobrazíme formu
+                        <Box mt={4}>
+                            <Divider sx={{ mb: 2 }} />
+                            <Typography variant="h6" gutterBottom>
+                                Odovzdanie riešenia
+                            </Typography>
+                            <UploadSolutionForm assignmentId={assignmentIdNumber} />
+                        </Box>
+                    ) : (
+                        // Ak už nie je možné uploadovať (napr. uploadSolution == false)
+                        <Box mt={4}>
+                            <Typography variant="body2" color="textSecondary">
+                                Toto zadanie už nie je možné odovzdať.
+                            </Typography>
+                        </Box>
                     )}
                 </CardContent>
             </Card>

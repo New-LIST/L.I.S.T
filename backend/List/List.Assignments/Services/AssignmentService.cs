@@ -212,28 +212,57 @@ public class AssignmentService : IAssignmentService
 
         return assignment;
     }
-    
+
     public async Task<bool> CanUploadSolutionAsync(int assignmentId)
+    {
+        // Vyberieme len stĺpec UploadSolution
+        var assignmentWithRel = await _dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Include(a => a.CourseTaskSetRel)    // načítame väzbu, ktorá obsahuje UploadSolution
+            .Select(a => new
+            {
+                a.Id,
+                UploadSolution = a.CourseTaskSetRel.UploadSolution
+            })
+            .FirstOrDefaultAsync();
+
+        if (assignmentWithRel == null)
         {
-            // Vyberieme len stĺpec UploadSolution
-            var assignmentWithRel = await _dbContext.Assignments
+            // Dané zadanie (assignmentId) neexistuje
+            return false;
+        }
+
+        return assignmentWithRel.UploadSolution;
+    }
+
+    public async Task<double?> CalculateMaxPoints(int assignmentId)
+    {
+        var assignment = await _dbContext.Assignments
                 .AsNoTracking()
                 .Where(a => a.Id == assignmentId)
-                .Include(a => a.CourseTaskSetRel)    // načítame väzbu, ktorá obsahuje UploadSolution
-                .Select(a => new 
-                { 
-                    a.Id, 
-                    UploadSolution = a.CourseTaskSetRel.UploadSolution 
+                .Select(a => new
+                {
+                    a.PointsOverride
                 })
                 .FirstOrDefaultAsync();
 
-            if (assignmentWithRel == null)
-            {
-                // Dané zadanie (assignmentId) neexistuje
-                return false;
-            }
-
-            return assignmentWithRel.UploadSolution;
+        if (assignment == null)
+        {
+            return null;
         }
 
+        if (assignment.PointsOverride.HasValue)
+        {
+            return assignment.PointsOverride.Value;
+        }
+
+        var sumPointsNullable = await _dbContext.AssignmentTaskRels
+                .AsNoTracking()
+                .Where(r => r.AssignmentId == assignmentId && !r.BonusTask)
+                .Select(r => (double?)r.PointsTotal)
+                .SumAsync();
+
+        return sumPointsNullable;
+    }
 }

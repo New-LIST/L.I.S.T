@@ -37,4 +37,5 @@ public interface ISubmissionService
     Task<SolutionInfoDto> GetSolutionInfoAsync(int assignmentId, int solutionId);
     Task<List<string>?> GetFilesListAsync(int solutionId, int version);
     Task<Stream?> GetFileContentAsync(int solutionId, int version, string filePath);
+    Task<List<StudentPointsDto>> GetStudentPointsForCourseAsync(int studentId, int courseId);
 }

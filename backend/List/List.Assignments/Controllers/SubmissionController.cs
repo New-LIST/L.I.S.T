@@ -49,10 +49,9 @@ public class SubmissionController : ControllerBase
         return Ok(version);
     }
 
-    [HttpPost("{solutionId}/versions")]
+    [HttpPost("~/api/solutions/{solutionId}/versions")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadVersionForSolution(
-            int assignmentId,
             int solutionId,
             [FromForm] IFormFile file
         )
@@ -73,9 +72,8 @@ public class SubmissionController : ControllerBase
     }
 
     // GET  /api/assignments/{assignmentId}/solutions/{solutionId}/versions
-    [HttpGet("{solutionId}/versions")]
+    [HttpGet("~/api/solutions/{solutionId}/versions")]
     public async Task<IActionResult> GetVersionsBySolutionId(
-        int assignmentId,
         int solutionId)
     {
         // voliteľne overenie: riešenie patrí pod assignment
@@ -91,8 +89,8 @@ public class SubmissionController : ControllerBase
         return File(zipStream, "application/zip", fileName);
     }
 
-    [HttpGet("{solutionId}/download-all-versions")]
-    public async Task<IActionResult> DownloadAllVersions(int assignmentId, int solutionId)
+    [HttpGet("~/api/solutions/{solutionId}/download-all-versions")]
+    public async Task<IActionResult> DownloadAllVersions(int solutionId)
     {
         var ms = await _svc.DownloadAllVersionsAsync(solutionId);
         return File(
@@ -167,15 +165,15 @@ public class SubmissionController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("{solutionId}/versions/{version}/files")]
-    public async Task<IActionResult> ListFiles(int assignmentId, int solutionId, int version)
+    [HttpGet("~/api/solutions/{solutionId}/versions/{version}/files")]
+    public async Task<IActionResult> ListFiles(int solutionId, int version)
     {
         var names = await _svc.GetFilesListAsync(solutionId, version);
         if (names == null) return NotFound();
         return Ok(names);
     }
 
-    [HttpGet("{solutionId}/versions/{version}/files/{*filePath}")]
+    [HttpGet("~/api/solutions/{solutionId}/versions/{version}/files/{*filePath}")]
     public async Task<IActionResult> GetFile(
         int assignmentId, int solutionId, int version, string filePath)
     {
@@ -189,5 +187,21 @@ public class SubmissionController : ControllerBase
 
         // Teraz pošleme stream spolu s určeným contentType
         return File(content, contentType);
+    }
+
+    [HttpGet("~/api/solutions/courses/{courseId}/student-points")]
+    public async Task<IActionResult> GetStudentPointsForCourse(int courseId)
+    {
+        // 1) Overenie identity študenta cez ClaimTypes.NameIdentifier
+        var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (claim == null)
+            return BadRequest("Chýba identifikátor študenta.");
+        var studentId = int.Parse(claim.Value);
+        
+        // 2) Zavoláme službu
+        List<StudentPointsDto> list = await _svc.GetStudentPointsForCourseAsync(studentId, courseId);
+
+        // 3) Vrátime výsledok (môže byť aj prázdny zoznam, ak nemá riešenie)
+        return Ok(list);
     }
 }

@@ -634,5 +634,22 @@ public class SubmissionService : ISubmissionService
         return ms;
     }
 
+    public async Task<List<StudentPointsDto>> GetStudentPointsForCourseAsync(int studentId, int courseId)
+    {
+        // 1) Spojíme tabuľky SolutionModel a AssignmentModel, aby sme filtrovali podľa courseId a studentId
+        // 2) Vyberieme assignmentId a points
+        var list = await _db.Solutions
+                .AsNoTracking()
+                .Where(s => s.StudentId == studentId && s.Assignment.CourseId == courseId)
+                .Select(s => new StudentPointsDto
+                {
+                    AssignmentId = s.AssignmentId,
+                    Points = s.Points
+                })
+                .ToListAsync();
+
+            return list;
+    }
+
 
 }
