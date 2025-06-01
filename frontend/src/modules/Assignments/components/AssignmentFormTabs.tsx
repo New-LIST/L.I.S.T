@@ -6,6 +6,8 @@ import AssignmentFormTasks from "./AssignmentFormTasks";
 import AssignmentPreview from "./AssignmentPreview";
 import { Assignment } from "../types/Assignment";
 import { useNotification } from "../../../shared/components/NotificationContext";
+import api from "../../../services/api";
+
 
 
 type Props = {
@@ -19,13 +21,34 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
   const [assignmentId, setAssignmentId] = useState<number | null>(
     assignment?.id ?? null
   );
+  const [assignmentData, setAssignmentData] = useState<Assignment | null>(
+    assignment ?? null
+  );
 
   // keď sa načíta defaultValues (pri editácii), nastavíme ID
   useEffect(() => {
-    if (assignment?.id) {
-      setAssignmentId(assignment.id);
+    if (assignment) {
+      setAssignmentData(assignment);
     }
   }, [assignment]);
+
+  useEffect(() => {
+    if (assignmentData?.id) {
+      setAssignmentId(assignmentData.id);
+    }
+  }, [assignmentData]);
+
+  const handleUpdated = async () => {
+    if (!assignmentData?.id) return;
+
+    try {
+      const res = await api.get<Assignment>(`/assignments/${assignmentData.id}`);
+      setAssignmentData(res.data);
+      showNotification("Zadanie sa načítalo po úprave", "success");
+    } catch {
+      showNotification("Nepodarilo sa načítať aktualizované zadanie.", "error");
+    }
+  };
 
   // handler pre vytvorenie nového assignmentu
   const handleCreated = (id: number) => {
@@ -54,7 +77,8 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
         {activeTab === 0 && (
           <AssignmentFormInfo
             onCreated={handleCreated}
-            defaultValues={assignment}
+            defaultValues={assignmentData ?? undefined}
+            onUpdated={handleUpdated}
           />
         )}
         {activeTab === 1 && assignmentId !== null && (

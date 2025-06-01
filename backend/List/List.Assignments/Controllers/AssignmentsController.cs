@@ -4,7 +4,10 @@ using List.Assignments.DTOs;
 using List.Common.Models;
 
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using List.Common.Files;
+
 
 namespace List.Assignments.Controllers;
 
@@ -68,7 +71,7 @@ public class AssignmentsController : ControllerBase
             return BadRequest("Chýba identifikátor učiteľa.");
         var teacherId = int.Parse(claim.Value);
 
-        var createdAssignment = await _assignmentService.CreateAsync(dto);
+        var createdAssignment = await _assignmentService.CreateAsync(dto, teacherId);
         return Ok(new { id = createdAssignment.Id, name = createdAssignment.Name });
     }
 
@@ -140,5 +143,19 @@ public class AssignmentsController : ControllerBase
         // Potom vrátime hodnotu UploadSolution (true/false)
         var maxPoints = await _assignmentService.CalculateMaxPoints(id);
         return Ok(maxPoints);
+    }
+
+    [HttpPost("upload-image")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var relativePath = await fileStorageService.SaveFileAsync(file, "assignments"); // saves to /uploads/tasks
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var url = $"{baseUrl}/{relativePath.Replace("\\", "/")}";
+
+        return Ok(new { location = url });
     }
 }

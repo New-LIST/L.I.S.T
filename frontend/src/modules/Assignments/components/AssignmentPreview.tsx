@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../services/api";
-import { Paper, CircularProgress, Typography, Divider } from "@mui/material";
+import { Paper, CircularProgress, Typography, Divider, Box } from "@mui/material";
 import AssignmentTaskPreview from "./AssignmentTaskPreview";
 import { AssignmentTaskForPreview } from "../types/AssignmentTaskForPreview";
 
@@ -54,9 +54,13 @@ const AssignmentPreview: React.FC<Props> = ({ assignmentId }) => {
       {instructions && (
         <>
           <Divider sx={{ mt: 2, mb: 2 }} />
-          <Typography variant="body1" paragraph>
-            {instructions}
-          </Typography>
+          <Box
+                sx={{
+                    '& img': { maxWidth: '100%' },
+                    '& p': { mb: 1.5 },
+                }}
+                dangerouslySetInnerHTML={{ __html: instructions }}
+            />
         </>
       )}
 

@@ -15,13 +15,25 @@ import { Course } from "../../Courses/Types/Course";
 import { TaskSetType } from "../../TaskSets/Types/TaskSetType";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import { Assignment } from "../types/Assignment";
+import { Editor } from "@tinymce/tinymce-react";
+import "tinymce/tinymce";
+import "tinymce/themes/silver/theme";
+import "tinymce/icons/default/icons";
+import "tinymce/models/dom/model";
+
+import "tinymce/plugins/link";
+import "tinymce/plugins/lists";
+import "tinymce/plugins/code";
+import "tinymce/plugins/image";
+import "tinymce/plugins/table";
 
 type Props = {
   onCreated: (id: number) => void;
   defaultValues?: Assignment;
+  onUpdated?: () => void; 
 };
 
-const AssignmentFormInfo = ({ onCreated, defaultValues }: Props) => {
+const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
   // inicializácia stavu z defaultValues alebo prázdne
   const [name, setName] = useState(defaultValues?.name ?? "");
   const [courseId, setCourseId] = useState<number | "">("");
@@ -83,6 +95,31 @@ const AssignmentFormInfo = ({ onCreated, defaultValues }: Props) => {
       return;
     }
 
+    let updatedInstructions = instructions;
+    const matches = [
+      ...instructions.matchAll(
+        /<img[^>]+src=["'](data:image\/[^"']+)["'][^>]*>/g
+      ),
+    ];
+
+    for (const match of matches) {
+      const base64Data = match[1];
+
+      const blob = await (await fetch(base64Data)).blob();
+      const formData = new FormData();
+      formData.append("file", blob, "image.png");
+
+      // Predpokladám, že endpoint na upload obrázkov máš rovnaký:
+      const response = await api.post("/assignments/upload-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
+
+      const { location } = response.data;
+      // nahradíme v celom HTML TinyMCE obsah URL adresou nahratého obrázka
+      updatedInstructions = updatedInstructions.replace(base64Data, location);
+    }
+
     const dto = {
       name,
       courseId,
@@ -99,11 +136,15 @@ const AssignmentFormInfo = ({ onCreated, defaultValues }: Props) => {
       instructions: instructions.trim() ? instructions : null,
       internalComment: internalComment.trim() ? internalComment : null,
     };
-
+    console.log(defaultValues?.id);
     if (defaultValues?.id) {
       // PUT pre editáciu
       await api.put(`/assignments/${defaultValues.id}`, dto);
       showNotification("Zostava upravená", "success");
+      if (onUpdated) {
+        onUpdated();
+      }
+
     } else {
       // POST pre vytvorenie
       const res = await api.post("/assignments", dto);
@@ -192,14 +233,51 @@ const AssignmentFormInfo = ({ onCreated, defaultValues }: Props) => {
         fullWidth
       />
 
-      <TextField
-        label="Inštrukcie"
-        value={instructions}
-        onChange={(e) => setInstructions(e.target.value)}
-        multiline
-        rows={3}
-        fullWidth
-      />
+      <Box>
+        <Editor
+          value={instructions}
+          onEditorChange={(content) => setInstructions(content)}
+          init={{
+            height: 400,
+            menubar: false,
+            plugins: "lists link image table code",
+            toolbar:
+              "undo redo | fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist outdent indent | link image | table | code ",
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+            font_formats:
+              "Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Verdana=verdana,geneva,sans-serif; Times New Roman=times new roman,times,serif;",
+            content_style:
+              "body { font-family:Roboto,Arial,sans-serif; font-size:14px }",
+            skin_url: "/tinymce/skins/ui/oxide",
+            content_css: "/tinymce/skins/content/default/content.css",
+            license_key: "gpl",
+            model: "dom",
+
+            file_picker_types: "image",
+            file_picker_callback: (callback, value, meta) => {
+              if (meta.filetype === "image") {
+                const input = document.createElement("input");
+                input.setAttribute("type", "file");
+                input.setAttribute("accept", "image/*");
+
+                input.onchange = function () {
+                  const file = (this as HTMLInputElement).files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function () {
+                      const base64 = reader.result as string;
+                      callback(base64, { title: file.name });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                };
+
+                input.click();
+              }
+            },
+          }}
+        />
+      </Box>
 
       <TextField
         label="Interný komentár"
