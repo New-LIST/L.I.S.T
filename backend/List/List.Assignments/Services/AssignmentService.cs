@@ -90,7 +90,7 @@ public class AssignmentService : IAssignmentService
 
 
 
-    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto)
+    public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, int teacherId)
     {
         var assignment = new AssignmentModel
         {
@@ -105,7 +105,7 @@ public class AssignmentService : IAssignmentService
             Instructions = assignmentDto.Instructions,
             PointsOverride = assignmentDto.PointsOverride,
             InternalComment = assignmentDto.InternalComment,
-            TeacherId = assignmentDto.TeacherId
+            TeacherId = teacherId,
         };
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();

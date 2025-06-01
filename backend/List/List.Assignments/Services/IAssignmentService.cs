@@ -13,7 +13,7 @@ public interface IAssignmentService
 
     Task<AssignmentNameDto?> GetAssignmentNameAsync(int assignmentId);
     Task<List<AssignmentModel>> GetByCourseAsync(int courseId);
-    Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto);
+    Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, int teacherId);
     Task<AssignmentModel> CloneAsync(int id);
     Task<AssignmentModel?> UpdateAsync(int id, CreateAssignmentDto updatedAssignmentDto);
     Task<AssignmentModel?> DeleteAsync(int id);
