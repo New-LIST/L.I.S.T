@@ -375,10 +375,9 @@ const GradeTable: React.FC = () => {
                     ) {
                       const pts = s.points[c.assignmentId];
                       const solId = solutionsMap[c.assignmentId]?.[s.studentId];
-                      content =
-                        pts == null ? (
-                          "–"
-                        ) : (
+                      if (solId != null) {
+                        // CHANGED: zobraziť tlačidlo, ak existuje riešenie
+                        content = (
                           <Button
                             size="small"
                             style={{ justifyContent: "flex-start" }}
@@ -388,9 +387,14 @@ const GradeTable: React.FC = () => {
                               )
                             }
                           >
-                            {formatNum(pts)}
+                            {pts == null // CHANGED: ak sú pts null, zobrazím pomlčku
+                              ? "–"
+                              : formatNum(pts)}
                           </Button>
                         );
+                      } else {
+                        content = "–"; // CHANGED: ak riešenie neexistuje, ostáva pomlčka
+                      }
                     } else if (c.type === "grand") {
                       const total = calcGrandTotal(s, matrix.types);
                       cellSx.fontWeight = "bold";
