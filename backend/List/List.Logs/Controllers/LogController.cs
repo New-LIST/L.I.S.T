@@ -13,11 +13,12 @@ public class LogController(ILogService logService) : ControllerBase
     public async Task<ActionResult<PagedResult<ActivityLogDto>>> GetLogs(
     int page = 1,
     int pageSize = 100,
-    string? filter = null,
+    string? textFilter = null,
+    string? userFilter = null,
     string sort = "timestamp",
     bool desc = true)
     {
-        var result = await logService.GetPagedAsync(page, pageSize, filter);
+        var result = await logService.GetPagedAsync(page, pageSize, textFilter, userFilter);
         return Ok(result);
     }
 

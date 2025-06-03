@@ -6,4 +6,5 @@ export type Log = {
     targetName: string;
     timestamp: string;
     ipAdress: string;
+    text: string;
 }

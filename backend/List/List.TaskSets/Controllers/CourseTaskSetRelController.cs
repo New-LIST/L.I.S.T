@@ -42,7 +42,7 @@ public class CourseTaskSetRelController : ControllerBase
     {
         var created = await _service.CreateAsync(dto);
         return created != null
-        ? Ok(new { id = created.Id, name = $"Zostava v course s id = {created.CourseId} s task_set_type_id = {created.TaskSetTypeId}" })
+        ? Ok()
         : NotFound();
     }
 
@@ -53,7 +53,7 @@ public class CourseTaskSetRelController : ControllerBase
 
         var updated = await _service.UpdateAsync(id, dto);
         return updated != null
-            ? Ok(new { id = updated.Id, name = $"Zostava v course s id = {updated.CourseId} s task_set_type_id = {updated.TaskSetTypeId}" })
+            ? Ok()
             : NotFound();
     }
 
@@ -62,7 +62,7 @@ public class CourseTaskSetRelController : ControllerBase
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted != null
-            ? Ok(new { id = deleted.Id, name = $"Zostava v course s id = {deleted.CourseId} s task_set_type_id = {deleted.TaskSetTypeId}" })
+            ? Ok()
             : NotFound();
     }
 
