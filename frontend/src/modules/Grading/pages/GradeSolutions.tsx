@@ -150,7 +150,7 @@ const GradeSolutions: React.FC = () => {
       </Typography>
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Manuálne vytvoriť riešenie</Typography>
+          <Typography>Manuálne vytvoriť záznam</Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ py: 1, px: 2 }}>
   {availableStudents.length === 0 ? (
@@ -261,7 +261,7 @@ const GradeSolutions: React.FC = () => {
                         form.append("comment", "");
                         try {
                           await api.post(
-                            `/assignments/${assignmentId}/solutions/${row.solutionId}/versions`,
+                            `/solutions/${row.solutionId}/versions`,
                             form,
                             {
                               headers: {
