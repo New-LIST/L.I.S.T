@@ -17,14 +17,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace List.Assignments.Services;
 
-public class SubmissionService : ISubmissionService
+public class EvaluationService : IEvaluationService
 {
     private readonly AssignmentsDbContext _db;
 
     private readonly CoursesDbContext _coursesDb;
     private readonly IFileStorageService _files;
 
-    public SubmissionService(AssignmentsDbContext db, CoursesDbContext coursesDb, IFileStorageService files)
+    public EvaluationService(AssignmentsDbContext db, CoursesDbContext coursesDb, IFileStorageService files)
     {
         _db = db;
         _coursesDb = coursesDb;
@@ -487,7 +487,7 @@ public class SubmissionService : ISubmissionService
     }
 
 
-    public async Task<List<SubmissionOverviewDto>> GetSubmissionOverviewsAsync(int assignmentId)
+    public async Task<List<SubmissionOverviewDto>> GetEvaluationOverviewsAsync(int assignmentId)
     {
         // 1) Načítaj assignment, aby si mal courseId
         var assignment = await _db.Assignments

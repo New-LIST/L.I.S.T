@@ -13,11 +13,11 @@ namespace List.Assignments.Controllers;
 
 [ApiController]
 [Route("api/assignments/{assignmentId}/solutions")]
-public class SubmissionController : ControllerBase
+public class EvaluationController : ControllerBase
 {
-    private readonly ISubmissionService _svc;
+    private readonly IEvaluationService _svc;
 
-    public SubmissionController(ISubmissionService svc)
+    public EvaluationController(IEvaluationService svc)
     {
         _svc = svc;
     }
@@ -135,7 +135,7 @@ public class SubmissionController : ControllerBase
     [HttpGet("grade")]
     public async Task<IActionResult> GetSolutionsForGrading(int assignmentId)
     {
-        var list = await _svc.GetSubmissionOverviewsAsync(assignmentId);
+        var list = await _svc.GetEvaluationOverviewsAsync(assignmentId);
         return Ok(list);
     }
 

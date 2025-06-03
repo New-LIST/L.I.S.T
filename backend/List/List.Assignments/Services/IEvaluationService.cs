@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace List.Assignments.Services;
 
-public interface ISubmissionService
+public interface IEvaluationService
 {
     Task<SolutionVersionDto> AddVersionAsync(
         int assignmentId,
@@ -32,7 +32,7 @@ public interface ISubmissionService
     Task UpdateSolutionInfoAsync(int assignmentId, int solutionId, SolutionInfoDto dto);
     Task<List<BulkGradeItemDto>> GetBulkGradeItemsAsync(int assignmentId);
     Task SaveBulkGradesAsync(int assignmentId, List<BulkGradeSaveDto> items);
-    Task<List<SubmissionOverviewDto>> GetSubmissionOverviewsAsync(int assignmentId);
+    Task<List<SubmissionOverviewDto>> GetEvaluationOverviewsAsync(int assignmentId);
     Task<EvaluationHeaderDto> GetEvaluationHeaderAsync(int assignmentId, int solutionId);
     Task<SolutionInfoDto> GetSolutionInfoAsync(int assignmentId, int solutionId);
     Task<List<string>?> GetFilesListAsync(int solutionId, int version);
