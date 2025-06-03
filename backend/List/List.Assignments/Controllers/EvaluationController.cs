@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
+using List.Logs.Services;
 
 
 namespace List.Assignments.Controllers;
@@ -16,10 +17,12 @@ namespace List.Assignments.Controllers;
 public class EvaluationController : ControllerBase
 {
     private readonly IEvaluationService _svc;
+    private readonly ILogService _log;
 
-    public EvaluationController(IEvaluationService svc)
+    public EvaluationController(IEvaluationService svc, ILogService log)
     {
         _svc = svc;
+        _log = log;
     }
 
     [HttpPost("versions")]
@@ -35,7 +38,6 @@ public class EvaluationController : ControllerBase
         if (claim == null)
             return BadRequest("Chýba identifikátor študenta.");
         var studentId = int.Parse(claim.Value);
-
         var remoteIp = HttpContext.GetClientIpAddress();
 
 
@@ -46,6 +48,16 @@ public class EvaluationController : ControllerBase
             remoteIp,
             comment
         );
+        var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "neznámy";
+        await _log.LogAsync(
+    userName,
+    "POST",
+    "solution",
+    version.Id,
+    version.AssignmentName,
+    remoteIp,
+    $"Študent {version.StudentName} odovzdal riešenie k zadaniu \"{version.AssignmentName}\""
+);
         return Ok(version);
     }
 
@@ -61,6 +73,17 @@ public class EvaluationController : ControllerBase
             solutionId,
             file
         );
+        var teacherName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "neznámy";
+        var ip = HttpContext.GetClientIpAddress();
+        await _log.LogAsync(
+    teacherName,
+    "POST",
+    "solution",
+    dto.Id,
+    dto.AssignmentName,
+    ip,
+    $"Učiteľ {teacherName} nahral riešenie za študenta {dto.StudentName} k zadaniu \"{dto.AssignmentName}\""
+);
         return Ok(dto);
     }
 
@@ -197,7 +220,7 @@ public class EvaluationController : ControllerBase
         if (claim == null)
             return BadRequest("Chýba identifikátor študenta.");
         var studentId = int.Parse(claim.Value);
-        
+
         // 2) Zavoláme službu
         List<StudentPointsDto> list = await _svc.GetStudentPointsForCourseAsync(studentId, courseId);
 

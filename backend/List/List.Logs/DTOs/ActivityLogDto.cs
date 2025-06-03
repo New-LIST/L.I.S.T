@@ -9,6 +9,7 @@ public class ActivityLogDto
     public string? TargetName { get; set; }
     public string? IpAdress { get; set; }
     public DateTime Timestamp { get; set; }
+    public string? Text { get; set; }
 
     
 }

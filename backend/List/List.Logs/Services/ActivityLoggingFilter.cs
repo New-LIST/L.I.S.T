@@ -42,6 +42,6 @@ public class ActivityLoggingFilter : IActionFilter
         var pathSegments = context.HttpContext.Request.Path.ToString().ToLower().Split('/');
         var target = pathSegments.LastOrDefault(s => !string.IsNullOrWhiteSpace(s) && !int.TryParse(s, out _)) ?? "unknown";
 
-        _ = _logService.LogAsync(userId, method == "PUT" ? "UPDATE" : method, target, id.Value, name, ipAddress);
+        _ = _logService.LogAsync(userId, method == "PUT" ? "UPDATE" : method, target, id.Value, name, ipAddress, null);
     }
 }

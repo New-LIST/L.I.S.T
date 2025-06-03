@@ -9,6 +9,8 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using List.Common.Utils;
+using List.Logs.Services;
 
 namespace List.Users.Controllers
 {
@@ -18,11 +20,14 @@ namespace List.Users.Controllers
     {
         private readonly UsersDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogService _logService;
 
-        public AuthController(UsersDbContext context, IConfiguration configuration)
+
+        public AuthController(UsersDbContext context, IConfiguration configuration, ILogService logService)
         {
             _context = context;
             _configuration = configuration;
+            _logService = logService;
         }
 
         [HttpPost("register")]
@@ -78,6 +83,17 @@ namespace List.Users.Controllers
 
             var expireHours = request.RememberMe ? 336 : 24; // 14 days if remember me was ticked
             var token = GenerateJwtToken(user, expireHours);
+
+            var roleText = user.Role switch
+            {
+                UserRole.Teacher => "Učiteľ",
+                UserRole.Assistant => "Asistent",
+                _ => "Študent"
+            };
+
+            var ip = HttpContext.GetClientIpAddress();
+            await _logService.LogAsync(user.Fullname, "LOGIN", "auth", user.Id, user.Fullname, ip, $"{roleText} {user.Fullname} sa prihlásil do systému");
+
             return Ok(new
             {
                 message = "Login successful",

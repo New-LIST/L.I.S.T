@@ -29,4 +29,7 @@ public class ActivityLog
 
     [Column("created")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    [Column("text")]
+    public string? Text { get; set; }
 }

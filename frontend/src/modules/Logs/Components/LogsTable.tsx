@@ -15,6 +15,7 @@ import {
   DialogContentText,
   CircularProgress,
   IconButton,
+  Box,
 } from "@mui/material";
 import api from "../../../services/api";
 import { Log } from "../Types/Log";
@@ -27,6 +28,7 @@ export default function LogsTable() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [filter, setFilter] = useState("");
+  const [userFilter, setUserFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
 
@@ -37,7 +39,8 @@ export default function LogsTable() {
         params: {
           page: page + 1,
           pageSize: rowsPerPage,
-          filter: filter || undefined,
+          textfilter: filter || undefined,
+          userFilter: userFilter || undefined,
         },
       });
       setLogs(response.data.items);
@@ -49,7 +52,7 @@ export default function LogsTable() {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, rowsPerPage, filter]);
+  }, [page, rowsPerPage, filter, userFilter]);
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -68,46 +71,28 @@ export default function LogsTable() {
     setSelectedLog(null);
   };
 
-  const getActionText = (action: string) => {
-    switch (action) {
-      case "POST":
-        return "pridal";
-      case "UPDATE":
-        return "upravil";
-      case "DELETE":
-        return "odstránil";
-      default:
-        return action.toLowerCase();
-    }
-  };
-
-  const getTargetText = (target: string) => {
-    switch (target) {
-      case "courses":
-        return "course";
-      case "periods":
-        return "period";
-      case "course-task-set-rel":
-        return "zostavu v kurze";
-      case "tasks":
-        return "task";
-      default:
-        return target.toLowerCase();
-    }
-  };
-
   return (
     <Paper sx={{ p: 2 }}>
-      <TextField
-        label="Filter"
-        value={filter}
-        onChange={(e) => {
-          setFilter(e.target.value);
-          setPage(0);
-        }}
-        fullWidth
-        sx={{ mb: 2 }}
-      />
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+        <TextField
+          label="Filtrovať podľa textu"
+          value={filter}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setPage(0);
+          }}
+          fullWidth
+        />
+        <TextField
+          label="Filtrovať podľa používateľa"
+          value={userFilter}
+          onChange={(e) => {
+            setUserFilter(e.target.value);
+            setPage(0);
+          }}
+          fullWidth
+        />
+      </Box>
 
       {loading ? (
         <CircularProgress />
@@ -124,11 +109,7 @@ export default function LogsTable() {
               <TableBody>
                 {logs.map((log, index) => (
                   <TableRow key={index}>
-                    <TableCell>
-                      {`${log.userId} ${getActionText(log.action)} ${
-                        getTargetText(log.target)
-                      } s názvom "${log.targetName ?? "(bez názvu)"}"`}
-                    </TableCell>
+                    <TableCell>{log.text}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         onClick={() => handleOpenDialog(log)}
@@ -159,6 +140,9 @@ export default function LogsTable() {
         <DialogContent>
           {selectedLog && (
             <DialogContentText component="div">
+              <div style={{ marginBottom: "1em" }}>
+                <strong>Popis:</strong> {selectedLog.text}
+              </div>
               <div>
                 <strong>Id:</strong> {selectedLog.targetId}
               </div>
@@ -183,8 +167,7 @@ export default function LogsTable() {
                 {new Date(selectedLog.timestamp).toLocaleString()}
               </div>
               <div>
-                <strong>IpAdress:</strong>{" "}
-                {selectedLog.ipAdress ?? "unknown"}
+                <strong>IpAdress:</strong> {selectedLog.ipAdress ?? "unknown"}
               </div>
             </DialogContentText>
           )}

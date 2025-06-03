@@ -148,7 +148,9 @@ public class EvaluationService : IEvaluationService
         {
             Id = ver.Id,
             Version = ver.Version,
-            StorageKey = ver.StorageKey
+            StorageKey = ver.StorageKey,
+            AssignmentName = solution.Assignment.Name,
+            StudentName = solution.Student.Fullname
         };
     }
 
@@ -233,7 +235,9 @@ public class EvaluationService : IEvaluationService
         {
             Id = ver.Id,
             Version = ver.Version,
-            StorageKey = ver.StorageKey
+            StorageKey = ver.StorageKey,
+            AssignmentName = solution.Assignment.Name,
+            StudentName = solution.Student.Fullname
         };
     }
 
@@ -648,7 +652,7 @@ public class EvaluationService : IEvaluationService
                 })
                 .ToListAsync();
 
-            return list;
+        return list;
     }
 
 
