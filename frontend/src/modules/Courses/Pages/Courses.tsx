@@ -343,13 +343,30 @@ const Courses = () => {
                         >
                           <EditIcon />
                         </IconButton>
+
                         <IconButton
-                          onClick={() => {
-                            setCourseToDelete(course);
-                            setConfirmOpen(true);
-                          }}
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/description`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
                         >
-                          <DeleteIcon />
+                          <InfoIcon />
+                        </IconButton>
+                        <IconButton
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/participants`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
+                        >
+                          <GroupIcon />
                         </IconButton>
                         <IconButton
                             onClick={() =>
@@ -364,29 +381,12 @@ const Courses = () => {
                           <AssignmentIcon />
                         </IconButton>
                         <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/participants`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
+                            onClick={() => {
+                              setCourseToDelete(course);
+                              setConfirmOpen(true);
+                            }}
                         >
-                          <GroupIcon />
-                        </IconButton>
-
-                        <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/description`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
-                        >
-                          <InfoIcon />
+                          <DeleteIcon />
                         </IconButton>
                       </Box>
                     </TableCell>
