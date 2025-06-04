@@ -1,79 +1,198 @@
 using List.TaskSets.Formula.Nodes;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 
-namespace List.TaskSets.Formula;
-
-public class FormulaExpressionParser
+namespace List.TaskSets.Formula
 {
-    public FormulaNode Parse(string input)
+    /// <summary>
+    ///    Parsuje výraz s podporou:
+    ///      - súčtu a odčítania (+, -) 
+    ///      - násobenia a delenia (*, /) 
+    ///      - premenných typu “~X” (VariableNode)
+    ///      - premenných typu “$X” (MaxVariableNode)
+    ///      - konštánt (ConstantNode)
+    ///      - zátvoriek “( … )”
+    /// 
+    ///    Výraz má gramatiku:
+    ///      Expression := Term { ("+" | "-") Term }
+    ///      Term       := Factor { ("*" | "/") Factor }
+    ///      Factor     := "~"<IDENT> 
+    ///                  | "$"<IDENT> 
+    ///                  | <číslo> 
+    ///                  | "(" Expression ")"
+    /// 
+    ///    Pri volaní Parse(“( ~DU + ~KV ) / ( $DU + $KV ) ”) 
+    ///    dostaneme AST, ktoré korektne zodpovedá 
+    ///    ( (DU + KV) / (Max(DU) + Max(KV)) ).
+    /// </summary>
+    public class FormulaExpressionParser
     {
-        var tokens = Tokenize(input);
-        var node = ParseTokens(tokens);
-        return node;
-    }
+        private List<string> _tokens = new();
+        private int _pos;
 
-    private List<string> Tokenize(string input)
-    {
-        return input
-            .Replace("(", " ( ")
-            .Replace(")", " ) ")
-            .Split(" ", StringSplitOptions.RemoveEmptyEntries)
-            .ToList();
-    }
-
-    private FormulaNode ParseTokens(List<string> tokens)
-    {
-        var stack = new Stack<FormulaNode>();
-        var opStack = new Stack<string>();
-
-        foreach (var token in tokens)
+        /// <summary>
+        ///   Hlavná metóda na volanie — vráti koreň AST pre daný reťazec.
+        /// </summary>
+        public FormulaNode Parse(string input)
         {
-            if (token == "(" || token == ")") continue;
+            _tokens = Tokenize(input);
+            _pos = 0;
+            var root = ParseExpression();
 
-            if (IsOperator(token))
+            if (_pos < _tokens.Count)
             {
-                opStack.Push(token);
-            }
-            else if (token.StartsWith("~"))
-            {
-                var varName = token[1..];
-                stack.Push(new VariableNode { Name = varName });
-            }
-            else if (token.StartsWith("$"))
-            {
-                var varName = token[1..];
-                stack.Push(new MaxVariableNode { Name = varName });
-            }
-            else if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
-            {
-                stack.Push(new ConstantNode { Value = number });
-            }
-            else
-            {
-                throw new Exception($"Neznámy token: {token}");
+                throw new Exception($"Neplatný výraz – zvyšné tokeny od indexu {_pos}: “{string.Join(" ", _tokens.GetRange(_pos, _tokens.Count - _pos))}”");
             }
 
-            // ak sú dvaja operandy a operátor, vytvárame uzol
-            if (stack.Count >= 2 && opStack.Count >= 1)
-            {
-                var right = stack.Pop();
-                var left = stack.Pop();
-                var op = opStack.Pop();
-
-                stack.Push(new BinaryNode
-                {
-                    Operator = op,
-                    Left = left,
-                    Right = right
-                });
-            }
+            return root;
         }
 
-        if (stack.Count != 1)
-            throw new Exception("Neplatná štruktúra výrazu.");
+        /// <summary>
+        ///   Rozdelí vstupný reťazec na samostatné tokeny: “(”, “)”, “+”, “-”, “*”, “/”, “~X”, “$X”, alebo čísla.
+        ///   Napríklad “( ~DU + 5 )” → ["(", "~DU", "+", "5", ")"]
+        /// </summary>
+        private List<string> Tokenize(string input)
+        {
+            var spaced = input
+                .Replace("(", " ( ")
+                .Replace(")", " ) ")
+                .Replace("+", " + ")
+                .Replace("-", " - ")
+                .Replace("*", " * ")
+                .Replace("/", " / ");
 
-        return stack.Pop();
+            var parts = spaced
+                .Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            return new List<string>(parts);
+        }
+
+        /// <summary>
+        ///   Expression := Term { ("+" | "-") Term }
+        /// </summary>
+        private FormulaNode ParseExpression()
+        {
+            // najprv parseujeme jeden "Term"
+            var node = ParseTerm();
+
+            // potom dokiaľ nasledovať + alebo -, berieme ďalší Term a zabalíme do BinaryNode
+            while (_pos < _tokens.Count)
+            {
+                var token = _tokens[_pos];
+                if (token == "+" || token == "-")
+                {
+                    _pos++; // posuň sa za operátor
+                    var rhs = ParseTerm();
+                    node = new BinaryNode
+                    {
+                        Operator = token,
+                        Left = node,
+                        Right = rhs
+                    };
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return node;
+        }
+
+        /// <summary>
+        ///   Term := Factor { ("*" | "/") Factor }
+        /// </summary>
+        private FormulaNode ParseTerm()
+        {
+            var node = ParseFactor();
+
+            // dokiaľ ďalší token je * alebo /, spawnujeme nové BinaryNode
+            while (_pos < _tokens.Count)
+            {
+                var token = _tokens[_pos];
+                if (token == "*" || token == "/")
+                {
+                    _pos++; 
+                    var rhs = ParseFactor();
+                    node = new BinaryNode
+                    {
+                        Operator = token,
+                        Left = node,
+                        Right = rhs
+                    };
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return node;
+        }
+
+        /// <summary>
+        ///   Factor := "~"<IDENT> | "$"<IDENT> | <číslo> | "(" Expression ")"
+        /// </summary>
+        private FormulaNode ParseFactor()
+        {
+            if (_pos >= _tokens.Count)
+            {
+                throw new Exception("Neočakávaný koniec výrazu pri parseFactor.");
+            }
+
+            var token = _tokens[_pos++];
+
+            // 1) zatvorka → rekurzívne parse výrazu a očakávame pravej zátvorky
+            if (token == "(")
+            {
+                var inside = ParseExpression();
+
+                if (_pos >= _tokens.Count || _tokens[_pos] != ")")
+                {
+                    throw new Exception("Očakávala sa ‘)’ zatvorka.");
+                }
+                _pos++; // zoberieme “)”
+                return inside;
+            }
+
+            // 2) "~X" → VariableNode
+            if (token.StartsWith("~"))
+            {
+                var varName = token.Substring(1);
+                if (string.IsNullOrWhiteSpace(varName))
+                    throw new Exception("Neplatný názov premennej od ‘~’.");
+
+                return new VariableNode
+                {
+                    Name = varName
+                };
+            }
+
+            // 3) "$X" → MaxVariableNode
+            if (token.StartsWith("$"))
+            {
+                var varName = token.Substring(1);
+                if (string.IsNullOrWhiteSpace(varName))
+                    throw new Exception("Neplatný názov premennej od ‘$’.");
+
+                return new MaxVariableNode
+                {
+                    Name = varName
+                };
+            }
+
+            // 4) číslo → ConstantNode
+            if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
+            {
+                return new ConstantNode
+                {
+                    Value = number
+                };
+            }
+
+            // 5) neznámy token
+            throw new Exception($"Neznámy token pri parseFactor: “{token}”.");
+        }
     }
-
-    private bool IsOperator(string s) => s is "+" or "-" or "*" or "/";
 }
