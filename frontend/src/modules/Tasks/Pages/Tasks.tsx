@@ -90,13 +90,10 @@ const Tasks = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 5 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-        <Typography variant="h4">Úlohy</Typography>
+        <Typography sx={{ mb: 1 }}  variant="h4">Úlohy</Typography>
         <Button variant="contained" onClick={() => navigate("/dash/tasks/new")}>
           Pridať úlohu
         </Button>
-      </Box>
-
       <Box mb={2}>
         <FormControlLabel
             control={
