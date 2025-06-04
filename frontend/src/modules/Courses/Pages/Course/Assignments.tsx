@@ -9,13 +9,16 @@ import {
     TableCell,
     TableBody,
     Chip,
-    Button, Stack,
-    CircularProgress
+    Button,
+    Stack,
+    CircularProgress,
+    Checkbox,
+    FormControlLabel,
 } from '@mui/material';
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import api from "../../../../services/api";
-import {useNotification} from "../../../../shared/components/NotificationContext.tsx";
-import {useNavigate, useParams} from "react-router-dom";
+import { useNotification } from "../../../../shared/components/NotificationContext.tsx";
+import { useNavigate, useParams } from "react-router-dom";
 
 const statusLabels: Record<string, string> = {
     graded: 'Ohodnotené',
@@ -54,12 +57,12 @@ const getDeadlineColor = (deadline: Date) => {
 };
 
 export default function Assignments() {
-
     const { id } = useParams();
     const { showNotification } = useNotification();
     const [assignments, setAssignments] = useState<any[]>([]);
     const [statusFilter, setStatusFilter] = useState<string | 'all'>('all');
     const [loading, setLoading] = useState(true);
+    const [visibleTypes, setVisibleTypes] = useState<Record<string, boolean>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -67,8 +70,13 @@ export default function Assignments() {
             try {
                 const response = await api.get(`/assignments/filter?courseId=${id}`);
                 setAssignments(response.data.items);
-                console.log("Načítané assignments:", response.data.items);
-                console.log("Prvý assignment:", response.data.items[0]);
+
+                // Inicializujeme viditeľnosť pre každý typ úloh (všetko na true)
+                const typesMap: Record<string, boolean> = {};
+                response.data.items.forEach((a: any) => {
+                    typesMap[a.taskSetType.identifier] = true;
+                });
+                setVisibleTypes(typesMap);
             } catch (error) {
                 console.error(error);
                 showNotification("Nepodarilo sa načítať zadania", "error");
@@ -79,22 +87,32 @@ export default function Assignments() {
         fetchAssignments();
     }, [id]);
 
+    // Filterujeme podľa statusu (tu ostáva placeholder, dá sa rozšíriť)
     const filteredAssignments = statusFilter === 'all'
         ? assignments
         : assignments.filter(() => true);
 
+    // Zoznam jedinečných typov úloh
     const assignmentTypes = Array.from(
         new Map(
             assignments.map((a) => [a.taskSetType.identifier, a.taskSetType.name])
         ).entries()
-    ).map(([id, label]) => ({ id, label }));
+    ).map(([typeId, label]) => ({ id: typeId, label }));
 
     if (loading) {
         return <CircularProgress sx={{ mt: 4 }} />;
     }
+
+    const toggleVisibility = (typeId: string) => {
+        setVisibleTypes(prev => ({
+            ...prev,
+            [typeId]: !prev[typeId],
+        }));
+    };
+
     return (
         <Box>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
+            <Typography variant="h5" sx={{ mb: 0 }} fontWeight="bold" gutterBottom>
                 Zadania
             </Typography>
 
@@ -103,7 +121,7 @@ export default function Assignments() {
                     backgroundColor: '#f0f4ff',
                     p: 2,
                     borderRadius: 2,
-                    mb: 3,
+                    mb: 1,
                 }}
             >
                 <Typography variant="body1" fontWeight="medium" gutterBottom>
@@ -112,6 +130,7 @@ export default function Assignments() {
                 <Stack direction="row" spacing={1} flexWrap="wrap">
                     <Button
                         variant={statusFilter === 'all' ? 'contained' : 'outlined'}
+                        size="small"
                         onClick={() => setStatusFilter('all')}
                     >
                         Všetky
@@ -120,6 +139,7 @@ export default function Assignments() {
                         <Button
                             key={key}
                             variant={statusFilter === key ? 'contained' : 'outlined'}
+                            size="small"
                             onClick={() => setStatusFilter(key)}
                         >
                             {label}
@@ -135,62 +155,79 @@ export default function Assignments() {
 
                 if (assignmentsOfType.length === 0) return null;
 
-                const totalPoints = 0; // mock
+                // Mock bodov - vypočítajte podľa potreby
+                const totalPoints = 0;
                 const maxPoints = assignmentsOfType.reduce(
                     (sum, a) => sum + (a.pointsOverride ?? 0),
                     0
                 );
 
                 return (
-                    <Box key={type.id} mb={4}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                            <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                                {type.label}
-                            </Typography>
+                    <Box key={type.id} mb={1}>
+                        {/* Názov sekcie s checkboxom */}
+                        <Box display="flex" alignItems="center" mb={0.5}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        checked={!!visibleTypes[type.id]}
+                                        onChange={() => toggleVisibility(type.id)}
+                                    />
+                                }
+                                label={
+                                    <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                        {type.label}
+                                    </Typography>
+                                }
+                                sx={{ mr: 'auto', userSelect: 'none', '& .MuiFormControlLabel-label': { flexGrow: 1 } }}
+                            />
                             <Typography variant="body2" color="text.secondary">
                                 {totalPoints} / {maxPoints} points
                             </Typography>
                         </Box>
 
-                        <Card>
-                            <CardContent sx={{ p: 0 }}>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow sx={{ backgroundColor: '#f0f4ff' }}>
-                                            <TableCell>Zadanie</TableCell>
-                                            <TableCell>Deadline</TableCell>
-                                            <TableCell>Body</TableCell>
-                                            <TableCell>Status</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {assignmentsOfType.map((a) => {
-                                            const deadline = a.uploadEndTime ? new Date(a.uploadEndTime) : null;
+                        {/* Ak je pre daný typ políčko odškrtnuté, tabuľku vôbec nezobrazíme */}
+                        {visibleTypes[type.id] && (
+                            <Card>
+                                <CardContent sx={{ p: 0 }}>
+                                    <Table size="small">
+                                        <TableHead>
+                                            <TableRow sx={{ backgroundColor: '#f0f4ff' }}>
+                                                <TableCell sx={{ py: 0.5 }}>Zadanie</TableCell>
+                                                <TableCell sx={{ py: 0.5 }}>Deadline</TableCell>
+                                                <TableCell sx={{ py: 0.5 }}>Body</TableCell>
+                                                <TableCell sx={{ py: 0.5 }}>Status</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {assignmentsOfType.map((a) => {
+                                                const deadline = a.uploadEndTime ? new Date(a.uploadEndTime) : null;
 
-                                            return (
-                                                <TableRow
-                                                    key={a.id}
-                                                    hover
-                                                    sx={{ cursor: 'pointer' }}
-                                                    onClick={() => navigate(`/student/courses/${id}/assignments/${a.id}/tasks`)}
-                                                >
-                                                    <TableCell>{a.name}</TableCell>
-
-                                                    <TableCell sx={{ color: deadline ? getDeadlineColor(deadline) : undefined }}>
-                                                        {deadline ? deadline.toLocaleString() : '—'}
-                                                    </TableCell>
-
-                                                    <TableCell>
-                                                        - / {a.pointsOverride !== null && a.pointsOverride !== undefined ? a.pointsOverride : '—'}
-                                                    </TableCell>
-                                                    <TableCell>{getStatusChip('open')}</TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                                                return (
+                                                    <TableRow
+                                                        key={a.id}
+                                                        hover
+                                                        sx={{ cursor: 'pointer', '& td': { py: 0.5 } }}
+                                                        onClick={() =>
+                                                            navigate(`/student/courses/${id}/assignments/${a.id}/tasks`)
+                                                        }
+                                                    >
+                                                        <TableCell>{a.name}</TableCell>
+                                                        <TableCell sx={{ color: deadline ? getDeadlineColor(deadline) : undefined }}>
+                                                            {deadline ? deadline.toLocaleString() : '—'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            - / {a.pointsOverride ?? '—'}
+                                                        </TableCell>
+                                                        <TableCell>{getStatusChip('open')}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        )}
                     </Box>
                 );
             })}

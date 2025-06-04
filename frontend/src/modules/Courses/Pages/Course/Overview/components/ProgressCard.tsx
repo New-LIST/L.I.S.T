@@ -12,15 +12,6 @@ const categories = [
     { id: 'project', label: 'Projekty', points: 17, maxPoints: 55 },
 ];
 
-const getGrade = (percentage: number) => {
-    if (percentage >= 90) return 'A';
-    if (percentage >= 80) return 'B';
-    if (percentage >= 70) return 'C';
-    if (percentage >= 60) return 'D';
-    if (percentage >= 50) return 'E';
-    return 'F';
-};
-
 export default function ProgressCard() {
     const totalPoints = categories.reduce((sum, c) => sum + c.points, 0);
     const maxPoints = categories.reduce((sum, c) => sum + c.maxPoints, 0);
@@ -47,20 +38,6 @@ export default function ProgressCard() {
                                 {overallPercentage}%
                             </Typography>
                         </Box>
-                    </Box>
-
-                    <Box
-                        px={2}
-                        py={1}
-                        bgcolor="#e0e7ff"
-                        borderRadius={2}
-                        textAlign="center"
-                        minWidth={140}
-                    >
-                        <Typography variant="body2" color="primary">Aktuálna známka</Typography>
-                        <Typography variant="h6" fontWeight="bold" color="primary">
-                            {getGrade(overallPercentage)}
-                        </Typography>
                     </Box>
                 </Box>
 
