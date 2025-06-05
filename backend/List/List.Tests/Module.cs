@@ -1,5 +1,6 @@
 ﻿using List.Common.Integrations;
 using List.Tests.Data;
+using List.Tests.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +15,9 @@ public class Module : IModule
         services.AddDbContext<TestsDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddScoped<ITestService, TestService>();
+        services.AddScoped<ICompareOutputService, CompareOutputService>();
+        services.AddScoped<IRunScriptService, RunScriptService>();
     }
 
     public void UseServices(IApplicationBuilder app)
