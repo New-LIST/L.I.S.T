@@ -11,7 +11,7 @@ import {
   TableCell,
   TableBody,
   IconButton,
-  CircularProgress,
+  CircularProgress, Box, FormControlLabel, Checkbox,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -35,6 +35,7 @@ const Tasks = () => {
     author: "",
     categoryBlocks: [] as CategoryFilterBlock[],
   });
+  const [filterEnabled, setFilterEnabled] = useState(false);
 
   const navigate = useNavigate();
 
@@ -46,7 +47,7 @@ const Tasks = () => {
         author: filters.author,
       };
 
-      if (filters.categoryBlocks.length > 0) {
+      if (filterEnabled && filters.categoryBlocks.length > 0) {
         params.categoryFilter = filters.categoryBlocks
           .map((b) => {
             const hasInclude = b.include.length > 0;
@@ -83,24 +84,33 @@ const Tasks = () => {
       setConfirmOpen(false);
     }
   };
-
   useEffect(() => {
     fetchTasks();
-  }, [filters]);
+  }, [filters, filterEnabled]);
 
   return (
-    <Container maxWidth="md" sx={{ mt: 5 }}>
-      <Typography variant="h4" gutterBottom>
-        Úlohy
-      </Typography>
-      <Button
-        variant="contained"
-        sx={{ mb: 2 }}
-        onClick={() => navigate("/dash/tasks/new")}
-      >
-        Pridať úlohu
-      </Button>
-      <TaskFilterBar onFilterChange={(f) => setFilters(f)} />
+    <Container maxWidth="lg" sx={{ mt: 5 }}>
+        <Typography sx={{ mb: 1 }}  variant="h4">Úlohy</Typography>
+        <Button variant="contained" onClick={() => navigate("/dash/tasks/new")}>
+          Pridať úlohu
+        </Button>
+      <Box mb={2}>
+        <FormControlLabel
+            control={
+              <Checkbox
+                  checked={filterEnabled}
+                  onChange={(e) => setFilterEnabled(e.target.checked)}
+              />
+            }
+            label="Filtrovanie"
+        />
+      </Box>
+
+      {filterEnabled && (
+          <Box mb={3}>
+            <TaskFilterBar onFilterChange={(f) => setFilters(f)} />
+          </Box>
+      )}
       <Card>
         <CardContent>
           {loading ? (

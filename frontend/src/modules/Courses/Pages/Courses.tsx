@@ -14,6 +14,8 @@ import {
   TableBody,
   CircularProgress,
   IconButton,
+  TextField,
+  MenuItem
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -57,6 +59,37 @@ const Courses = () => {
   const navigate = useNavigate();
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  const [periodFilter, setPeriodFilter] = useState<string>("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  const filteredCourses = courses.filter((c) => {
+    const q = debouncedSearchQuery.toLowerCase().trim();
+    if (q) {
+      if (
+          !c.name.toLowerCase().includes(q) &&
+          !c.teacherName.toLowerCase().includes(q)
+      ) {
+        return false;
+      }
+    }
+    if (periodFilter) {
+      return c.periodName === periodFilter;
+    }
+    return true;
+  });
+
+
   const fetchCourses = async () => {
     setLoading(true);
     try {
@@ -82,10 +115,8 @@ const Courses = () => {
 
   useEffect(() => {
     fetchCourses();
-    if (openDialog || editDialogOpen) {
-      fetchPeriods(); // ⬅️ načíta sa vždy, keď sa otvorí dialog
-    }
-  }, [openDialog, editDialogOpen]);
+    fetchPeriods();
+  }, []);
 
   const resetForm = () => {
     setName("");
@@ -279,7 +310,7 @@ const Courses = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
+    <Container maxWidth="xl" sx={{ mt: 5 }}>
       <Typography variant="h4" gutterBottom>
         Kurzy
       </Typography>
@@ -292,6 +323,34 @@ const Courses = () => {
       >
         Pridať kurz
       </Button>
+
+      <Box display="flex" gap={2} mb={2}>
+        <TextField
+            fullWidth
+            label="Vyhľadaj kurz alebo učiteľa"
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
+        <TextField
+            select
+            label="Obdobie"
+            value={periodFilter}
+            onChange={(e) => setPeriodFilter(e.target.value)}
+            size="small"
+            sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">Všetky obdobia</MenuItem>
+          {periods.map((p) => (
+              <MenuItem key={p.id} value={p.name}>
+                {p.name}
+              </MenuItem>
+          ))}
+        </TextField>
+      </Box>
+
 
       <Card>
         <CardContent>
@@ -308,7 +367,7 @@ const Courses = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <TableRow key={course.id}>
                     <TableCell>{course.name}</TableCell>
                     <TableCell>
@@ -343,13 +402,30 @@ const Courses = () => {
                         >
                           <EditIcon />
                         </IconButton>
+
                         <IconButton
-                          onClick={() => {
-                            setCourseToDelete(course);
-                            setConfirmOpen(true);
-                          }}
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/description`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
                         >
-                          <DeleteIcon />
+                          <InfoIcon />
+                        </IconButton>
+                        <IconButton
+                            onClick={() =>
+                                navigate(`/dash/courses/${course.id}/participants`, {
+                                  state: {
+                                    courseName: course.name,
+                                    periodName: course.periodName,
+                                  },
+                                })
+                            }
+                        >
+                          <GroupIcon />
                         </IconButton>
                         <IconButton
                             onClick={() =>
@@ -364,29 +440,12 @@ const Courses = () => {
                           <AssignmentIcon />
                         </IconButton>
                         <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/participants`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
+                            onClick={() => {
+                              setCourseToDelete(course);
+                              setConfirmOpen(true);
+                            }}
                         >
-                          <GroupIcon />
-                        </IconButton>
-
-                        <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/description`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
-                        >
-                          <InfoIcon />
+                          <DeleteIcon />
                         </IconButton>
                       </Box>
                     </TableCell>

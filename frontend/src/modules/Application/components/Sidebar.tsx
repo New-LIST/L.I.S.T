@@ -34,24 +34,31 @@ export default function Sidebar({
         <div>
             <Toolbar />
             <List>
-                {items.map(({ label, path }) => (
-                    <ListItemButton
-                        key={path}
-                        component={NavLink}
-                        to={`${basePath}${path}`}
-                        onClick={() => setMobileOpen(false)}
-                        sx={{
-                            '&.active': {
-                                backgroundColor: '#e0e0e0',
-                                fontWeight: 'bold',
-                            },
-                            color: 'inherit',
-                            textDecoration: 'none'
-                        }}
-                    >
-                        <ListItemText primary={label} />
-                    </ListItemButton>
-                ))}
+                {items.map(({ label, path }) => {
+                    const to = path.startsWith('/')
+                        ? path
+                        : `${basePath}${path}`;
+
+                    return (
+                        <ListItemButton
+                            key={path}
+                            component={NavLink}
+                            to={to}
+                            end={path.startsWith('/')}
+                            onClick={() => setMobileOpen(false)}
+                            sx={{
+                                '&.active': {
+                                    backgroundColor: '#e0e0e0',
+                                    fontWeight: 'bold',
+                                },
+                                color: 'inherit',
+                                textDecoration: 'none',
+                            }}
+                        >
+                            <ListItemText primary={label} />
+                        </ListItemButton>
+                    );
+                })}
             </List>
         </div>
     );

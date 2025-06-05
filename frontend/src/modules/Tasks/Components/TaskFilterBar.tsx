@@ -54,7 +54,6 @@ const TaskFilterBar = ({ onFilterChange }: Props) => {
 
   return (
     <Box mb={3} display="flex" flexDirection="column" gap={2}>
-      <Typography variant="h6">Filter</Typography>
       <Box display="flex" gap={2} flexWrap="wrap">
         <TextField
           label="Názov"
@@ -109,13 +108,19 @@ const TaskFilterBar = ({ onFilterChange }: Props) => {
         ))}
         <Button
           onClick={() => setBlocks([...blocks, { include: [], exclude: [] }])}
+          sx={{ mb: 0 }}
         >
           Pridať OR blok
         </Button>
       </Box>
-      <Button variant="contained" onClick={handleChange} sx={{ mt: 2 }}>
+      <Button
+          variant="contained"
+          onClick={handleChange}
+          sx={{ mt: 0, maxWidth: 250, alignSelf: 'flex-start' }}
+      >
         Použiť filter
       </Button>
+
     </Box>
   );
 };

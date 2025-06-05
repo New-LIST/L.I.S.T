@@ -11,6 +11,7 @@ import {
     TableBody,
     IconButton,
     CircularProgress,
+    TextField
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -34,6 +35,17 @@ export default function Participants() {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const { showNotification } = useNotification();
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 250);
+
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchParticipants = async () => {
@@ -84,6 +96,9 @@ export default function Participants() {
         }
     };
 
+    const filteredParticipants = participants.filter(p =>
+        p.userName.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
 
     return (
         <Container maxWidth="md" sx={{ mt: 5 }}>
@@ -93,6 +108,17 @@ export default function Participants() {
 
             <Card>
                 <CardContent>
+                    <Box sx={{ mb: 2 }}>
+                        <TextField
+                            fullWidth
+                            label="Vyhľadaj podľa mena"
+                            variant="outlined"
+                            size="small"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </Box>
+
                     {loading ? (
                         <CircularProgress />
                     ) : (
@@ -106,7 +132,7 @@ export default function Participants() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {participants.map((p) => (
+                                {filteredParticipants.map(p => (
                                     <TableRow key={p.userId}>
                                         <TableCell>{p.userName}</TableCell>
                                         <TableCell>{p.email}</TableCell>
