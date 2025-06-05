@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Sidebar from "../../Application/components/Sidebar.tsx";
 
 const courseSidebarItems = [
+    { label: 'Kurzy', path: '/student' },
     { label: 'Popis', path: 'description' },
     { label: 'Úlohy', path: 'assignments' },
     { label: 'Prehľad', path: 'overview' },

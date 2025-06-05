@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 
 namespace List.Users.Controllers
@@ -26,6 +27,7 @@ namespace List.Users.Controllers
         }
 
         [HttpPost("register")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
             if (!ModelState.IsValid)

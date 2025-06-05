@@ -5,6 +5,7 @@ using List.Users.Models;
 using List.Users.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using TinyCsvParser;
 using TinyCsvParser.Mapping;
 
@@ -14,19 +15,23 @@ namespace List.Users.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService) : ControllerBase
 {
+
     [HttpGet("teachers")]
+    [Authorize(Roles = "Teacher")]
     public async Task<IEnumerable<User>> GetTeachersAsync()
     {
         return await userService.GetTeachersAsync();
     }
 
     [HttpGet]
+    [Authorize(Roles = "Teacher")]
     public async Task<PagedResult<User>> GetUserPageAsync(int page = 0, int pageSize = 100, string search = "")
     {
         return await userService.GetUsersByAsync(null, page, pageSize, search);
     }
 
     [HttpPost]
+    [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> AddUserAsync(UserDto userDto)
     {
         if (!ModelState.IsValid)
@@ -47,6 +52,7 @@ public class UsersController(IUserService userService) : ControllerBase
 
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UserUpdateDto dto)
     {
         if (!ModelState.IsValid)
@@ -70,6 +76,7 @@ public class UsersController(IUserService userService) : ControllerBase
 
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> DeleteUserAsync(int id)
     {
         if (await userService.DeleteUserAsync(id))
@@ -79,6 +86,7 @@ public class UsersController(IUserService userService) : ControllerBase
     }
 
     [HttpPost("import")]
+    [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> ImportUsersAsync(IFormFile file)
     {
         var fileExtension = Path.GetExtension(file.FileName);
