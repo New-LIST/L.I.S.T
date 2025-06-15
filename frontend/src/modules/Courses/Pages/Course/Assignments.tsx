@@ -24,7 +24,6 @@ const statusLabels: Record<string, string> = {
     graded: 'Ohodnotené',
     submitted: 'Odovzdané',
     open: 'Otvorené',
-    late: 'Odovzdané neskoro',
     missing: 'Neodovzdané',
 };
 const getStatusChip = (status: string) => {
@@ -32,7 +31,6 @@ const getStatusChip = (status: string) => {
         graded: 'success',
         submitted: 'info',
         open: 'secondary',
-        late: 'warning',
         missing: 'error',
     } as const;
 
@@ -65,6 +63,26 @@ export default function Assignments() {
     const [visibleTypes, setVisibleTypes] = useState<Record<string, boolean>>({});
     const navigate = useNavigate();
 
+    const [studentPoints, setStudentPoints] = useState<Record<number, number>>({});
+
+    const getAssignmentStatus = (
+        assignmentId: number,
+        deadlineStr: string | null,
+        uploadAllowed: boolean
+    ): string => {
+        const points = studentPoints[assignmentId];
+        const hasSolution = assignmentId in studentPoints;
+        const deadline = deadlineStr ? new Date(deadlineStr) : null;
+        const now = new Date();
+
+        if (points != null) return "graded";
+        if (hasSolution) return "submitted";
+        if (!uploadAllowed) return "missing";
+        if (deadline && deadline < now) return "missing";
+        return "open";
+    };
+
+
     useEffect(() => {
         const fetchAssignments = async () => {
             try {
@@ -87,12 +105,32 @@ export default function Assignments() {
         fetchAssignments();
     }, [id]);
 
-    // Filterujeme podľa statusu (tu ostáva placeholder, dá sa rozšíriť)
+    useEffect(() => {
+        if (!id) return;
+        api
+            .get(`/solutions/courses/${id}/student-points`)
+            .then((res) => {
+                const map: Record<number, number> = {};
+                res.data.forEach((p: { assignmentId: number; points: number }) => {
+                    map[p.assignmentId] = p.points;
+                });
+                setStudentPoints(map);
+            })
+            .catch((err) => {
+                console.error(err);
+                showNotification("Nepodarilo sa načítať získané body", "error");
+            });
+    }, [id]);
+
+
     const filteredAssignments = statusFilter === 'all'
         ? assignments
-        : assignments.filter(() => true);
+        : assignments.filter((a) => {
+            const status = getAssignmentStatus(a.id, a.uploadEndTime);
+            return status === statusFilter;
+        });
 
-    // Zoznam jedinečných typov úloh
+
     const assignmentTypes = Array.from(
         new Map(
             assignments.map((a) => [a.taskSetType.identifier, a.taskSetType.name])
@@ -155,8 +193,11 @@ export default function Assignments() {
 
                 if (assignmentsOfType.length === 0) return null;
 
-                // Mock bodov - vypočítajte podľa potreby
-                const totalPoints = 0;
+                const totalPoints = assignmentsOfType.reduce(
+                    (sum, a) => sum + (studentPoints[a.id] ?? 0),
+                    0
+                );
+
                 const maxPoints = assignmentsOfType.reduce(
                     (sum, a) => sum + (a.pointsOverride ?? 0),
                     0
@@ -164,7 +205,6 @@ export default function Assignments() {
 
                 return (
                     <Box key={type.id} mb={1}>
-                        {/* Názov sekcie s checkboxom */}
                         <Box display="flex" alignItems="center" mb={0.5}>
                             <FormControlLabel
                                 control={
@@ -186,7 +226,6 @@ export default function Assignments() {
                             </Typography>
                         </Box>
 
-                        {/* Ak je pre daný typ políčko odškrtnuté, tabuľku vôbec nezobrazíme */}
                         {visibleTypes[type.id] && (
                             <Card>
                                 <CardContent sx={{ p: 0 }}>
@@ -217,9 +256,11 @@ export default function Assignments() {
                                                             {deadline ? deadline.toLocaleString() : '—'}
                                                         </TableCell>
                                                         <TableCell>
-                                                            - / {a.pointsOverride ?? '—'}
+                                                            {(studentPoints[a.id] ?? '–')} / {(a.pointsOverride ?? '–')}
                                                         </TableCell>
-                                                        <TableCell>{getStatusChip('open')}</TableCell>
+                                                        <TableCell>
+                                                            {getStatusChip(getAssignmentStatus(a.id, a.uploadEndTime))}
+                                                        </TableCell>
                                                     </TableRow>
                                                 );
                                             })}
