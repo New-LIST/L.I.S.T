@@ -215,26 +215,26 @@ public class AssignmentService : IAssignmentService
 
     public async Task<bool> CanUploadSolutionAsync(int assignmentId)
     {
-        // Vyberieme len stĺpec UploadSolution
-        var assignmentWithRel = await _dbContext.Assignments
+        var assignment = await _dbContext.Assignments
             .AsNoTracking()
             .Where(a => a.Id == assignmentId)
-            .Include(a => a.CourseTaskSetRel)    // načítame väzbu, ktorá obsahuje UploadSolution
+            .Include(a => a.CourseTaskSetRel)
             .Select(a => new
             {
                 a.Id,
+                a.UploadEndTime,
                 UploadSolution = a.CourseTaskSetRel.UploadSolution
             })
             .FirstOrDefaultAsync();
 
-        if (assignmentWithRel == null)
-        {
-            // Dané zadanie (assignmentId) neexistuje
+        if (assignment == null)
             return false;
-        }
 
-        return assignmentWithRel.UploadSolution;
+        var now = DateTime.UtcNow;
+
+        return assignment.UploadSolution && (assignment.UploadEndTime == null || assignment.UploadEndTime > now);
     }
+
 
     public async Task<double?> CalculateMaxPoints(int assignmentId)
     {
