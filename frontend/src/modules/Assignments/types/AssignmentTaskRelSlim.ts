@@ -5,7 +5,8 @@ export interface TaskSlim {
   name: string;
   text: string;
   internalComment: string;
-  authorName: string;
+  authorId: number;
+  fullname: string;
 }
 
 export interface AssignmentTaskRelSlim {
