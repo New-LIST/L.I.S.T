@@ -9,7 +9,7 @@ public interface IAssignmentTaskRelService
     Task<bool> DeleteAsync(int taskId, int assignmentId);
 
     Task<List<AssignmentTaskRelModel>> GetAllAsync();
-    Task<List<AssignmentTaskRelModel>> GetByAssignmentIdAsync(int assignmentId);
+    Task<List<AssignmentTaskRelDto>> GetByAssignmentIdAsync(int assignmentId);
     Task<AssignmentTaskRelModel?> UpdateAsync(CreateAssignmentTaskRelDto dto);
     Task<List<AssignmentTaskRelSlimDto>> GetSlimByAssignmentIdAsync(int assignmentId);
 

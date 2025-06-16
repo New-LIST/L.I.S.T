@@ -76,12 +76,27 @@ public class AssignmentTaskRelService : IAssignmentTaskRelService
             .ToListAsync();
     }
 
-    public async Task<List<AssignmentTaskRelModel>> GetByAssignmentIdAsync(int assignmentId)
+    public async Task<List<AssignmentTaskRelDto>> GetByAssignmentIdAsync(int assignmentId)
     {
         return await _dbContext.AssignmentTaskRels
             .Where(r => r.AssignmentId == assignmentId)
-            .Include(r => r.Task)
-            .Include(r => r.Assignment)
+            .Select(r => new AssignmentTaskRelDto
+            {
+                TaskId = r.TaskId,
+                AssignmentId = r.AssignmentId,
+                PointsTotal = r.PointsTotal,
+                BonusTask = r.BonusTask,
+                InternalComment = r.InternalComment,
+                Task = new TaskDto
+                {
+                    Id = r.Task.Id,
+                    Name = r.Task.Name!,
+                    Text = r.Task.Text,
+                    InternalComment = r.Task.InternalComment,
+                    AuthorId = r.Task.AuthorId,
+                    Fullname = r.Task.Author.Fullname
+                }
+            })
             .ToListAsync();
     }
 

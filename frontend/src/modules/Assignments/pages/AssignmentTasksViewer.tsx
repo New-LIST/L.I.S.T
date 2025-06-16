@@ -32,11 +32,9 @@ const AssignmentTasksViewer = () => {
     useEffect(() => {
         const fetch = async () => {
             try {
-                // Získaj úlohy
                 const tasksRes = await api.get(`/assignment-task-rel/by-assignment/${assignmentIdNumber}`);
                 setTasks(tasksRes.data);
 
-                // Získaj detail zadania
                 const assignmentRes = await api.get(`/assignments/${assignmentIdNumber}`);
                 setAssignment(assignmentRes.data);
 
@@ -91,7 +89,7 @@ const AssignmentTasksViewer = () => {
                                 key={rel.taskId}
                                 name={rel.task.name}
                                 text={rel.task.text}
-                                authorName={rel.task.authorName || "Neznámy autor"}
+                                authorName={rel.task.fullname || "Neznámy autor"}
                                 pointsTotal={rel.pointsTotal}
                                 bonus={rel.bonusTask}
                             />
@@ -99,12 +97,10 @@ const AssignmentTasksViewer = () => {
                     )}
 
                     {loadingCanUpload ? (
-                        // Kým čakáme na odpoveď z /canUpload
                         <Box mt={4} textAlign="center">
                             <CircularProgress />
                         </Box>
                     ) : canUpload ? (
-                        // Ak sa môže uploadovať: zobrazíme formu
                         <Box mt={4}>
                             <Divider sx={{ mb: 2 }} />
                             <Typography variant="h6" gutterBottom>
@@ -113,7 +109,6 @@ const AssignmentTasksViewer = () => {
                             <UploadSolutionForm assignmentId={assignmentIdNumber} />
                         </Box>
                     ) : (
-                        // Ak už nie je možné uploadovať (napr. uploadSolution == false)
                         <Box mt={4}>
                             <Typography variant="body2" color="textSecondary">
                                 Toto zadanie už nie je možné odovzdať.
