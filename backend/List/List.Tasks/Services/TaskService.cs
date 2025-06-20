@@ -55,12 +55,21 @@ public class TaskService : ITaskService
     public async Task<TaskModel?> DeleteTaskAsync(int id)
     {
         var task = await context.Tasks.FindAsync(id);
-        if (task is null) return null;
+        if (task == null) return null;
+
+        var children = await context.Tasks
+            .Where(t => t.ParentTaskId == id)
+            .ToListAsync();
+
+        foreach (var child in children)
+        {
+            child.ParentTaskId = null;
+        }
 
         context.Tasks.Remove(task);
         await context.SaveChangesAsync();
 
-        
+
         return task;
     }
 

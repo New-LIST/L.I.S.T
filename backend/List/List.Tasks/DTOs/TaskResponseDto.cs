@@ -10,5 +10,7 @@ namespace List.Tasks.DTOs
         public string? InternalComment { get; set; }
         public int AuthorId { get; set; }
         public string AuthorFullname { get; set; } = string.Empty;
+
+        public int? ParentTaskId { get; set; }
     }
 }

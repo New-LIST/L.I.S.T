@@ -15,7 +15,7 @@ import {
   CircularProgress,
   IconButton,
   TextField,
-  MenuItem
+  MenuItem, Tooltip
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -23,6 +23,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import AssignmentIcon  from "@mui/icons-material/Assignment";
 import api from "../../../services/api";
 import GroupIcon from '@mui/icons-material/Group';
+import CopyAllIcon from '@mui/icons-material/CopyAll';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import { Course } from "../Types/Course";
 import { Period } from "../../Periods/Types/Period";
 import CreateCourseDialog from "../Components/CreateCourseDialog";
@@ -30,7 +32,7 @@ import EditCourseDialog from "../Components/EditCourseDialog";
 
 import ConfirmDeleteCourseDialog from "../Components/ConfirmDeleteCourseDialog";
 import { useNotification } from "../../../shared/components/NotificationContext";
-import InfoIcon from "@mui/icons-material/Info";
+import ConfirmDuplicateCourseDialog from "../Components/ConfirmDuplicateCourseDialog";
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -62,6 +64,9 @@ const Courses = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [periodFilter, setPeriodFilter] = useState<string>("");
+
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [courseToDuplicate, setCourseToDuplicate] = useState<Course | null>(null);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -309,6 +314,19 @@ const Courses = () => {
     }
   };
 
+  const handleDuplicate = async (courseId: number) => {
+    try {
+      const res = await api.post(`/courses/${courseId}/duplicate`);
+      showNotification("Kurz bol duplikovaný.", "success");
+      fetchCourses();
+    } catch (err) {
+      console.error(err);
+      showNotification("Nepodarilo sa duplikovať kurz.", "error");
+    }
+  };
+
+
+
   return (
     <Container maxWidth="xl" sx={{ mt: 5 }}>
       <Typography variant="h4" gutterBottom>
@@ -376,77 +394,96 @@ const Courses = () => {
                     <TableCell>{course.teacherName}</TableCell>
                     <TableCell align="right">
                       <Box>
-                        <IconButton
-                          onClick={() => {
-                            setCourseToEdit(course);
-                            setName(course.name);
-                            setSelectedPeriodId(
-                              periods.find((p) => p.name === course.periodName)
-                                ?.id ?? ""
-                            );
-                            setCapacity(course.capacity);
-                            setGroupChangeDeadline(
-                              course.groupChangeDeadline
-                                ? course.groupChangeDeadline.split("T")[0]
-                                : null
-                            );
-                            setEnrollmentLimit(
-                              course.enrollmentLimit
-                                ? course.enrollmentLimit.split("T")[0]
-                                : null
-                            );
-                            setHiddenInList(course.hiddenInList);
-                            setAutoAcceptStudents(course.autoAcceptStudents);
-                            setEditDialogOpen(true);
-                          }}
-                        >
+                        <Tooltip title="Upraviť kurz" placement="top">
+                          <IconButton
+                            onClick={() => {
+                              setCourseToEdit(course);
+                              setName(course.name);
+                              setSelectedPeriodId(
+                                periods.find((p) => p.name === course.periodName)
+                                  ?.id ?? ""
+                              );
+                              setCapacity(course.capacity);
+                              setGroupChangeDeadline(
+                                course.groupChangeDeadline
+                                  ? course.groupChangeDeadline.split("T")[0]
+                                  : null
+                              );
+                              setEnrollmentLimit(
+                                course.enrollmentLimit
+                                  ? course.enrollmentLimit.split("T")[0]
+                                  : null
+                              );
+                              setHiddenInList(course.hiddenInList);
+                              setAutoAcceptStudents(course.autoAcceptStudents);
+                              setEditDialogOpen(true);
+                            }}
+                          >
                           <EditIcon />
                         </IconButton>
-
-                        <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/description`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
-                        >
-                          <InfoIcon />
+                      </Tooltip>
+                        <Tooltip title="Zmeniť popisok" placement="top">
+                          <IconButton
+                              onClick={() =>
+                                  navigate(`/dash/courses/${course.id}/description`, {
+                                    state: {
+                                      courseName: course.name,
+                                      periodName: course.periodName,
+                                    },
+                                  })
+                              }
+                          >
+                          <EditNoteIcon/>
                         </IconButton>
-                        <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/participants`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
-                        >
-                          <GroupIcon />
-                        </IconButton>
-                        <IconButton
-                            onClick={() =>
-                                navigate(`/dash/courses/${course.id}/tasksets`, {
-                                  state: {
-                                    courseName: course.name,
-                                    periodName: course.periodName,
-                                  },
-                                })
-                            }
-                        >
-                          <AssignmentIcon />
-                        </IconButton>
-                        <IconButton
-                            onClick={() => {
-                              setCourseToDelete(course);
-                              setConfirmOpen(true);
-                            }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Študenti" placement="top">
+                          <IconButton
+                              onClick={() =>
+                                  navigate(`/dash/courses/${course.id}/participants`, {
+                                    state: {
+                                      courseName: course.name,
+                                      periodName: course.periodName,
+                                    },
+                                  })
+                              }
+                          >
+                            <GroupIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Zostavy úloh" placement="top">
+                          <IconButton
+                              onClick={() =>
+                                  navigate(`/dash/courses/${course.id}/tasksets`, {
+                                    state: {
+                                      courseName: course.name,
+                                      periodName: course.periodName,
+                                    },
+                                  })
+                              }
+                          >
+                            <AssignmentIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Duplikovať kurz" placement="top">
+                          <IconButton
+                              onClick={() => {
+                                setCourseToDuplicate(course);
+                                setDuplicateDialogOpen(true);
+                              }}
+                          >
+                            <CopyAllIcon/>
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Vymazať kurz" placement="top" >
+                          <IconButton
+                              onClick={() => {
+                                setCourseToDelete(course);
+                                setConfirmOpen(true);
+                              }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -522,6 +559,26 @@ const Courses = () => {
           setImageFile={setImageFile}
         />
       )}
+
+      {courseToDuplicate && (
+          <ConfirmDuplicateCourseDialog
+              open={duplicateDialogOpen}
+              onClose={() => {
+                setDuplicateDialogOpen(false);
+                setCourseToDuplicate(null);
+              }}
+              onConfirm={() => {
+                if (courseToDuplicate) {
+                  handleDuplicate(courseToDuplicate.id);
+                }
+                setDuplicateDialogOpen(false);
+                setCourseToDuplicate(null);
+              }}
+              courseName={courseToDuplicate.name}
+          />
+      )}
+
+
     </Container>
   );
 };

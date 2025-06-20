@@ -262,6 +262,40 @@ namespace List.Courses.Controllers
         }
 
 
-                
+        [HttpPost("{id}/duplicate")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> Duplicate(int id)
+        {
+            var course = await _context.Courses
+                .Include(c => c.Period)
+                .Include(c => c.Teacher)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (course == null)
+                return NotFound();
+
+            var newCourse = new Course
+            {
+                Name = course.Name + " (kópia)",
+                PeriodId = course.PeriodId,
+                Capacity = course.Capacity,
+                GroupChangeDeadline = course.GroupChangeDeadline,
+                EnrollmentLimit = course.EnrollmentLimit,
+                HiddenInList = course.HiddenInList,
+                AutoAcceptStudents = course.AutoAcceptStudents,
+                TeacherId = course.TeacherId,
+                Description = course.Description,
+                ImageUrl = course.ImageUrl
+            };
+
+            _context.Courses.Add(newCourse);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { id = newCourse.Id });
+        }
+
+
+
+
     }
 }
