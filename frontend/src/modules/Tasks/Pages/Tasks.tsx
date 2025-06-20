@@ -23,6 +23,8 @@ import ConfirmDeleteTaskDialog from "../Components/ConfirmDeleteTaskDialog.tsx";
 import { useNavigate } from "react-router-dom";
 import TaskFilterBar from "../Components/TaskFilterBar";
 import { CategoryFilterBlock } from "../Types/CategoryFilterBlock";
+import CopyAllIcon from "@mui/icons-material/CopyAll";
+import ConfirmDuplicateTaskDialog from "../Components/ConfirmDuplicateTaskDialog.tsx";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,6 +38,10 @@ const Tasks = () => {
     categoryBlocks: [] as CategoryFilterBlock[],
   });
   const [filterEnabled, setFilterEnabled] = useState(false);
+
+  const [taskToDuplicate, setTaskToDuplicate] = useState<Task | null>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -71,6 +77,19 @@ const Tasks = () => {
       setLoading(false);
     }
   };
+
+  const handleDuplicate = async (taskId: number) => {
+    try {
+      const res = await api.post(`/tasks/${taskId}/duplicate`);
+      showNotification("Úloha bola duplikovaná.", "success");
+      fetchTasks();
+    } catch (err) {
+      console.error(err);
+      showNotification("Nepodarilo sa duplikovať úlohu.", "error");
+    }
+  };
+
+
 
   const handleDelete = async () => {
     if (!taskToDelete) return;
@@ -138,6 +157,15 @@ const Tasks = () => {
                         <EditIcon />
                       </IconButton>
                       <IconButton
+                          onClick={() => {
+                            setTaskToDuplicate(task);
+                            setDuplicateDialogOpen(true);
+                          }}
+                      >
+                        <CopyAllIcon />
+                      </IconButton>
+
+                      <IconButton
                         onClick={() => {
                           setTaskToDelete(task);
                           setConfirmOpen(true);
@@ -162,6 +190,26 @@ const Tasks = () => {
           itemName={taskToDelete.name}
         />
       )}
+
+      {taskToDuplicate && (
+          <ConfirmDuplicateTaskDialog
+              open={duplicateDialogOpen}
+              onClose={() => {
+                setDuplicateDialogOpen(false);
+                setTaskToDuplicate(null);
+              }}
+              onConfirm={() => {
+                if (taskToDuplicate) {
+                  handleDuplicate(taskToDuplicate.id);
+                }
+                setDuplicateDialogOpen(false);
+                setTaskToDuplicate(null);
+              }}
+              taskName={taskToDuplicate.name}
+          />
+      )}
+
+
     </Container>
   );
 };

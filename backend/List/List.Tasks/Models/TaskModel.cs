@@ -34,4 +34,13 @@ public class TaskModel
     public User Author { get; set; } = null!;
 
     public ICollection<TaskCategoryRel> TaskCategories { get; set; } = new List<TaskCategoryRel>();
+
+    [Column("parent_task_id")]
+    public int? ParentTaskId { get; set; }
+
+    [ForeignKey(nameof(ParentTaskId))]
+    public TaskModel? ParentTask { get; set; }
+
+    public ICollection<TaskModel> Variants { get; set; } = new List<TaskModel>();
+
 }

@@ -36,6 +36,11 @@ public class TasksDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(t => t.AuthorId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.ParentTask)
+                  .WithMany(t => t.Variants)
+                  .HasForeignKey(t => t.ParentTaskId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<CategoryModel>()

@@ -1,4 +1,4 @@
-using List.Tasks.Models;
+﻿using List.Tasks.Models;
 using List.Tasks.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,7 +11,7 @@ namespace List.Tasks.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TasksController(ITaskService taskService) : ControllerBase
+public class TasksController(ITaskService taskService, ITaskCategoryRelService relService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllTasks()
@@ -145,6 +145,39 @@ public class TasksController(ITaskService taskService) : ControllerBase
 
         return Ok(new { location = url });
     }
+
+    [HttpPost("{id}/duplicate")]
+    public async Task<IActionResult> DuplicateTask(int id)
+    {
+        var original = await taskService.GetTaskAsync(id);
+        if (original == null) return NotFound();
+
+        var duplicated = new TaskModel
+        {
+            Name = original.Name + " (kópia)",
+            Text = original.Text,
+            InternalComment = original.InternalComment,
+            AuthorId = original.AuthorId,
+            Created = DateTime.UtcNow,
+            Updated = DateTime.UtcNow,
+            ParentTaskId = original.ParentTaskId ?? original.Id
+        };
+
+        var result = await taskService.AddTaskAsync(duplicated);
+        if (result == null)
+            return BadRequest("Nepodarilo sa vytvoriť kópiu.");
+
+
+        var originalCategories = await relService.GetCategoryIdsByTaskAsync(original.Id);
+        foreach (var categoryId in originalCategories)
+        {
+            await relService.AddRelationAsync(result.Id, categoryId);
+        }
+
+        return Ok(new { id = result.Id, name = result.Name });
+    }
+
+
 
 
 }
