@@ -282,7 +282,7 @@ const TaskSets = () => {
               Existujúce zostavy
             </Typography>
             <Box sx={{ overflowX: "auto" }}>
-              <Table>
+              <Table size = "small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Typ zostavy úloh</TableCell>

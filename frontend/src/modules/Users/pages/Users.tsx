@@ -136,7 +136,7 @@ const Users = () => {
                 </Box>
             </Box>
             <TableContainer component={Card}>
-                <Table>
+                <Table size = "small">
                     <TableHead>
                         <TableRow>
                             <TableCell>Názov</TableCell>

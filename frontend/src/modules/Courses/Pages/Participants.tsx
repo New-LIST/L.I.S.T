@@ -122,7 +122,7 @@ export default function Participants() {
                     {loading ? (
                         <CircularProgress />
                     ) : (
-                        <Table>
+                        <Table size = "small">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Meno</TableCell>

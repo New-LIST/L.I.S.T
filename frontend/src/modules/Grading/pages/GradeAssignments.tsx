@@ -89,7 +89,7 @@ const GradeAssignments: React.FC = () => {
         Zadania pre kurz {courseName ?? courseId}
       </Typography>
       <TableContainer component={Paper}>
-        <Table>
+        <Table size = "small">
           <TableHead>
             <TableRow>
               <TableCell>Názov zadania</TableCell>

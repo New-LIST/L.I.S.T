@@ -99,7 +99,7 @@ export default function LogsTable() {
       ) : (
         <>
           <TableContainer>
-            <Table>
+            <Table size = "small">
               <TableHead>
                 <TableRow>
                   <TableCell>Popis</TableCell>

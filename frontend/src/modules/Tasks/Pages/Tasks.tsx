@@ -153,7 +153,7 @@ const Tasks = () => {
             {loading ? (
                 <CircularProgress />
             ) : (
-                <Table>
+                <Table size="small">
                   <TableHead>
                     <TableRow>
                       <TableCell>Názov</TableCell>
@@ -170,7 +170,7 @@ const Tasks = () => {
                       return (
                           <React.Fragment key={root.id}>
                             <TableRow>
-                              <TableCell>
+                              <TableCell sx={{ py: 0.2 }}>
                                 {root.name}
                                 {variants.length > 0 && (
                                     <IconButton size="small" onClick={() => toggleGroup(root.id)}>
@@ -178,9 +178,9 @@ const Tasks = () => {
                                     </IconButton>
                                 )}
                               </TableCell>
-                              <TableCell>{root.authorFullname}</TableCell>
-                              <TableCell>{root.internalComment}</TableCell>
-                              <TableCell>
+                              <TableCell sx={{ py: 0.2 }}>{root.authorFullname}</TableCell>
+                              <TableCell sx={{ py: 0.2 }}>{root.internalComment}</TableCell>
+                              <TableCell sx={{ py: 0.2 }}>
                                 <Tooltip title="Upraviť úlohu" placement="top">
                                   <IconButton onClick={() => navigate(`/dash/tasks/${root.id}/edit`)}>
                                     <EditIcon />
@@ -212,10 +212,10 @@ const Tasks = () => {
                                         <TableBody>
                                           {variants.map((variant) => (
                                               <TableRow key={variant.id}>
-                                                <TableCell>{variant.name}</TableCell>
-                                                <TableCell>{variant.authorFullname}</TableCell>
-                                                <TableCell>{variant.internalComment}</TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ py: 0.2 }}>{variant.name}</TableCell>
+                                                <TableCell sx={{ py: 0.2 }}>{variant.authorFullname}</TableCell>
+                                                <TableCell sx={{ py: 0.2 }}>{variant.internalComment}</TableCell>
+                                                <TableCell sx={{ py: 0.2 }}>
                                                   <Tooltip title="Upraviť úlohu" placement="top">
                                                     <IconButton onClick={() => navigate(`/dash/tasks/${variant.id}/edit`)}>
                                                       <EditIcon />

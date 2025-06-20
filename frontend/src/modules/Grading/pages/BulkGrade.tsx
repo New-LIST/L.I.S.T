@@ -71,7 +71,7 @@ const BulkGrade: React.FC = () => {
         Hromadné hodnotenie zadania {assignmentName ?? assignmentId}
       </Typography>
       <TableContainer component={Paper}>
-        <Table>
+        <Table size = "small">
           <TableHead>
             <TableRow>
               <TableCell>Meno</TableCell>

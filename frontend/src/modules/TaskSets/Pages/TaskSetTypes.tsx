@@ -145,7 +145,7 @@ const TaskSetTypes = () => {
           {loading ? (
             <CircularProgress />
           ) : (
-            <Table>
+              <Table size = "small">
               <TableHead>
                 <TableRow>
                   <TableCell>Názov typu</TableCell>
