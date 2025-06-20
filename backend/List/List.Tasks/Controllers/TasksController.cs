@@ -27,7 +27,8 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
             Text = t.Text,
             InternalComment = t.InternalComment,
             AuthorId = t.AuthorId,
-            AuthorFullname = t.Author?.Fullname ?? "Unknown"
+            AuthorFullname = t.Author?.Fullname ?? "Unknown",
+            ParentTaskId = t.ParentTaskId
         });
 
         return Ok(taskDtos);
@@ -48,7 +49,8 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
             Text = task.Text,
             InternalComment = task.InternalComment,
             AuthorId = task.AuthorId,
-            AuthorFullname = task.Author?.Fullname ?? "Unknown"
+            AuthorFullname = task.Author?.Fullname ?? "Unknown",
+            ParentTaskId = task.ParentTaskId
         };
 
         return Ok(taskDto);
@@ -67,7 +69,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
             InternalComment = t.InternalComment,
             Created = t.Created,
             Updated = t.Updated,
-            AuthorFullname = t.Author?.Fullname ?? "Unknown"
+            AuthorId = t.AuthorId,
+            AuthorFullname = t.Author?.Fullname ?? "Unknown",
+            ParentTaskId = t.ParentTaskId
         });
 
 

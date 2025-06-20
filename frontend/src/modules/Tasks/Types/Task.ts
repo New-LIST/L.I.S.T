@@ -6,4 +6,5 @@ export type Task = {
     created: string;
     updated: string;
     authorFullname: string;
+    parentTaskId?: number;
 };

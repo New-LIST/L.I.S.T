@@ -11,10 +11,17 @@ import {
   TableCell,
   TableBody,
   IconButton,
-  CircularProgress, Box, FormControlLabel, Checkbox, Tooltip,
+  CircularProgress,
+  Box,
+  FormControlLabel,
+  Checkbox,
+  Tooltip,
+  Collapse,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 import { Task } from "../Types/Task";
 import api from "../../../services/api";
@@ -41,8 +48,7 @@ const Tasks = () => {
 
   const [taskToDuplicate, setTaskToDuplicate] = useState<Task | null>(null);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
-
-
+  const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
   const navigate = useNavigate();
 
   const fetchTasks = async () => {
@@ -55,18 +61,16 @@ const Tasks = () => {
 
       if (filterEnabled && filters.categoryBlocks.length > 0) {
         params.categoryFilter = filters.categoryBlocks
-          .map((b) => {
-            const hasInclude = b.include.length > 0;
-            const hasExclude = b.exclude.length > 0;
-
-            if (!hasInclude && !hasExclude) return null;
-
-            let part = hasInclude ? b.include.join(",") : "";
-            if (hasExclude) part += `;!${b.exclude.join(",")}`;
-            return part;
-          })
-          .filter(Boolean)
-          .join("|");
+            .map((b) => {
+              const hasInclude = b.include.length > 0;
+              const hasExclude = b.exclude.length > 0;
+              if (!hasInclude && !hasExclude) return null;
+              let part = hasInclude ? b.include.join(",") : "";
+              if (hasExclude) part += `;!${b.exclude.join(",")}`;
+              return part;
+            })
+            .filter(Boolean)
+            .join("|");
       }
 
       const response = await api.get("/tasks/filter", { params });
@@ -80,7 +84,7 @@ const Tasks = () => {
 
   const handleDuplicate = async (taskId: number) => {
     try {
-      const res = await api.post(`/tasks/${taskId}/duplicate`);
+      await api.post(`/tasks/${taskId}/duplicate`);
       showNotification("Úloha bola duplikovaná.", "success");
       fetchTasks();
     } catch (err) {
@@ -103,121 +107,183 @@ const Tasks = () => {
       setConfirmOpen(false);
     }
   };
+
+  const toggleGroup = (groupId: number) => {
+    setExpandedGroups((prev) =>
+        prev.includes(groupId)
+            ? prev.filter((id) => id !== groupId)
+            : [...prev, groupId]
+    );
+  };
+
   useEffect(() => {
     fetchTasks();
   }, [filters, filterEnabled]);
 
+  const groupedTasks = tasks.reduce((acc, task) => {
+    const rootId = task.parentTaskId ?? task.id;
+    if (!acc[rootId]) acc[rootId] = [];
+    acc[rootId].push(task);
+    return acc;
+  }, {} as Record<number, Task[]>);
+
+  const rootTaskIds = Object.keys(groupedTasks)
+      .map((id) => parseInt(id))
+      .filter((id) => groupedTasks[id].some((t) => t.id === id || !t.parentTaskId));
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
-        <Typography sx={{ mb: 1 }}  variant="h4">Úlohy</Typography>
-        <Button variant="contained" onClick={() => navigate("/dash/tasks/new")}>
-          Pridať úlohu
-        </Button>
-      <Box mb={2}>
-        <FormControlLabel
-            control={
-              <Checkbox
-                  checked={filterEnabled}
-                  onChange={(e) => setFilterEnabled(e.target.checked)}
-              />
-            }
-            label="Filtrovanie"
-        />
-      </Box>
-
-      {filterEnabled && (
-          <Box mb={3}>
-            <TaskFilterBar onFilterChange={(f) => setFilters(f)} />
-          </Box>
-      )}
-      <Card>
-        <CardContent>
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Názov</TableCell>
-                  <TableCell>Autor</TableCell>
-                  <TableCell>Vnútorný komentár</TableCell>
-                  <TableCell>Akcie</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{task.name}</TableCell>
-                    <TableCell>{task.authorFullname}</TableCell>
-                    <TableCell>{task.internalComment}</TableCell>
-                    <TableCell>
-                      <Tooltip title="Upraviť úlohu" placement="top">
-                        <IconButton
-                            onClick={() => navigate(`/dash/tasks/${task.id}/edit`)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Duplikovať úlohu" placement="top">
-                        <IconButton
-                            onClick={() => {
-                              setTaskToDuplicate(task);
-                              setDuplicateDialogOpen(true);
-                            }}
-                        >
-                          <CopyAllIcon />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Vymazať úlohu" placement="top">
-                        <IconButton
-                            onClick={() => {
-                              setTaskToDelete(task);
-                              setConfirmOpen(true);
-                            }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {taskToDelete && (
-        <ConfirmDeleteTaskDialog
-          open={confirmOpen}
-          onClose={() => setConfirmOpen(false)}
-          onConfirm={handleDelete}
-          itemName={taskToDelete.name}
-        />
-      )}
-
-      {taskToDuplicate && (
-          <ConfirmDuplicateTaskDialog
-              open={duplicateDialogOpen}
-              onClose={() => {
-                setDuplicateDialogOpen(false);
-                setTaskToDuplicate(null);
-              }}
-              onConfirm={() => {
-                if (taskToDuplicate) {
-                  handleDuplicate(taskToDuplicate.id);
-                }
-                setDuplicateDialogOpen(false);
-                setTaskToDuplicate(null);
-              }}
-              taskName={taskToDuplicate.name}
+      <Container maxWidth="lg" sx={{ mt: 5 }}>
+        <Typography sx={{ mb: 1 }} variant="h4">Úlohy</Typography>
+        <Button variant="contained" onClick={() => navigate("/dash/tasks/new")}>Pridať úlohu</Button>
+        <Box mb={2}>
+          <FormControlLabel
+              control={<Checkbox checked={filterEnabled} onChange={(e) => setFilterEnabled(e.target.checked)} />}
+              label="Filtrovanie"
           />
-      )}
+        </Box>
+
+        {filterEnabled && (
+            <Box mb={3}>
+              <TaskFilterBar onFilterChange={(f) => setFilters(f)} />
+            </Box>
+        )}
+
+        <Card>
+          <CardContent>
+            {loading ? (
+                <CircularProgress />
+            ) : (
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Názov</TableCell>
+                      <TableCell>Autor</TableCell>
+                      <TableCell>Vnútorný komentár</TableCell>
+                      <TableCell>Akcie</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rootTaskIds.map((rootId) => {
+                      const group = groupedTasks[rootId];
+                      const root = group.find((t) => t.id === rootId) ?? group[0];
+                      const variants = group.filter((t) => t.id !== root.id);
+                      return (
+                          <React.Fragment key={root.id}>
+                            <TableRow>
+                              <TableCell>
+                                {root.name}
+                                {variants.length > 0 && (
+                                    <IconButton size="small" onClick={() => toggleGroup(root.id)}>
+                                      {expandedGroups.includes(root.id) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                    </IconButton>
+                                )}
+                              </TableCell>
+                              <TableCell>{root.authorFullname}</TableCell>
+                              <TableCell>{root.internalComment}</TableCell>
+                              <TableCell>
+                                <Tooltip title="Upraviť úlohu" placement="top">
+                                  <IconButton onClick={() => navigate(`/dash/tasks/${root.id}/edit`)}>
+                                    <EditIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Duplikovať úlohu" placement="top">
+                                  <IconButton onClick={() => {
+                                    setTaskToDuplicate(root);
+                                    setDuplicateDialogOpen(true);
+                                  }}>
+                                    <CopyAllIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Vymazať úlohu" placement="top">
+                                  <IconButton onClick={() => {
+                                    setTaskToDelete(root);
+                                    setConfirmOpen(true);
+                                  }}>
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </TableCell>
+                            </TableRow>
+                            {variants.length > 0 && (
+                                <TableRow>
+                                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
+                                    <Collapse in={expandedGroups.includes(root.id)} timeout="auto" unmountOnExit>
+                                      <Table size="small">
+                                        <TableBody>
+                                          {variants.map((variant) => (
+                                              <TableRow key={variant.id}>
+                                                <TableCell>{variant.name}</TableCell>
+                                                <TableCell>{variant.authorFullname}</TableCell>
+                                                <TableCell>{variant.internalComment}</TableCell>
+                                                <TableCell>
+                                                  <Tooltip title="Upraviť úlohu" placement="top">
+                                                    <IconButton onClick={() => navigate(`/dash/tasks/${variant.id}/edit`)}>
+                                                      <EditIcon />
+                                                    </IconButton>
+                                                  </Tooltip>
+                                                  <Tooltip title="Duplikovať úlohu" placement="top">
+                                                    <IconButton onClick={() => {
+                                                      setTaskToDuplicate(variant);
+                                                      setDuplicateDialogOpen(true);
+                                                    }}>
+                                                      <CopyAllIcon />
+                                                    </IconButton>
+                                                  </Tooltip>
+                                                  <Tooltip title="Vymazať úlohu" placement="top">
+                                                    <IconButton onClick={() => {
+                                                      setTaskToDelete(variant);
+                                                      setConfirmOpen(true);
+                                                    }}>
+                                                      <DeleteIcon />
+                                                    </IconButton>
+                                                  </Tooltip>
+                                                </TableCell>
+                                              </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </Collapse>
+                                  </TableCell>
+                                </TableRow>
+                            )}
+                          </React.Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {taskToDelete && (
+            <ConfirmDeleteTaskDialog
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleDelete}
+                itemName={taskToDelete.name}
+            />
+        )}
+
+        {taskToDuplicate && (
+            <ConfirmDuplicateTaskDialog
+                open={duplicateDialogOpen}
+                onClose={() => {
+                  setDuplicateDialogOpen(false);
+                  setTaskToDuplicate(null);
+                }}
+                onConfirm={() => {
+                  if (taskToDuplicate) {
+                    handleDuplicate(taskToDuplicate.id);
+                  }
+                  setDuplicateDialogOpen(false);
+                  setTaskToDuplicate(null);
+                }}
+                taskName={taskToDuplicate.name}
+            />
+        )}
 
 
-    </Container>
+      </Container>
   );
 };
 

@@ -24,6 +24,9 @@ import TaskFilterBar from "../../Tasks/Components/TaskFilterBar";
 import { CategoryFilterBlock } from "../../Tasks/Types/CategoryFilterBlock";
 import AddTaskDialog from "../components/AddTaskDialog";
 import PreviewDialog from "../components/PreviewDialog";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import { Collapse } from "@mui/material";
 
 const SelectTasksForAssignmentPage = () => {
   const { id: assignmentId } = useParams<{ id: string }>();
@@ -35,6 +38,7 @@ const SelectTasksForAssignmentPage = () => {
     author: "",
     categoryBlocks: [] as CategoryFilterBlock[],
   });
+  const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{
@@ -48,6 +52,14 @@ const SelectTasksForAssignmentPage = () => {
   const [addTaskId, setAddTaskId] = useState<number | null>(null);
 
   const navigate = useNavigate();
+
+  const toggleGroup = (groupId: number) => {
+    setExpandedGroups((prev) =>
+        prev.includes(groupId)
+            ? prev.filter((id) => id !== groupId)
+            : [...prev, groupId]
+    );
+  };
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -162,6 +174,18 @@ const SelectTasksForAssignmentPage = () => {
     fetchTasks();
   }, [filters]);
 
+  const groupedTasks = tasks.reduce((acc, task) => {
+    const rootId = task.parentTaskId ?? task.id;
+    if (!acc[rootId]) acc[rootId] = [];
+    acc[rootId].push(task);
+    return acc;
+  }, {} as Record<number, Task[]>);
+
+  const rootTaskIds = Object.keys(groupedTasks)
+      .map((id) => parseInt(id))
+      .filter((id) => groupedTasks[id].some((t) => t.id === id || !t.parentTaskId));
+
+
   return (
     <Container maxWidth="md" sx={{ mt: 5 }}>
       <Typography variant="h4" gutterBottom>
@@ -186,22 +210,71 @@ const SelectTasksForAssignmentPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{task.name}</TableCell>
-                    <TableCell>{task.authorFullname}</TableCell>
-                    <TableCell>{task.internalComment}</TableCell>
-                    <TableCell align="right">
-                      <IconButton onClick={() => handlePreview(task.id)}>
-                        <PreviewIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleOpenAdd(task.id)}>
-                        <AddIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {rootTaskIds.map((rootId) => {
+                  const group = groupedTasks[rootId];
+                  const root = group.find((t) => t.id === rootId) ?? group[0];
+                  const variants = group.filter((t) => t.id !== root.id);
+
+                  return (
+                      <React.Fragment key={root.id}>
+                        <TableRow>
+                          <TableCell>
+                            {root.name}
+                            {variants.length > 0 && (
+                                <IconButton size="small" onClick={() => toggleGroup(root.id)}>
+                                  {expandedGroups.includes(root.id) ? (
+                                      <ExpandLessIcon />
+                                  ) : (
+                                      <ExpandMoreIcon />
+                                  )}
+                                </IconButton>
+                            )}
+                          </TableCell>
+                          <TableCell>{root.authorFullname}</TableCell>
+                          <TableCell>{root.internalComment}</TableCell>
+                          <TableCell align="right">
+                            <IconButton onClick={() => handlePreview(root.id)}>
+                              <PreviewIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleOpenAdd(root.id)}>
+                              <AddIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+
+                        {variants.length > 0 && (
+                            <TableRow>
+                              <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
+                                <Collapse in={expandedGroups.includes(root.id)} timeout="auto" unmountOnExit>
+                                  <Table size="small">
+                                    <TableBody>
+                                      {variants.map((variant) => (
+                                          <TableRow key={variant.id}>
+                                            <TableCell sx={{ pl: 4 }}>{variant.name}</TableCell>
+                                            <TableCell>{variant.authorFullname}</TableCell>
+                                            <TableCell>{variant.internalComment}</TableCell>
+                                            <TableCell align="right">
+                                              <IconButton onClick={() => handlePreview(variant.id)}>
+                                                <PreviewIcon />
+                                              </IconButton>
+                                              <IconButton onClick={() => handleOpenAdd(variant.id)}>
+                                                <AddIcon />
+                                              </IconButton>
+                                            </TableCell>
+                                          </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </Collapse>
+                              </TableCell>
+                            </TableRow>
+                        )}
+                      </React.Fragment>
+                  );
+                })}
               </TableBody>
+
+
             </Table>
           )}
         </CardContent>
