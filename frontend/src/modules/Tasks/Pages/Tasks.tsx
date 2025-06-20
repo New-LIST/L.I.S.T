@@ -11,7 +11,7 @@ import {
   TableCell,
   TableBody,
   IconButton,
-  CircularProgress, Box, FormControlLabel, Checkbox,
+  CircularProgress, Box, FormControlLabel, Checkbox, Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -151,28 +151,35 @@ const Tasks = () => {
                     <TableCell>{task.authorFullname}</TableCell>
                     <TableCell>{task.internalComment}</TableCell>
                     <TableCell>
-                      <IconButton
-                        onClick={() => navigate(`/dash/tasks/${task.id}/edit`)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                          onClick={() => {
-                            setTaskToDuplicate(task);
-                            setDuplicateDialogOpen(true);
-                          }}
-                      >
-                        <CopyAllIcon />
-                      </IconButton>
+                      <Tooltip title="Upraviť úlohu" placement="top">
+                        <IconButton
+                            onClick={() => navigate(`/dash/tasks/${task.id}/edit`)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
 
-                      <IconButton
-                        onClick={() => {
-                          setTaskToDelete(task);
-                          setConfirmOpen(true);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Tooltip title="Duplikovať úlohu" placement="top">
+                        <IconButton
+                            onClick={() => {
+                              setTaskToDuplicate(task);
+                              setDuplicateDialogOpen(true);
+                            }}
+                        >
+                          <CopyAllIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Vymazať úlohu" placement="top">
+                        <IconButton
+                            onClick={() => {
+                              setTaskToDelete(task);
+                              setConfirmOpen(true);
+                            }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -12,7 +12,7 @@ import {
     TableContainer,
     TableHead,
     TablePagination,
-    TableRow,
+    TableRow, Tooltip,
     Typography
 } from "@mui/material";
 import api from "../../../services/api.ts";
@@ -29,6 +29,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import { AssistantScopeDialog } from "../components/AssistantScopeDialog.tsx";
 import {EditUserDialog} from "../components/EditUserDialog.tsx";
+import ConfirmDeleteUserDialog from "../components/ConfirmDeleteUserDialog.tsx";
 
 const Users = () => {
     const { showNotification } = useNotification();
@@ -42,9 +43,16 @@ const Users = () => {
     const [isEditDialogOpen, setEditDialogOpen] = useState(false);
     const [isScopeDialogOpen, setScopeDialogOpen] = useState(false);
 
+    const [debouncedSearch, setDebouncedSearch] = useState(searchString);
+
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+
+
     const [selectedAssistant, setSelectedAssistant] = useState<User | null>(null);
 
-    const { users, loading, reload } = getUsers(page, pageSize, searchString);
+    const { users, loading, reload } = getUsers(page, pageSize, debouncedSearch);
 
     
     const AddUser = async (user: User) => {
@@ -64,20 +72,30 @@ const Users = () => {
                 showNotification("Nepodarilo sa pridať použivateľa", "error");
             });
     }
-    
-    const DeleteUser = async (user: User) => {
-        await api.delete(`/users/${user.id}`)
-            .then(() => {
-                showNotification("Použivateľ bol vymazaný", "success");
-            })
-            .catch((error: AxiosError) => {
-                console.error(error);
-                showNotification("Nepodarilo sa vymazať použivateľa ", "error");
-            })
-            .finally(() => {
-                reload();
-            })
-    }
+
+    const handleDeleteUser = async () => {
+        if (!userToDelete) return;
+        try {
+            await api.delete(`/users/${userToDelete.id}`);
+            showNotification("Použivateľ bol vymazaný", "success");
+            reload();
+        } catch (error) {
+            console.error(error);
+            showNotification("Nepodarilo sa vymazať používateľa", "error");
+        } finally {
+            setDeleteDialogOpen(false);
+            setUserToDelete(null);
+        }
+    };
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setDebouncedSearch(searchString);
+        }, 250);
+
+        return () => clearTimeout(timeout);
+    }, [searchString]);
+
     
     return (
         <>
@@ -98,7 +116,6 @@ const Users = () => {
                             inputProps={{ 'aria-label': 'search' }}
                             onChange={(e) => {
                                 setSearchString(e.target.value);
-                                reload();
                             }}
                         />
                     </Search>
@@ -143,27 +160,37 @@ const Users = () => {
                                     <TableCell>{user.role}</TableCell>
                                     <TableCell align="right">
                                         {user.role === "Assistant" && (
-                                            <IconButton onClick={() => {
-                                                setSelectedAssistant(user);
-                                                setScopeDialogOpen(true);
-                                            }}>
-                                                <ManageAccountsIcon />
-                                            </IconButton>
+                                            <Tooltip title="Nastaviť rozsah asistenta" placement="top">
+                                                <IconButton onClick={() => {
+                                                    setSelectedAssistant(user);
+                                                    setScopeDialogOpen(true);
+                                                }}>
+                                                    <ManageAccountsIcon />
+                                                </IconButton>
+                                            </Tooltip>
                                         )}
 
-                                        <IconButton onClick={() => {
-                                            setSelectedUser(user);
-                                            setEditDialogOpen(true);
-                                        }}>
-                                            <EditIcon />
-                                        </IconButton>
+                                        <Tooltip title="Upraviť používateľa" placement="top">
+                                            <IconButton onClick={() => {
+                                                setSelectedUser(user);
+                                                setEditDialogOpen(true);
+                                            }}>
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
 
-                                        <IconButton
-                                            onClick={() => { DeleteUser(user) }}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <Tooltip title="Vymazať používateľa" placement="top">
+                                            <IconButton
+                                                onClick={() => {
+                                                    setUserToDelete(user);
+                                                    setDeleteDialogOpen(true);
+                                                }}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                     </TableCell>
+
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -226,6 +253,18 @@ const Users = () => {
                     setSelectedAssistant(null);
                 }}
             />
+
+            {userToDelete && (
+                <ConfirmDeleteUserDialog
+                    open={deleteDialogOpen}
+                    onClose={() => {
+                        setDeleteDialogOpen(false);
+                        setUserToDelete(null);
+                    }}
+                    onConfirm={handleDeleteUser}
+                    userName={userToDelete.fullname}
+                />
+            )}
 
         </>
     );
