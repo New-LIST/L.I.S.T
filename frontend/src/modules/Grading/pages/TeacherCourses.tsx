@@ -18,7 +18,7 @@ import {
 import api from "../../../services/api";
 import GradingIcon from "@mui/icons-material/Grading";
 import TableChartIcon from '@mui/icons-material/TableChart';
-
+import EmptyState from "../../../shared/components/EmptyState";
 
 interface Course {
   id: number;
@@ -47,7 +47,7 @@ const TeacherCourses: React.FC = () => {
         Moje kurzy
       </Typography>
       <TableContainer component={Paper}>
-        <Table>
+        <Table size = "small">
           <TableHead>
             <TableRow>
               <TableCell>Názov kurzu</TableCell>
@@ -55,35 +55,46 @@ const TeacherCourses: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {courses.map((course) => (
-              <TableRow key={course.id}>
-                <TableCell component="th" scope="row">
-                  {course.name}
-                </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Hodnotiť zadania">
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        navigate(`/dash/grade/course/${course.id}`)
-                      }
-                    >
-                      <GradingIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Tabuľka hodnotení">
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        navigate(`/dash/grade/course/${course.id}/matrix`)
-                      }
-                    >
-                      <TableChartIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
+            {courses.length > 0 ? (
+                courses.map((course) => (
+                    <TableRow key={course.id}>
+                      <TableCell component="th" scope="row">
+                        {course.name}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Hodnotiť zadania">
+                          <IconButton
+                              size="small"
+                              onClick={() =>
+                                  navigate(`/dash/grade/course/${course.id}`)
+                              }
+                          >
+                            <GradingIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Tabuľka hodnotení">
+                          <IconButton
+                              size="small"
+                              onClick={() =>
+                                  navigate(`/dash/grade/course/${course.id}/matrix`)
+                              }
+                          >
+                            <TableChartIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                  <TableCell colSpan={2}>
+                    <EmptyState
+                        message="Žiadne kurzy"
+                        subtext="Zatiaľ nemáte žiadne kurzy."
+                    />
+                  </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

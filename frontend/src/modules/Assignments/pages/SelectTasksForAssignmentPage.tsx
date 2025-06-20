@@ -200,7 +200,7 @@ const SelectTasksForAssignmentPage = () => {
           {loading ? (
             <CircularProgress />
           ) : (
-            <Table>
+              <Table size = "small">
               <TableHead>
                 <TableRow>
                   <TableCell>Názov</TableCell>

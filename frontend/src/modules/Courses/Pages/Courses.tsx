@@ -375,7 +375,7 @@ const Courses = () => {
           {loading ? (
             <CircularProgress />
           ) : (
-            <Table>
+              <Table size = "small">
               <TableHead>
                 <TableRow>
                   <TableCell>Názov kurzu</TableCell>

@@ -210,7 +210,7 @@ const AssignmentsPage = () => {
       )}
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table size = "small">
           <TableHead>
             <TableRow>
               {visibleCols.includes("id") && renderSortableHeader("ID", "id")}

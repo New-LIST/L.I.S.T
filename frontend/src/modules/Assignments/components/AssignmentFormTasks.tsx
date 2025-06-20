@@ -138,7 +138,7 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId }) => {
 
   return (
     <Box>
-      <Table>
+      <Table size = "small">
         <TableHead>
           <TableRow>
             <TableCell>Úloha</TableCell>

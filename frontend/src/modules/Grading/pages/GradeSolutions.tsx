@@ -196,7 +196,7 @@ const GradeSolutions: React.FC = () => {
         </AccordionDetails>
       </Accordion>
       <TableContainer component={Paper} sx={{ mt: 1 }}>
-        <Table>
+        <Table size = "small">
           <TableHead>
             <TableRow>
               <TableCell>Vytvorené</TableCell>
