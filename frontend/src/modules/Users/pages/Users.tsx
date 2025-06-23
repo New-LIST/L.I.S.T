@@ -9,14 +9,14 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableContainer,
+    TableContainer, TableFooter,
     TableHead,
     TablePagination,
     TableRow, Tooltip,
     Typography
 } from "@mui/material";
 import api from "../../../services/api.ts";
-import {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {User} from "../types/User.ts";
 import {AddUserDialog} from "../components/AddUserDialog.tsx";
 import {AxiosError, AxiosResponse} from "axios";
@@ -37,7 +37,7 @@ const Users = () => {
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
     const [isImportUsersDialogOpen, setImportUsersDialogOpen] = useState(false);
     const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(15);
     const [searchString, setSearchString] = useState("");
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isEditDialogOpen, setEditDialogOpen] = useState(false);
@@ -196,17 +196,22 @@ const Users = () => {
                         </TableBody>
                     )}
                 </Table>
-                <TablePagination
-                    component="div"
-                    count={users.totalCount}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    rowsPerPage={pageSize}
-                    onRowsPerPageChange={(e) => {
-                        setPageSize(parseInt(e.target.value, 10));
-                        setPage(0);
-                    }}
-                />
+                <TableFooter>
+                    <TableRow>
+                        <TablePagination
+                            count={users.totalCount}
+                            page={page}
+                            onPageChange={(event, newPage) => setPage(newPage)}
+                            rowsPerPage={pageSize}
+                            onRowsPerPageChange={(e) => {
+                                setPageSize(parseInt(e.target.value, 10));
+                                setPage(0);
+                            }}
+                            rowsPerPageOptions={[5, 15, 25]}
+                            labelRowsPerPage="Úloh na stránku:"
+                        />
+                    </TableRow>
+                </TableFooter>
             </TableContainer>
             <AddUserDialog isOpen={isAddDialogOpen}
                            onClose={()=> {

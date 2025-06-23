@@ -68,7 +68,6 @@ export default function Assignments() {
     const getAssignmentStatus = (
         assignmentId: number,
         deadlineStr: string | null,
-        uploadAllowed: boolean
     ): string => {
         const points = studentPoints[assignmentId];
         const hasSolution = assignmentId in studentPoints;
@@ -77,8 +76,12 @@ export default function Assignments() {
 
         if (points != null) return "graded";
         if (hasSolution) return "submitted";
-        if (!uploadAllowed) return "missing";
-        if (deadline && deadline < now) return "missing";
+
+
+        if (deadline && deadline < now) {
+            return "missing";
+        }
+
         return "open";
     };
 
