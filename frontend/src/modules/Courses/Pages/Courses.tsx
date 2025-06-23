@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -15,7 +15,7 @@ import {
   CircularProgress,
   IconButton,
   TextField,
-  MenuItem, Tooltip
+  MenuItem, Tooltip, TablePagination, TableFooter
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -67,6 +67,10 @@ const Courses = () => {
 
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [courseToDuplicate, setCourseToDuplicate] = useState<Course | null>(null);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -325,6 +329,10 @@ const Courses = () => {
     }
   };
 
+  const paginatedCourses = filteredCourses.slice(
+      page * rowsPerPage,
+      page * rowsPerPage + rowsPerPage
+  );
 
 
   return (
@@ -385,7 +393,7 @@ const Courses = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredCourses.map((course) => (
+                {paginatedCourses.map((course) => (
                   <TableRow key={course.id}>
                     <TableCell>{course.name}</TableCell>
                     <TableCell>
@@ -489,6 +497,23 @@ const Courses = () => {
                   </TableRow>
                 ))}
               </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                        count={filteredCourses.length}
+                        page={page}
+                        onPageChange={(event, newPage) => setPage(newPage)}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={(e) => {
+                          setRowsPerPage(parseInt(e.target.value, 10));
+                          setPage(0);
+                        }}
+                        rowsPerPageOptions={[5, 10, 25]}
+                        labelRowsPerPage="Úloh na stránku:"
+                    />
+                  </TableRow>
+                </TableFooter>
+
             </Table>
           )}
         </CardContent>

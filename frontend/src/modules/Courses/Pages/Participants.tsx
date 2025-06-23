@@ -11,7 +11,9 @@ import {
     TableBody,
     IconButton,
     CircularProgress,
-    TextField
+    TextField,
+    TableFooter,
+    TablePagination
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -38,6 +40,9 @@ export default function Participants() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -100,6 +105,11 @@ export default function Participants() {
         p.userName.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     );
 
+    const paginatedParticipants = filteredParticipants.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
+
     return (
         <Container maxWidth="md" sx={{ mt: 5 }}>
             <Typography variant="h4" gutterBottom>
@@ -122,7 +132,7 @@ export default function Participants() {
                     {loading ? (
                         <CircularProgress />
                     ) : (
-                        <Table size = "small">
+                        <Table size="small">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Meno</TableCell>
@@ -132,7 +142,7 @@ export default function Participants() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredParticipants.map(p => (
+                                {paginatedParticipants.map(p => (
                                     <TableRow key={p.userId}>
                                         <TableCell>{p.userName}</TableCell>
                                         <TableCell>{p.email}</TableCell>
@@ -154,6 +164,22 @@ export default function Participants() {
                                     </TableRow>
                                 ))}
                             </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TablePagination
+                                        count={filteredParticipants.length}
+                                        page={page}
+                                        onPageChange={(e, newPage) => setPage(newPage)}
+                                        rowsPerPage={rowsPerPage}
+                                        onRowsPerPageChange={(e) => {
+                                            setRowsPerPage(parseInt(e.target.value, 10));
+                                            setPage(0);
+                                        }}
+                                        rowsPerPageOptions={[5, 15, 25]}
+                                        labelRowsPerPage="Účastníkov na stránku:"
+                                    />
+                                </TableRow>
+                            </TableFooter>
                         </Table>
                     )}
                 </CardContent>

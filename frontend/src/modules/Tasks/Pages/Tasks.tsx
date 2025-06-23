@@ -17,6 +17,8 @@ import {
   Checkbox,
   Tooltip,
   Collapse,
+  TableFooter,
+  TablePagination
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -49,6 +51,10 @@ const Tasks = () => {
   const [taskToDuplicate, setTaskToDuplicate] = useState<Task | null>(null);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const navigate = useNavigate();
 
   const fetchTasks = async () => {
@@ -163,7 +169,7 @@ const Tasks = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {rootTaskIds.map((rootId) => {
+                    {rootTaskIds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((rootId) => {
                       const group = groupedTasks[rootId];
                       const root = group.find((t) => t.id === rootId) ?? group[0];
                       const variants = group.filter((t) => t.id !== root.id);
@@ -205,7 +211,9 @@ const Tasks = () => {
                               </TableCell>
                             </TableRow>
                             {variants.length > 0 && (
-                                <TableRow>
+                                <TableRow
+                                    sx={{ backgroundColor: 'rgba(0, 0, 0, 0.03)' }}
+                                >
                                   <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
                                     <Collapse in={expandedGroups.includes(root.id)} timeout="auto" unmountOnExit>
                                       <Table size="small">
@@ -250,6 +258,24 @@ const Tasks = () => {
                       );
                     })}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination
+                          count={rootTaskIds.length}
+                          page={page}
+                          onPageChange={(event, newPage) => setPage(newPage)}
+                          rowsPerPage={rowsPerPage}
+                          onRowsPerPageChange={(e) => {
+                            setRowsPerPage(parseInt(e.target.value, 10));
+                            setPage(0);
+                          }}
+                          rowsPerPageOptions={[5, 10, 25]}
+                          labelRowsPerPage="Úloh na stránku:"
+                      />
+                    </TableRow>
+                  </TableFooter>
+
+
                 </Table>
             )}
           </CardContent>
