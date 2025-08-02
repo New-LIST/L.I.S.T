@@ -1,6 +1,9 @@
+using List.Tests.Models;
+
 namespace List.Tests.Services;
 
 public interface IRunScriptService
 {
-    public Task<IEnumerable<string>> RunScriptAsync(string relativePath, List<string> arguments, List<string> inputLines);
+    public Task<TestResult> RunScriptAsync(Test test, List<string> inputLines);
+    
 }

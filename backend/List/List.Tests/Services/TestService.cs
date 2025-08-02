@@ -17,6 +17,8 @@ public class TestService(TestsDbContext context, IFileStorageService storageServ
     {
         storageService.SaveFileAsync(file, $"Tests/{test.Name}");
         
+        context.Tests.Add(test);
+        
         return Task.FromResult(true);
     }
     
