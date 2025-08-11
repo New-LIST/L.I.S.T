@@ -9,7 +9,7 @@ public class RunScriptService(IWebHostEnvironment env) : IRunScriptService
 {
     public async Task<TestResult> RunScriptAsync(Test test, List<string> inputLines = null)
     {
-        var fullPath = Path.Combine(env.WebRootPath, test.FilePath);
+        var fullPath = Path.Combine(env.WebRootPath, test.StorageKey);
         
         var process = new Process();
         process.StartInfo.FileName = "python";

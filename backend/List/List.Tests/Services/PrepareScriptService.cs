@@ -8,13 +8,16 @@ public class PrepareScriptService(IRunScriptService runScriptService) : IPrepare
     {
         switch (test.Type)
         {
-            case TestType.Python:
+            case TestType.PythonIO:
                 await PreparePythonScriptAsync(test);
                 break;
-            case TestType.Java:
+            case TestType.PythonUnit:
+                await PreparePythonScriptAsync(test);
+                break;
+            case TestType.JavaUnit:
                 await PrepareJavaScriptAsync(test);
                 break;
-            case TestType.C:
+            case TestType.CUnit:
                 await PrepareCScriptAsync(test);
                 break;
             case TestType.Txt:
