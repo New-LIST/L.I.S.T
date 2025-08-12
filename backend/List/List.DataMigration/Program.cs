@@ -9,7 +9,7 @@ builder.Services.AddDbContext<OldListDbContext>(options =>
     options.UseNpgsql(config.GetConnectionString("OldListConnection")));
 
 builder.Services.AddDbContext<NewListDbContext>(options =>
-    options.UseNpgsql(config.GetConnectionString("NewListConnection")));
+    options.UseMySQL(config.GetConnectionString("NewListConnection")));
 
 var app = builder.Build();
 
