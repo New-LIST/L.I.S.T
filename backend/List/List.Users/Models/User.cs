@@ -37,4 +37,7 @@ public class User
     [JsonConverter(typeof(JsonStringEnumConverter))]
     [Column("role")]
     public UserRole Role { get; set; }
+    
+    [Column("inactive ")]
+    public bool Inactive { get; set; } = false;
 }
