@@ -61,7 +61,7 @@ const Users = () => {
     const { users, loading, reload } = getUsers(page, pageSize, debouncedSearch);
 
     
-    const AddUser = async (user: User) => {
+    const handleAddUser = async (user: User) => {
         await api.post('/users', user)
             .then((response: AxiosResponse<User>) => {
                 showNotification("Používateľ bol úspešne pridaný", "success");
@@ -276,7 +276,7 @@ const Users = () => {
                                setAddDialogOpen(false);
                                reload();
                            }}
-                           onSubmit={AddUser} />
+                           onSubmit={handleAddUser} />
             <ImportUsersDialog isOpen={isImportUsersDialogOpen}
                                onClose={()=> {
                                    setImportUsersDialogOpen(false);

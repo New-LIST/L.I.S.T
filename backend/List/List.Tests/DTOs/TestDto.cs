@@ -8,12 +8,14 @@ public class TestDto
 {
     [Key]
     public int Id { get; set; }
+    [Required]
     public string Name { get; set; }
     [Required]
     public TestType Type { get; set; }
     [Required]
     public int Timeout { get; set; }
     [Required]
-    public int TaskId { get; set; }
-    public List<string> InputLines { get; set; }
+    public bool Allowed { get; set; }
+    [Required]
+    public bool Evaluate { get; set; }
 }

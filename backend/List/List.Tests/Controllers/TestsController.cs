@@ -1,6 +1,9 @@
+using System.Data;
+using List.Common.Models;
 using List.Tests.DTOs;
 using List.Tests.Models;
 using List.Tests.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,15 +14,15 @@ namespace List.Tests.Controllers;
 public class TestsController(ITestService testService, IPrepareScriptService prepareScriptService) : ControllerBase
 {
     [HttpGet]
-    public async Task<List<Test>> GetAllAsync()
+    public async Task<PagedResult<Test>> GetTestsPageAsync(int page = 0, int pageSize = 100)
     {
-        return (await testService.GetTestsAsync()).ToList();
+        return await testService.GetTestsByAsync(page, pageSize);
     }
 
     [HttpPost("/api/run-test")]
     public async Task<ActionResult<TestResult>> RunTest(Test test, IFormFile file)
     {
-        var result = await testService.AddTestAsync(test, file);
+        var result = await testService.AddTestAsync(test);
 
         if (!result)
         {
@@ -31,24 +34,53 @@ public class TestsController(ITestService testService, IPrepareScriptService pre
         return testResult;
     }
 
-    [HttpPost]
-    public async Task<ActionResult<bool>> Update(Test test, IFormFile file)
+    [Authorize(Roles = "Teacher")]
+    [HttpPost("/api/tasks/{taskId:int}/tests/{testId:int}")]
+    public async Task<ActionResult<bool>> Update(int taskId, int testId, TestDto test)
     {
-        return await testService.UpdateTestAsync(test, file);
+        var testToUpdate = await testService.GetTestAsync(testId);
+        
+        if (testToUpdate is null)
+            return NotFound();;
+        
+        testToUpdate.Name = test.Name;
+        testToUpdate.Timeout = test.Timeout;
+        testToUpdate.Type = test.Type;
+        testToUpdate.Allowed = test.Allowed;
+        testToUpdate.Evaluate = test.Evaluate;
+        testToUpdate.TaskId = taskId;
+        var result =  await testService.UpdateTestAsync(testToUpdate);
+        if (result)
+            return Ok();
+        return BadRequest();
     }
 
-    [HttpPut]
-    public async Task<ActionResult<bool>> Add(Test test, IFormFile file)
+    [Authorize(Roles = "Teacher")]
+    [HttpPut("/api/tasks/{taskId:int}/tests")]
+    public async Task<ActionResult<bool>> Add(int taskId, TestDto test)
     {
-        return await testService.AddTestAsync(test, file);
+        var newTest = new Test()
+        {
+            Name = test.Name,
+            Timeout = test.Timeout,
+            Type = test.Type,
+            TaskId = taskId,
+            Allowed = test.Allowed,
+            Evaluate = test.Evaluate,
+            StorageKey = Guid.NewGuid().ToString(),
+        };
+        return await testService.AddTestAsync(newTest);
     }
 
-    [HttpDelete]
+    [Authorize(Roles = "Teacher")]
+    [HttpDelete("{id:int}")]
+
     public async Task<ActionResult<bool>> Delete(int id)
     {
         return await testService.DeleteTestAsync(id);
     }
     
+    [Authorize(Roles = "Teacher")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Test>> GetById(int id)
     {

@@ -39,5 +39,5 @@ public class User
     public UserRole Role { get; set; }
     
     [Column("inactive ")]
-    public bool Inactive { get; set; } = false;
+    public bool Inactive { get; set; } = false; 
 }
