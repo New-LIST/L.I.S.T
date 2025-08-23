@@ -64,9 +64,11 @@ export default function SignIn() {
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response) {
                 const serverMessage = error.response.data;
-
+                
                 if (serverMessage.message === 'Invalid email or password.') {
                     setGeneralError('Zlý email alebo heslo');
+                } else if (serverMessage.message === 'User is inactive.') {
+                    setGeneralError('Používateľ je deaktivovaný')
                 } else {
                     setGeneralError(serverMessage.message || 'Prihlásenie zlyhalo.');
                 }
