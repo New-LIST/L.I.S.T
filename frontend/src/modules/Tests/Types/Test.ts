@@ -3,7 +3,8 @@ import {TestType} from "./TestType.ts";
 export type Test = {
     id: number;
     name: string;
-    taskId: number;
-    testType: TestType;
+    type: TestType;
     timeout: number;
+    allowed: boolean;
+    evaluate: boolean;
 }

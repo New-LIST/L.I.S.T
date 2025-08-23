@@ -18,6 +18,7 @@ public class Module : IModule
         services.AddScoped<ITestService, TestService>();
         services.AddScoped<ICompareOutputService, CompareOutputService>();
         services.AddScoped<IRunScriptService, RunScriptService>();
+        services.AddScoped<IPrepareScriptService, PrepareScriptService>();
     }
 
     public void UseServices(IApplicationBuilder app)

@@ -31,6 +31,7 @@ import SolutionDetail from "../../Grading/pages/SolutionDetail.tsx";
 import GradeTable from "../../Grading/pages/GradeTable.tsx";
 import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
 import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer.tsx";
+import Tests from "../../Tests/Pages/Tests.tsx";
 
 const AppRoutes = () => {
   return (
@@ -81,6 +82,7 @@ const AppRoutes = () => {
             <Route path="grade/course/:courseId/assignments/:assignmentId/bulk-grade" element={<BulkGrade />}/>
             <Route path="grade/course/:courseId/assignments/:assignmentId/grade-solutions" element={<GradeSolutions />}/>
             <Route path="grade/course/:courseId/assignments/:assignmentId/solutions/:solutionId/evaluate" element={<SolutionDetail />}/>
+        <Route path="tests" element={<Tests />}/> 
       </Route>
 
       {/* fallback na root */}

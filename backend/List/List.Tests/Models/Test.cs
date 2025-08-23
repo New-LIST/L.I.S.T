@@ -30,5 +30,11 @@ public class Test
     [Required]
     public int Timeout { get; set; } // in milliseconds
     
+    [Required]
+    public bool Allowed { get; set; }
+    
+    [Required]
+    public bool Evaluate { get; set; }
+    
     public string StorageKey { get; set; }
 }

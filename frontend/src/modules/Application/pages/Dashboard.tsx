@@ -25,7 +25,7 @@ export default function Dashboard() {
         { label: t('Assignments'), path: 'assignments'},
         { label: t('Logs'), path: 'logs'},
         { label: t('Grading'), path: 'grade'},
-
+        { label: 'Test', path: 'tests'}
     ];
 
     const role = user.role?.toLowerCase();
