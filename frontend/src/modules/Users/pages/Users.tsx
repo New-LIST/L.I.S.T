@@ -27,9 +27,14 @@ import {ImportUsersDialog} from "../components/ImportUsersDialog.tsx";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import DisabledVisibleIcon from '@mui/icons-material/DisabledVisible';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { AssistantScopeDialog } from "../components/AssistantScopeDialog.tsx";
 import {EditUserDialog} from "../components/EditUserDialog.tsx";
 import ConfirmDeleteUserDialog from "../components/ConfirmDeleteUserDialog.tsx";
+import ConfirmDeactivateUserDialog from "../components/ConfirmDeactivateUserDialog.tsx";
+import ConfirmToggleUserDialog from "../components/ConfirmToggleUserDialog.tsx";
 
 const Users = () => {
     const { showNotification } = useNotification();
@@ -48,7 +53,8 @@ const Users = () => {
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-
+    const [userToToggle, setUserToToggle] = useState<User | null>(null);
+    const [toggleUserDialogOpen, setToggleUserDialogOpen] = useState(false);
 
     const [selectedAssistant, setSelectedAssistant] = useState<User | null>(null);
 
@@ -87,6 +93,41 @@ const Users = () => {
             setUserToDelete(null);
         }
     };
+
+    const handleToggleUser = async () => {
+        if (!userToToggle) return;
+        try {
+            await api.get(`/users/${userToToggle.id}/toggle-inactive`);
+            showNotification("Použivateľ bol deaktivovaný", "success");
+            reload();
+        } catch (error) {
+            console.error(error);
+            showNotification("Nepodarilo sa deaktivovať používateľa", "error");
+        } finally {
+            setToggleUserDialogOpen(false);
+            setUserToToggle(null);
+        }
+    };
+    
+    const handleUpdateUser = async (updatedUser: User) => {
+        try {
+            await api.put(`/users/${updatedUser.id}`, {
+                fullName: updatedUser.fullname,
+                email: updatedUser.email,
+                role: updatedUser.role,
+            });
+            showNotification("Zmeny boli uložené", "success");
+
+            if (updatedUser.role === "Assistant") {
+                setSelectedAssistant(updatedUser);
+                setScopeDialogOpen(true);
+            }
+
+            reload();
+        } catch (error) {
+            showNotification("Nepodarilo sa uložiť zmeny", "error");
+        }
+    }
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -142,6 +183,7 @@ const Users = () => {
                             <TableCell>Názov</TableCell>
                             <TableCell>Email</TableCell>
                             <TableCell>Role</TableCell>
+                            <TableCell>Stav</TableCell>
                             <TableCell align="right">Akcie</TableCell>
                         </TableRow>
                     </TableHead>
@@ -158,6 +200,7 @@ const Users = () => {
                                     <TableCell>{user.fullname}</TableCell>
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>{user.role}</TableCell>
+                                    <TableCell>{(user.inactive) ? "Neaktívny" : "Aktívny"}</TableCell>
                                     <TableCell align="right">
                                         {user.role === "Assistant" && (
                                             <Tooltip title="Nastaviť rozsah asistenta" placement="top">
@@ -179,6 +222,21 @@ const Users = () => {
                                             </IconButton>
                                         </Tooltip>
 
+                                        <Tooltip title={(user.inactive) ? "Aktivovať používateľa" : "Deaktivovať používateľa"} placement="top">
+                                            <IconButton
+                                                onClick={() => {
+                                                    setUserToToggle(user);
+                                                    setToggleUserDialogOpen(true);
+                                                }}
+                                            >
+                                                {(user.inactive) ?
+                                                    <VisibilityIcon/>
+                                                    :
+                                                    <VisibilityOffIcon/>
+                                                }
+                                            </IconButton>
+                                        </Tooltip>
+                                        
                                         <Tooltip title="Vymazať používateľa" placement="top">
                                             <IconButton
                                                 onClick={() => {
@@ -227,26 +285,7 @@ const Users = () => {
             <EditUserDialog
                 isOpen={isEditDialogOpen}
                 user={selectedUser}
-                onSubmit={async (updatedUser) => {
-                    try {
-                        await api.put(`/users/${updatedUser.id}`, {
-                            fullName: updatedUser.fullname,
-                            email: updatedUser.email,
-                            role: updatedUser.role
-                        });
-                        showNotification("Zmeny boli uložené", "success");
-
-                        if (updatedUser.role === "Assistant") {
-                            setSelectedAssistant(updatedUser);
-                            setScopeDialogOpen(true);
-                        }
-
-                        reload();
-                    } catch (error) {
-                        showNotification("Nepodarilo sa uložiť zmeny", "error");
-                    }
-                }}
-
+                onSubmit={handleUpdateUser}
                 onClose={() => setEditDialogOpen(false)}
             />
 
@@ -268,6 +307,18 @@ const Users = () => {
                     }}
                     onConfirm={handleDeleteUser}
                     userName={userToDelete.fullname}
+                />
+            )}
+
+            {userToToggle && (
+                <ConfirmToggleUserDialog
+                    open={toggleUserDialogOpen}
+                    onClose={() => {
+                        setToggleUserDialogOpen(false);
+                        setUserToToggle(null);
+                    }}
+                    onConfirm={handleToggleUser}
+                    user={userToToggle}
                 />
             )}
 

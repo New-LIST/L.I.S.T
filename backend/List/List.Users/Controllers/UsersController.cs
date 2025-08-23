@@ -74,6 +74,23 @@ public class UsersController(IUserService userService) : ControllerBase
     }
 
 
+    [HttpGet("{id:int}/toggle-inactive")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> ToggleUserAsync(int id)
+    {
+        var user = await userService.GetUserAsync(id);
+        if (user is null)
+            return NotFound();
+        
+        user.Inactive = !user.Inactive;
+        
+        var updated = await userService.UpdateUserAsync(user);
+        if (updated)
+            return Ok();
+
+        return BadRequest("Nepodarilo sa deaktivovať/aktivovať použivateľa.");
+    }
+
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Teacher")]

@@ -80,21 +80,11 @@ namespace List.Users.Controllers
                 return BadRequest(ModelState);
             
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null && request.Email == "admin@admin.sk" && request.Password == "admin12345")
-            {
-                user = new User
-                {
-                    Fullname = "Admin",
-                    Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    Email = request.Email,
-                    Role = UserRole.Teacher,
-                };
-                
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-            }
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
                 return Unauthorized(new { message = "Invalid email or password." });
+            
+            if (user.Inactive)
+                return Unauthorized(new { message = "User is inactive." });
 
             var expireHours = request.RememberMe ? 336 : 24; // 14 days if remember me was ticked
             var token = GenerateJwtToken(user, expireHours);
