@@ -51,6 +51,9 @@ export default function Participants() {
     const [manualEmail, setManualEmail] = useState('');
     const [manualGroupId, setManualGroupId] = useState<number | null>(null);
     const [manualAllowed, setManualAllowed] = useState(true);
+    const [selectedParticipantIds, setSelectedParticipantIds] = useState<number[]>([]);
+    const [bulkGroupId, setBulkGroupId] = useState<number | "">("");
+    const [bulkAssigning, setBulkAssigning] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -112,32 +115,11 @@ export default function Participants() {
                 }
             });
             setParticipants(prev => prev.filter(p => p.userId !== userId));
+            setSelectedParticipantIds(prev => prev.filter(id => id !== userId));
             showNotification("Účastník bol odstránený.", "success");
         } catch (err) {
             console.error(err);
             showNotification("Nepodarilo sa odstrániť účastníka.", "error");
-        }
-    };
-
-    const assignGroup = async (userId: number, groupId: number | null) => {
-        try {
-            const res = await api.patch('/participants/group', {
-                courseId: Number(id),
-                userId,
-                groupId
-            });
-
-            setParticipants(prev =>
-                prev.map(p =>
-                    p.userId === userId
-                        ? { ...p, groupId: res.data.groupId ?? null, groupName: res.data.groupName ?? null }
-                        : p
-                )
-            );
-            showNotification("Skupina bola nastavena.", "success");
-        } catch (err: any) {
-            const msg = err.response?.data ?? "Nepodarilo sa nastavit skupinu.";
-            showNotification(msg, "error");
         }
     };
 
@@ -174,6 +156,82 @@ export default function Participants() {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
     );
+
+    const paginatedParticipantIds = paginatedParticipants.map(p => p.userId);
+    const selectedOnPageCount = paginatedParticipantIds.filter(userId =>
+        selectedParticipantIds.includes(userId)
+    ).length;
+    const allOnPageSelected = paginatedParticipantIds.length > 0 &&
+        selectedOnPageCount === paginatedParticipantIds.length;
+
+    const toggleParticipantSelection = (userId: number, checked: boolean) => {
+        setSelectedParticipantIds(prev =>
+            checked
+                ? Array.from(new Set([...prev, userId]))
+                : prev.filter(id => id !== userId)
+        );
+    };
+
+    const togglePageSelection = (checked: boolean) => {
+        setSelectedParticipantIds(prev => {
+            if (!checked) {
+                return prev.filter(userId => !paginatedParticipantIds.includes(userId));
+            }
+
+            return Array.from(new Set([...prev, ...paginatedParticipantIds]));
+        });
+    };
+
+    const assignSelectedToGroup = async () => {
+        if (selectedParticipantIds.length === 0) {
+            showNotification("Vyber studentov, ktorych chces priradit do skupiny.", "error");
+            return;
+        }
+
+        if (bulkGroupId === "") {
+            showNotification("Vyber cielovu skupinu.", "error");
+            return;
+        }
+
+        setBulkAssigning(true);
+        let successCount = 0;
+        let failedCount = 0;
+        let lastError = "";
+
+        for (const userId of selectedParticipantIds) {
+            try {
+                const res = await api.patch('/participants/group', {
+                    courseId: Number(id),
+                    userId,
+                    groupId: bulkGroupId
+                });
+
+                setParticipants(prev =>
+                    prev.map(p =>
+                        p.userId === userId
+                            ? { ...p, groupId: res.data.groupId ?? null, groupName: res.data.groupName ?? null }
+                            : p
+                    )
+                );
+                successCount += 1;
+            } catch (err: any) {
+                failedCount += 1;
+                lastError = err.response?.data ?? "Niektorych studentov sa nepodarilo priradit.";
+            }
+        }
+
+        if (successCount > 0) {
+            showNotification(`Do skupiny bolo priradenych ${successCount} studentov.`, "success");
+            setSelectedParticipantIds([]);
+            api.get<CourseGroup[]>(`/groups/course/${id}`).then(res => setGroups(res.data));
+        }
+
+        if (failedCount > 0) {
+            showNotification(`${failedCount} studentov sa nepodarilo priradit. ${lastError}`, "error");
+        }
+
+        setBulkAssigning(false);
+    };
 
     return (
         <Container maxWidth="lg" sx={{ mt: 5 }}>
@@ -232,12 +290,51 @@ export default function Participants() {
                         />
                     </Box>
 
+                    <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <FormControl size="small" sx={{ minWidth: 220 }}>
+                            <InputLabel id="bulk-group-select">Cielova skupina</InputLabel>
+                            <Select
+                                labelId="bulk-group-select"
+                                label="Cielova skupina"
+                                value={bulkGroupId}
+                                onChange={(e) => {
+                                    const value = e.target.value as number | "";
+                                    setBulkGroupId(value === "" ? "" : Number(value));
+                                }}
+                            >
+                                <MenuItem value="">Vyber skupinu</MenuItem>
+                                {groups.map(group => (
+                                    <MenuItem key={group.id} value={group.id}>
+                                        {group.name} ({group.participantCount}/{group.capacity})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <Button
+                            variant="contained"
+                            onClick={assignSelectedToGroup}
+                            disabled={bulkAssigning || selectedParticipantIds.length === 0 || bulkGroupId === ""}
+                        >
+                            Pridat vybranych do skupiny
+                        </Button>
+                        <Typography variant="body2" color="text.secondary">
+                            Vybranych: {selectedParticipantIds.length}
+                        </Typography>
+                    </Box>
+
                     {loading ? (
                         <CircularProgress />
                     ) : (
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            checked={allOnPageSelected}
+                                            indeterminate={selectedOnPageCount > 0 && !allOnPageSelected}
+                                            onChange={(e) => togglePageSelection(e.target.checked)}
+                                        />
+                                    </TableCell>
                                     <TableCell>Meno</TableCell>
                                     <TableCell>Email</TableCell>
                                     <TableCell>Skupina</TableCell>
@@ -248,31 +345,15 @@ export default function Participants() {
                             <TableBody>
                                 {paginatedParticipants.map(p => (
                                     <TableRow key={p.userId}>
+                                        <TableCell padding="checkbox">
+                                            <Checkbox
+                                                checked={selectedParticipantIds.includes(p.userId)}
+                                                onChange={(e) => toggleParticipantSelection(p.userId, e.target.checked)}
+                                            />
+                                        </TableCell>
                                         <TableCell>{p.userName}</TableCell>
                                         <TableCell>{p.email}</TableCell>
-                                        <TableCell>
-                                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                                                <InputLabel id={`group-select-${p.userId}`}>Skupina</InputLabel>
-                                                <Select
-                                                    labelId={`group-select-${p.userId}`}
-                                                    label="Skupina"
-                                                    value={p.groupId?.toString() ?? ""}
-                                                    onChange={(e) =>
-                                                        assignGroup(
-                                                            p.userId,
-                                                            e.target.value ? Number(e.target.value) : null
-                                                        )
-                                                    }
-                                                >
-                                                    <MenuItem value="">Bez skupiny</MenuItem>
-                                                    {groups.map(group => (
-                                                        <MenuItem key={group.id} value={group.id.toString()}>
-                                                            {group.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </TableCell>
+                                        <TableCell>{p.groupName ?? "Bez skupiny"}</TableCell>
                                         <TableCell>
                                             {p.allowed ? 'Potvrdený' : 'Čaká na schválenie'}
                                         </TableCell>

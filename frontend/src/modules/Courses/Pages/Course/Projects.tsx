@@ -65,7 +65,7 @@ export default function Projects() {
                                     <TableCell>Zvolena tema</TableCell>
                                     <TableCell>Rieseni</TableCell>
                                     <TableCell>Ukoncenie / hodnotenie</TableCell>
-                                    <TableCell align="right">Akcie</TableCell>
+                                    <TableCell align="right"></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

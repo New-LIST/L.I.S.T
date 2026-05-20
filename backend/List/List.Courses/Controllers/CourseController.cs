@@ -57,10 +57,13 @@ namespace List.Courses.Controllers
         }
 
         [HttpGet("student-visible")]
+        [Authorize]
         public async Task<IActionResult> GetVisibleToStudents()
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
             var visibleCourses = await _context.Courses
-                .Where(c => !c.HiddenInList)
+                .Where(c => c.Participants.Any(p => p.UserId == userId))
                 .Include(c => c.Period)
                 .Include(c => c.Teacher)
                 .Select(c => new CourseReadDto

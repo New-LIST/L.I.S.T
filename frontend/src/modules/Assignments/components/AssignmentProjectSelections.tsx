@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
+  Chip,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -191,7 +192,12 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
                   </FormControl>
                 </TableCell>
                 <TableCell>
-                  {row.hasSolution ? "Odovzdane riesenie" : "Mozno menit"}
+                  <Chip
+                    label={row.hasSolution ? "Odovzdane riesenie" : "Neodovzdane riesenie"}
+                    color={row.hasSolution ? "success" : "default"}
+                    size="small"
+                    variant={row.hasSolution ? "filled" : "outlined"}
+                  />
                 </TableCell>
               </TableRow>
             ))}

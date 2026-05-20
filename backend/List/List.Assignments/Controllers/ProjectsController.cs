@@ -373,7 +373,7 @@ public class ProjectsController : ControllerBase
     {
         return (await _db.Solutions
                 .AsNoTracking()
-                .Where(s => s.AssignmentId == assignmentId && s.BestVersion > 0)
+                .Where(s => s.AssignmentId == assignmentId && (s.BestVersion > 0 || s.Versions.Any()))
                 .Select(s => s.StudentId)
                 .ToListAsync())
             .ToHashSet();
@@ -383,7 +383,10 @@ public class ProjectsController : ControllerBase
     {
         return await _db.Solutions
             .AsNoTracking()
-            .AnyAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId && s.BestVersion > 0);
+            .AnyAsync(s =>
+                s.AssignmentId == assignmentId &&
+                s.StudentId == studentId &&
+                (s.BestVersion > 0 || s.Versions.Any()));
     }
 
     private async Task<bool> IsTopicFullAsync(int assignmentId, AssignmentTaskRelModel rel, int ignoredStudentId)
