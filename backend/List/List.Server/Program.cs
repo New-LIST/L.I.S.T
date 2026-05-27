@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using List.Common.Files;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,15 +28,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "List API",
-        Description = "Backend GET/POST/PUT/DELETE"
-    });
-});
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -85,7 +76,7 @@ builder.Services.Configure<RouteOptions>(options =>
 builder.Services.AddModule<List.Users.Module>(builder.Configuration);
 builder.Services.AddModule<List.Courses.Module>(builder.Configuration);
 builder.Services.AddModule<List.TaskSets.Module>(builder.Configuration);
-builder.Services.AddModule<List.BackgroundTasks.Module>(builder.Configuration);
+builder.Services.AddModule<List.Emails.Module>(builder.Configuration);
 builder.Services.AddModule<List.Tasks.Module>(builder.Configuration);
 builder.Services.AddModule<List.Assignments.Module>(builder.Configuration);
 builder.Services.AddModule<List.Logs.Module>(builder.Configuration);
@@ -94,20 +85,17 @@ builder.Services.AddModule<List.Tests.Module>(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "List API");
     });
-}
 
 app.UseModule<List.Users.Module>();
 app.UseModule<List.Courses.Module>();
 app.UseModule<List.TaskSets.Module>();
-app.UseModule<List.BackgroundTasks.Module>();
+app.UseModule<List.Emails.Module>();
 app.UseModule<List.Tasks.Module>();
 app.UseModule<List.Assignments.Module>();
 app.UseModule<List.Logs.Module>();
@@ -120,7 +108,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();

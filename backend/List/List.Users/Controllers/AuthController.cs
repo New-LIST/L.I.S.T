@@ -11,24 +11,25 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using List.Common.Utils;
+using List.Emails.Services;
 using List.Logs.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace List.Users.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController(
+        UsersDbContext context,
+        IConfiguration configuration,
+        ILogService logService,
+        IEmailService emailService) : ControllerBase
     {
-        private readonly UsersDbContext _context;
-        private readonly IConfiguration _configuration;
-        private readonly ILogService _logService;
-
-
-        public AuthController(UsersDbContext context, IConfiguration configuration, ILogService logService)
+        [HttpPost]
+        public async Task<IActionResult> SendRegistrationEmail()
         {
-            _context = context;
-            _configuration = configuration;
-            _logService = logService;
+            await emailService.SendEmailAsync("faresmarwan@gmail.com", "Test email", "Test email content");
+            return Ok();
         }
 
         [HttpPost("register")]
@@ -39,7 +40,7 @@ namespace List.Users.Controllers
                 return BadRequest(ModelState);
 
 
-            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            if (await context.Users.AnyAsync(u => u.Email == request.Email))
                 return BadRequest("Email already in use.");
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -52,8 +53,8 @@ namespace List.Users.Controllers
                 Role = request.Role ?? UserRole.Student
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
 
             return Ok(new { message = "User registered", user.Id });
         }
@@ -79,7 +80,8 @@ namespace List.Users.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
                 return Unauthorized(new { message = "Invalid email or password." });
             
@@ -97,7 +99,7 @@ namespace List.Users.Controllers
             };
 
             var ip = HttpContext.GetClientIpAddress();
-            await _logService.LogAsync(user.Fullname, "LOGIN", "auth", user.Id, user.Fullname, ip, $"{roleText} {user.Fullname} sa prihlásil do systému");
+            await logService.LogAsync(user.Fullname, "LOGIN", "auth", user.Id, user.Fullname, ip, $"{roleText} {user.Fullname} sa prihlásil do systému");
 
             return Ok(new
             {
@@ -109,7 +111,7 @@ namespace List.Users.Controllers
 
         private string GenerateJwtToken(User user, int expireHours)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
+            var jwtSettings = configuration.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
 
             var claims = new[]
