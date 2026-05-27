@@ -28,6 +28,8 @@ public class SendEmailService(EmailsDbContext dbContext, IConfiguration configur
             await smtp.DisconnectAsync(true);
         
             emailEntity.Sent = true;
+            dbContext.Emails.Update(emailEntity);
+            
             await dbContext.SaveChangesAsync();
         }
         catch (Exception ex)

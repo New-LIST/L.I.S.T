@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 using List.Common.Utils;
 using List.Emails.Services;
 using List.Logs.Services;
-using Microsoft.AspNetCore.Identity.UI.Services;
+using List.Users.Services;
 
 namespace List.Users.Controllers
 {
@@ -21,14 +21,74 @@ namespace List.Users.Controllers
     [Route("api/[controller]")]
     public class AuthController(
         UsersDbContext context,
+        IUserService userService,
         IConfiguration configuration,
         ILogService logService,
         IEmailService emailService) : ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> SendRegistrationEmail()
+        public class ForgotPasswordRequest
         {
-            await emailService.SendEmailAsync("faresmarwan@gmail.com", "Test email", "Test email content");
+            [Required, EmailAddress]
+            public string Email { get; set; }
+        }
+        
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            
+            var requestId = Guid.NewGuid();
+
+            await context.AddAsync(new PasswordChange
+            {
+                Id = requestId,
+                UserEmail = request.Email
+            });
+            await context.SaveChangesAsync();
+            
+            if (await context.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                await emailService.SendEmailAsync(
+                    request.Email, 
+                    "Password Reset For LIST Account", 
+                     $"<a href='http://localhost:5173/password-change/{requestId}'>Change password here</a>");
+            }
+            
+            return Ok();
+        }
+
+        public class ResetPasswordRequest
+        {
+            [Required]
+            public Guid RequestId { get; set; }
+            [Required]
+            public string NewPassword { get; set; }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var changeRequest =
+                await context.PasswordChanges.FirstOrDefaultAsync(entity => entity.Id == request.RequestId);
+            
+            if (changeRequest is null)
+                return BadRequest("Invalid request.");
+            
+            var user = await context.Users.FirstOrDefaultAsync(entity => entity.Email == changeRequest.UserEmail);
+            if (user is null)
+                return BadRequest("Invalid user.");
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            
+            var result = await userService.UpdateUserAsync(user);
+
+            context.PasswordChanges.Remove(changeRequest);
+            await context.SaveChangesAsync();
+            
             return Ok();
         }
 
@@ -38,7 +98,6 @@ namespace List.Users.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
 
             if (await context.Users.AnyAsync(u => u.Email == request.Email))
                 return BadRequest("Email already in use.");
@@ -80,7 +139,6 @@ namespace List.Users.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
                 return Unauthorized(new { message = "Invalid email or password." });
@@ -116,12 +174,12 @@ namespace List.Users.Controllers
 
             var claims = new[]
             {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Name, user.Fullname),
-        new Claim(ClaimTypes.Role, user.Role.ToString())
-    };
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Fullname),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
@@ -145,7 +203,5 @@ namespace List.Users.Controllers
 
             public bool RememberMe { get; set; } = false;
         }
-
-
     }
 }

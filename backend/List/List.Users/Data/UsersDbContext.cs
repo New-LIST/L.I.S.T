@@ -8,6 +8,7 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContex
 {
     public DbSet<User> Users { get; set; }
     public DbSet<AssistantPermissions> AssistantPermissions { get; set; }
+    public DbSet<PasswordChange> PasswordChanges { get; set; }
 
 
 

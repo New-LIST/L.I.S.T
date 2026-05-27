@@ -32,6 +32,7 @@ import GradeTable from "../../Grading/pages/GradeTable.tsx";
 import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
 import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer.tsx";
 import Tests from "../../Tests/Pages/Tests.tsx";
+import PasswordChange from "../../Authentication/pages/PasswordChange.tsx";
 
 const AppRoutes = () => {
   return (
@@ -49,6 +50,7 @@ const AppRoutes = () => {
                 <Route path="projects" element={<Projects />} />
         </Route>
       </Route>
+        <Route path="/password-change/:id" element={<PasswordChange />} />
       <Route
         path="/dash"
         element={
