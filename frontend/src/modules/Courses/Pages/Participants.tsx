@@ -125,7 +125,7 @@ export default function Participants() {
 
     const addParticipantManually = async () => {
         if (!manualEmail.trim()) {
-            showNotification("Zadaj email studenta.", "error");
+            showNotification("Zadaj email študenta.", "error");
             return;
         }
 
@@ -141,9 +141,9 @@ export default function Participants() {
             setManualEmail('');
             setManualGroupId(null);
             setManualAllowed(true);
-            showNotification("Student bol pridany do kurzu.", "success");
+            showNotification("Študent bol pridaný do kurzu.", "success");
         } catch (err: any) {
-            const msg = err.response?.data ?? "Nepodarilo sa pridat studenta do kurzu.";
+            const msg = err.response?.data ?? "Nepodarilo sa pridať študenta do kurzu.";
             showNotification(msg, "error");
         }
     };
@@ -184,12 +184,12 @@ export default function Participants() {
 
     const assignSelectedToGroup = async () => {
         if (selectedParticipantIds.length === 0) {
-            showNotification("Vyber studentov, ktorych chces priradit do skupiny.", "error");
+            showNotification("Vyber študentov, ktorých chceš priradiť do skupiny.", "error");
             return;
         }
 
         if (bulkGroupId === "") {
-            showNotification("Vyber cielovu skupinu.", "error");
+            showNotification("Vyber cieľovú skupinu.", "error");
             return;
         }
 
@@ -216,18 +216,18 @@ export default function Participants() {
                 successCount += 1;
             } catch (err: any) {
                 failedCount += 1;
-                lastError = err.response?.data ?? "Niektorych studentov sa nepodarilo priradit.";
+                lastError = err.response?.data ?? "Niektorých študentov sa nepodarilo priradiť.";
             }
         }
 
         if (successCount > 0) {
-            showNotification(`Do skupiny bolo priradenych ${successCount} studentov.`, "success");
+            showNotification(`Do skupiny bolo priradených ${successCount} študentov.`, "success");
             setSelectedParticipantIds([]);
             api.get<CourseGroup[]>(`/groups/course/${id}`).then(res => setGroups(res.data));
         }
 
         if (failedCount > 0) {
-            showNotification(`${failedCount} studentov sa nepodarilo priradit. ${lastError}`, "error");
+            showNotification(`${failedCount} študentov sa nepodarilo priradiť. ${lastError}`, "error");
         }
 
         setBulkAssigning(false);
@@ -243,7 +243,7 @@ export default function Participants() {
                 <CardContent>
                     <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                         <TextField
-                            label="Email studenta"
+                            label="Email študenta"
                             size="small"
                             value={manualEmail}
                             onChange={e => setManualEmail(e.target.value)}
@@ -272,10 +272,10 @@ export default function Participants() {
                                     onChange={(e) => setManualAllowed(e.target.checked)}
                                 />
                             }
-                            label="Schvaleny"
+                            label="Schválený"
                         />
                         <Button variant="contained" onClick={addParticipantManually}>
-                            Pridat studenta
+                            Pridať študenta
                         </Button>
                     </Box>
 
@@ -292,10 +292,10 @@ export default function Participants() {
 
                     <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                         <FormControl size="small" sx={{ minWidth: 220 }}>
-                            <InputLabel id="bulk-group-select">Cielova skupina</InputLabel>
+                            <InputLabel id="bulk-group-select">Cieľová skupina</InputLabel>
                             <Select
                                 labelId="bulk-group-select"
-                                label="Cielova skupina"
+                                label="Cieľová skupina"
                                 value={bulkGroupId}
                                 onChange={(e) => {
                                     const value = e.target.value as number | "";
@@ -315,10 +315,10 @@ export default function Participants() {
                             onClick={assignSelectedToGroup}
                             disabled={bulkAssigning || selectedParticipantIds.length === 0 || bulkGroupId === ""}
                         >
-                            Pridat vybranych do skupiny
+                            Pridať vybraných do skupiny
                         </Button>
                         <Typography variant="body2" color="text.secondary">
-                            Vybranych: {selectedParticipantIds.length}
+                            Vybraných: {selectedParticipantIds.length}
                         </Typography>
                     </Box>
 

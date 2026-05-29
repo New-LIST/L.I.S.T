@@ -16,7 +16,7 @@ import {
     Typography
 } from "@mui/material";
 import api from "../../../services/api.ts";
-import React, {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {User} from "../types/User.ts";
 import {AddUserDialog} from "../components/AddUserDialog.tsx";
 import {AxiosError, AxiosResponse} from "axios";
@@ -27,13 +27,11 @@ import {ImportUsersDialog} from "../components/ImportUsersDialog.tsx";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
-import DisabledVisibleIcon from '@mui/icons-material/DisabledVisible';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { AssistantScopeDialog } from "../components/AssistantScopeDialog.tsx";
 import {EditUserDialog} from "../components/EditUserDialog.tsx";
 import ConfirmDeleteUserDialog from "../components/ConfirmDeleteUserDialog.tsx";
-import ConfirmDeactivateUserDialog from "../components/ConfirmDeactivateUserDialog.tsx";
 import ConfirmToggleUserDialog from "../components/ConfirmToggleUserDialog.tsx";
 
 const Users = () => {
@@ -75,7 +73,7 @@ const Users = () => {
             })
             .catch((error: AxiosError) => {
                 console.error(error);
-                showNotification("Nepodarilo sa pridať použivateľa", "error");
+                showNotification("Nepodarilo sa pridať používateľa", "error");
             });
     }
 
@@ -83,7 +81,7 @@ const Users = () => {
         if (!userToDelete) return;
         try {
             await api.delete(`/users/${userToDelete.id}`);
-            showNotification("Použivateľ bol vymazaný", "success");
+            showNotification("Používateľ bol vymazaný", "success");
             reload();
         } catch (error) {
             console.error(error);
@@ -98,11 +96,11 @@ const Users = () => {
         if (!userToToggle) return;
         try {
             await api.get(`/users/${userToToggle.id}/toggle-inactive`);
-            showNotification("Použivateľ bol deaktivovaný", "success");
+            showNotification(userToToggle.inactive ? "Používateľ bol aktivovaný" : "Používateľ bol deaktivovaný", "success");
             reload();
         } catch (error) {
             console.error(error);
-            showNotification("Nepodarilo sa deaktivovať používateľa", "error");
+            showNotification("Nepodarilo sa zmeniť stav používateľa", "error");
         } finally {
             setToggleUserDialogOpen(false);
             setUserToToggle(null);
@@ -147,7 +145,7 @@ const Users = () => {
                     alignItems="center"
                     mb={2}
                 >
-                    <Typography variant="h5">Použivatelia</Typography>
+                    <Typography variant="h5">Používatelia</Typography>
                     <Search>
                         <SearchIconWrapper>
                             <SearchIcon />
@@ -165,7 +163,7 @@ const Users = () => {
                             variant="contained"
                             onClick={() => { setAddDialogOpen(true); }}
                         >
-                            Pridať Použivateľa
+                            Pridať používateľa
                         </Button>
                         <Button
                             variant="contained"
@@ -259,7 +257,7 @@ const Users = () => {
                         <TablePagination
                             count={users.totalCount}
                             page={page}
-                            onPageChange={(event, newPage) => setPage(newPage)}
+                            onPageChange={(_event, newPage) => setPage(newPage)}
                             rowsPerPage={pageSize}
                             onRowsPerPageChange={(e) => {
                                 setPageSize(parseInt(e.target.value, 10));

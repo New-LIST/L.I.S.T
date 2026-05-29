@@ -5,17 +5,24 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using List.Tasks.DTOs;
 using List.Common.Files;
+using List.Users.Services;
 
 
 namespace List.Tasks.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TasksController(ITaskService taskService, ITaskCategoryRelService relService) : ControllerBase
+public class TasksController(
+    ITaskService taskService,
+    ITaskCategoryRelService relService,
+    IAssistantPermissionService assistantPermissions) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllTasks()
     {
+        if (!await CanReadTaskBankAsync())
+            return Forbid();
+
         var tasks = await taskService.GetAllTasksAsync();
 
         var taskDtos = tasks.Select(t => new TaskResponseDto
@@ -37,6 +44,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTask(int id)
     {
+        if (!await CanReadTaskBankAsync())
+            return Forbid();
+
         var task = await taskService.GetTaskAsync(id);
         if (task is null) return NotFound();
 
@@ -59,6 +69,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpGet("filter")]
     public async Task<IActionResult> FilterTasks([FromQuery] string? name, [FromQuery] string? author, [FromQuery] string? categoryFilter)
     {
+        if (!await CanReadTaskBankAsync())
+            return Forbid();
+
         var tasks = await taskService.FilterTasksAsync(name, author, categoryFilter);
 
         var taskDtos = tasks.Select(t => new TaskResponseDto
@@ -82,6 +95,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpPost]
     public async Task<IActionResult> AddTask([FromBody] taskDto taskDto)
     {
+        if (!await CanManageTaskBankAsync())
+            return Forbid();
+
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -108,6 +124,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateTask(int id, [FromBody] taskDto taskDto)
     {
+        if (!await CanManageTaskBankAsync())
+            return Forbid();
+
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -130,6 +149,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)
     {
+        if (!await CanManageTaskBankAsync())
+            return Forbid();
+
         var deleted = await taskService.DeleteTaskAsync(id);
         return deleted != null
             ? Ok(new { id = deleted.Id, name = deleted.Name })
@@ -140,6 +162,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadImage([FromForm] IFormFile file, [FromServices] IFileStorageService fileStorageService)
     {
+        if (!await CanManageTaskBankAsync())
+            return Forbid();
+
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
@@ -153,6 +178,9 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     [HttpPost("{id}/duplicate")]
     public async Task<IActionResult> DuplicateTask(int id)
     {
+        if (!await CanManageTaskBankAsync())
+            return Forbid();
+
         var original = await taskService.GetTaskAsync(id);
         if (original == null) return NotFound();
 
@@ -182,6 +210,24 @@ public class TasksController(ITaskService taskService, ITaskCategoryRelService r
     }
 
 
+    private async Task<bool> CanReadTaskBankAsync()
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
 
+        return await assistantPermissions.HasAnyPermissionAsync(GetCurrentUserId());
+    }
 
+    private async Task<bool> CanManageTaskBankAsync()
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
+
+        return await assistantPermissions.HasAnyManageCourseContentAsync(GetCurrentUserId());
+    }
+
+    private int GetCurrentUserId()
+    {
+        return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    }
 }

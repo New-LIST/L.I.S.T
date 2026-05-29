@@ -4,6 +4,7 @@ using List.Assignments.DTOs;
 using List.Assignments.Models;
 using List.Courses.Data;
 using List.Courses.Models;
+using List.Users.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,11 +18,16 @@ public class ProjectsController : ControllerBase
 {
     private readonly AssignmentsDbContext _db;
     private readonly CoursesDbContext _coursesDb;
+    private readonly IAssistantPermissionService _assistantPermissions;
 
-    public ProjectsController(AssignmentsDbContext db, CoursesDbContext coursesDb)
+    public ProjectsController(
+        AssignmentsDbContext db,
+        CoursesDbContext coursesDb,
+        IAssistantPermissionService assistantPermissions)
     {
         _db = db;
         _coursesDb = coursesDb;
+        _assistantPermissions = assistantPermissions;
     }
 
     [HttpGet("course/{courseId}")]
@@ -226,12 +232,15 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpGet("assignments/{assignmentId}/selections")]
-    [Authorize(Roles = "Teacher")]
+    [Authorize]
     public async Task<IActionResult> GetTeacherSelections(int assignmentId)
     {
         var assignment = await LoadProjectAssignmentAsync(assignmentId);
         if (assignment == null)
             return NotFound("Projekt neexistuje.");
+
+        if (!await CanManageCourseContentAsync(assignment.CourseId))
+            return Forbid();
 
         var rels = await LoadProjectTaskRelsAsync(assignmentId);
         var selections = await LoadSelectionsAsync(assignmentId);
@@ -266,12 +275,15 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPatch("assignments/{assignmentId}/students/{studentId}")]
-    [Authorize(Roles = "Teacher")]
+    [Authorize]
     public async Task<IActionResult> AssignStudentProject(int assignmentId, int studentId, [FromBody] ProjectSelectionUpdateDto dto)
     {
         var assignment = await LoadProjectAssignmentAsync(assignmentId);
         if (assignment == null)
             return NotFound("Projekt neexistuje.");
+
+        if (!await CanManageCourseContentAsync(assignment.CourseId))
+            return Forbid();
 
         var participantExists = await _coursesDb.Participants
             .AsNoTracking()
@@ -332,6 +344,14 @@ public class ProjectsController : ControllerBase
     private int GetCurrentUserId()
     {
         return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    }
+
+    private async Task<bool> CanManageCourseContentAsync(int courseId)
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
+
+        return await _assistantPermissions.CanManageCourseContentAsync(GetCurrentUserId(), courseId);
     }
 
     private async Task<AssignmentModel?> LoadProjectAssignmentAsync(int assignmentId)

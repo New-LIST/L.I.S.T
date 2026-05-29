@@ -18,6 +18,7 @@ import { useNotification } from "../../../shared/components/NotificationContext"
 import { Assignment } from "../types/Assignment";
 import { isProjectTaskSetType } from "../utils/isProjectAssignment";
 import { Editor } from "@tinymce/tinymce-react";
+import { getStoredUser } from "../../Authentication/utils/auth";
 import "tinymce/tinymce";
 import "tinymce/themes/silver/theme";
 import "tinymce/icons/default/icons";
@@ -28,6 +29,7 @@ import "tinymce/plugins/lists";
 import "tinymce/plugins/code";
 import "tinymce/plugins/image";
 import "tinymce/plugins/table";
+import { useTranslation } from "react-i18next";
 
 type GroupSettingState = {
   groupId: number;
@@ -43,6 +45,7 @@ type Props = {
 };
 
 const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
+  const { t } = useTranslation();
   // inicializácia stavu z defaultValues alebo prázdne
   const [name, setName] = useState(defaultValues?.name ?? "");
   const [courseId, setCourseId] = useState<number | "">("");
@@ -80,7 +83,14 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
   const { showNotification } = useNotification();
 
   useEffect(() => {
-    api.get<Course[]>("/courses").then((res) => setCourses(res.data));
+    const user = getStoredUser();
+    const isAssistant = user?.role?.toLowerCase() === "assistant";
+
+    api.get<Course[]>("/courses").then((res) => {
+      setCourses(isAssistant
+        ? res.data.filter((course) => course.canManageCourseContent)
+        : res.data);
+    });
   }, []);
 
   useEffect(() => {
@@ -291,7 +301,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
 
       {isProject && (
         <TextField
-          label="Termin vyberu projektu"
+          label={t("Project Selection Deadline")}
           type="datetime-local"
           InputLabelProps={{ shrink: true }}
           value={projectSelectionDeadline ?? ""}
@@ -303,7 +313,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       {groups.length > 0 && (
         <Box>
           <Box mb={1}>
-            <strong>Skupinove nastavenia</strong>
+            <strong>Skupinové nastavenia</strong>
           </Box>
           <Box display="flex" flexDirection="column" gap={1}>
             {groups.map((group) => {

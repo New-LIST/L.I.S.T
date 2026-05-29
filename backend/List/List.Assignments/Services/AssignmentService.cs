@@ -18,13 +18,21 @@ public class AssignmentService : IAssignmentService
         _coursesDbContext = coursesDbContext;
     }
 
-    public async Task<List<AssignmentModel>> GetAllAsync()
+    public async Task<List<AssignmentModel>> GetAllAsync(IEnumerable<int>? allowedCourseIds = null)
     {
-        return await _dbContext.Assignments
+        var query = _dbContext.Assignments
             .Include(a => a.TaskSetType)
             .Include(a => a.Course)
             .Include(a => a.GroupSettings)
-            .ToListAsync();
+            .AsQueryable();
+
+        var courseIds = allowedCourseIds?.ToList();
+        if (courseIds is { Count: > 0 })
+            query = query.Where(a => courseIds.Contains(a.CourseId));
+        else if (allowedCourseIds != null)
+            return new List<AssignmentModel>();
+
+        return await query.ToListAsync();
     }
 
     public async Task<AssignmentModel?> GetByIdAsync(int id)
@@ -49,7 +57,7 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter)
+    public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter, IEnumerable<int>? allowedCourseIds = null)
     {
         var query = _dbContext.Assignments
             .Include(a => a.Course)
@@ -57,6 +65,16 @@ public class AssignmentService : IAssignmentService
             .Include(a => a.Teacher)
             .Include(a => a.GroupSettings)
             .AsQueryable();
+
+        var courseIds = allowedCourseIds?.ToList();
+        if (courseIds is { Count: > 0 })
+            query = query.Where(a => courseIds.Contains(a.CourseId));
+        else if (allowedCourseIds != null)
+            return new PagedResult<AssignmentModel>
+            {
+                Items = new List<AssignmentModel>(),
+                TotalCount = 0
+            };
 
         if (filter.UserId.HasValue)
             query = query.Where(a => a.TeacherId == filter.UserId);

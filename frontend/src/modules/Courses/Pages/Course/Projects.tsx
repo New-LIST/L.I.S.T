@@ -19,13 +19,16 @@ import api from '../../../../services/api';
 import EmptyState from '../../../../shared/components/EmptyState';
 import { useNotification } from '../../../../shared/components/NotificationContext';
 import { StudentProjectListItem } from '../../../Assignments/types/Project';
+import { useTranslation } from 'react-i18next';
 
 export default function Projects() {
+    const { t, i18n } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const [projects, setProjects] = useState<StudentProjectListItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const dateLocale = i18n.language === "en" ? "en-US" : "sk-SK";
 
     useEffect(() => {
         if (!id) return;
@@ -35,10 +38,10 @@ export default function Projects() {
             .then((res) => setProjects(res.data))
             .catch((err) => {
                 console.error(err);
-                showNotification("Nepodarilo sa nacitat projekty.", "error");
+                showNotification(t("Could not load projects"), "error");
             })
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [id, t]);
 
     if (loading) {
         return (
@@ -51,20 +54,20 @@ export default function Projects() {
     return (
         <Box>
             <Typography variant="h5" fontWeight="bold" mb={2}>
-                Projekty
+                {t("Projects")}
             </Typography>
             {projects.length === 0 ? (
-                <EmptyState message="V kurze zatial nie su dostupne projekty." />
+                <EmptyState message={t("No projects available")} />
             ) : (
                 <Card>
                     <CardContent sx={{ p: 0 }}>
                         <Table size="small">
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#f0f4ff' }}>
-                                    <TableCell>Nazov</TableCell>
-                                    <TableCell>Zvolena tema</TableCell>
-                                    <TableCell>Rieseni</TableCell>
-                                    <TableCell>Ukoncenie / hodnotenie</TableCell>
+                                    <TableCell>{t("Name")}</TableCell>
+                                    <TableCell>{t("Selected Topic")}</TableCell>
+                                    <TableCell>{t("Solutions")}</TableCell>
+                                    <TableCell>{t("Finish / Grading")}</TableCell>
                                     <TableCell align="right"></TableCell>
                                 </TableRow>
                             </TableHead>
@@ -75,7 +78,7 @@ export default function Projects() {
                                         <TableCell>
                                             {project.selectedTaskName ?? (
                                                 <Typography color="text.secondary" variant="body2">
-                                                    Bez vyberu
+                                                    {t("No Selection")}
                                                 </Typography>
                                             )}
                                         </TableCell>
@@ -84,8 +87,8 @@ export default function Projects() {
                                             <Stack spacing={0.5}>
                                                 <Typography variant="body2">
                                                     {project.uploadEndTime
-                                                        ? new Date(project.uploadEndTime).toLocaleString()
-                                                        : "Bez deadlinu"}
+                                                        ? new Date(project.uploadEndTime).toLocaleString(dateLocale)
+                                                        : t("No Deadline")}
                                                 </Typography>
                                                 <Box>
                                                     {project.points != null ? (
@@ -95,9 +98,9 @@ export default function Projects() {
                                                             size="small"
                                                         />
                                                     ) : project.canUpload ? (
-                                                        <Chip label="Otvorene" color="primary" size="small" />
+                                                        <Chip label={t("Open State")} color="primary" size="small" />
                                                     ) : (
-                                                        <Chip label="Neohodnotene" size="small" />
+                                                        <Chip label={t("Not Graded")} size="small" />
                                                     )}
                                                 </Box>
                                             </Stack>
@@ -110,7 +113,7 @@ export default function Projects() {
                                                     navigate(`/student/courses/${id}/projects/${project.assignmentId}`)
                                                 }
                                             >
-                                                Otvorit
+                                                {t("Open")}
                                             </Button>
                                         </TableCell>
                                     </TableRow>

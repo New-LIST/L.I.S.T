@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import TaskPreview from "../../Tasks/Components/TaskPreview";
 import { TaskPreviewData } from "../../Tasks/Types/TaskPreviewData";
+import { useTranslation } from "react-i18next";
 type AddTaskDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -26,6 +27,7 @@ type AddTaskDialogProps = {
 };
 
 const AddTaskDialog = ({ open, onClose, onConfirm, data, isProject = false }: AddTaskDialogProps) => {
+  const { t } = useTranslation();
   const [pointsTotal, setPointsTotal] = useState(0);
   const [bonusTask, setBonusTask] = useState(false);
   const [projectSelectionLimit, setProjectSelectionLimit] = useState<number | null>(3);
@@ -63,7 +65,7 @@ const AddTaskDialog = ({ open, onClose, onConfirm, data, isProject = false }: Ad
           />
           {isProject && (
             <TextField
-              label="Maximum studentov pre tuto temu"
+              label={t("Maximum Students For Topic")}
               type="number"
               value={projectSelectionLimit ?? ""}
               onChange={(e) =>

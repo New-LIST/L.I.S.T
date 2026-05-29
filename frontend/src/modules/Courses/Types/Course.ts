@@ -15,4 +15,9 @@ export type Course = {
     onJoined?: (courseId: number) => void;
     currentEnrollment: number;
     description?: string;
+    canViewCourseContent?: boolean;
+    canManageCourseContent?: boolean;
+    canGradeCourse?: boolean;
+    canRunPlagiarismCheck?: boolean;
+    assistantHistoricalAccess?: boolean;
   };

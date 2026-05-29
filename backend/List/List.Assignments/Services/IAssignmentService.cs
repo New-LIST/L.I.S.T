@@ -7,8 +7,8 @@ using List.Common.Models;
 
 public interface IAssignmentService
 {
-    Task<List<AssignmentModel>> GetAllAsync();
-    Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter);
+    Task<List<AssignmentModel>> GetAllAsync(IEnumerable<int>? allowedCourseIds = null);
+    Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter, IEnumerable<int>? allowedCourseIds = null);
     Task<AssignmentModel?> GetByIdAsync(int id);
 
     Task<AssignmentNameDto?> GetAssignmentNameAsync(int assignmentId);

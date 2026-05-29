@@ -9,6 +9,7 @@ import { Assignment } from "../types/Assignment";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import api from "../../../services/api";
 import { isProjectAssignment } from "../utils/isProjectAssignment";
+import { useTranslation } from "react-i18next";
 
 
 
@@ -17,6 +18,7 @@ type Props = {
 };
 
 const AssignmentFormTabs = ({ assignment }: Props) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState(0);
@@ -74,7 +76,7 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
       <Tabs value={activeTab} onChange={handleTabChange} centered>
         <Tab label="Info" />
         <Tab label="Úlohy" />
-        {isProject && <Tab label="Vybery projektu" />}
+        {isProject && <Tab label={t("Project Selections")} />}
         <Tab label="Prehľad" />
       </Tabs>
 

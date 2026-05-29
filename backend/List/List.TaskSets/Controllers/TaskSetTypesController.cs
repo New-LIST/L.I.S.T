@@ -36,6 +36,9 @@ public class TaskSetTypesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] TaskSetTypeDto dto)
     {
+        if (User.IsInRole("Assistant"))
+            return Forbid();
+
         try
         {
             var created = await _service.CreateAsync(dto);
@@ -51,6 +54,9 @@ public class TaskSetTypesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] TaskSetTypeDto dto)
     {
+        if (User.IsInRole("Assistant"))
+            return Forbid();
+
         if (id != dto.Id)
             return BadRequest("ID in route does not match DTO.");
 
@@ -72,6 +78,9 @@ public class TaskSetTypesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (User.IsInRole("Assistant"))
+            return Forbid();
+
         var deleted = await _service.DeleteAsync(id);
         return deleted != null
             ? Ok(new { id = deleted.Id, name = deleted.Name })
@@ -84,4 +93,3 @@ public class TaskSetTypesController : ControllerBase
                pgEx.SqlState == "23505"; // 23505 = unique_violation
     }
 }
-

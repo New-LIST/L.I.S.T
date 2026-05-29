@@ -1,9 +1,11 @@
-export type AssistantPermissions = {
+export type AssistantCoursePermission = {
+    id?: number;
     userId: number;
-    canAddStudents: boolean;
-    canManageStudents: boolean;
-    canManageTaskTypes: boolean;
-    canManagePeriods: boolean;
-    canManageCategories: boolean;
-    canViewLogs: boolean;
+    courseId: number;
+    courseName?: string;
+    periodName?: string;
+    canViewCourseContent: boolean;
+    canManageCourseContent: boolean;
+    canGradeCourse: boolean;
+    canRunPlagiarismCheck: boolean;
 };

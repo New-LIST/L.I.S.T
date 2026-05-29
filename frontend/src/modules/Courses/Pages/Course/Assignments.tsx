@@ -92,7 +92,7 @@ export default function Assignments() {
     useEffect(() => {
         const fetchAssignments = async () => {
             try {
-                const response = await api.get(`/assignments/course/${id}`);
+                const response = await api.get(`/assignments/course/${id}/student-visible`);
                 setAssignments(response.data);
 
                 // Inicializujeme viditeľnosť pre každý typ úloh (všetko na true)
@@ -153,7 +153,6 @@ export default function Assignments() {
             [typeId]: !prev[typeId],
         }));
     };
-
     return (
         <Box>
             <Typography variant="h5" sx={{ mb: 0 }} fontWeight="bold" gutterBottom>
@@ -228,7 +227,7 @@ export default function Assignments() {
                                 sx={{ mr: 'auto', userSelect: 'none', '& .MuiFormControlLabel-label': { flexGrow: 1 } }}
                             />
                             <Typography variant="body2" color="text.secondary">
-                                {totalPoints} / {maxPoints} points
+                                {totalPoints} / {maxPoints} bodov
                             </Typography>
                         </Box>
 

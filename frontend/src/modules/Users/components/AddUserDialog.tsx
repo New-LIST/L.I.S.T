@@ -50,7 +50,7 @@ export const AddUserDialog = ({isOpen, onSubmit, onClose}: DialogProps) => {
             setEmailError(null);
         }
         if (password.length < 6 || password.trim() === "") {
-            setPasswordError("Heslo musi obsahovat aspon 6 znakov");
+            setPasswordError("Heslo musí obsahovať aspoň 6 znakov");
         } else {
             setPasswordError(null);
         }
@@ -121,7 +121,7 @@ export const AddUserDialog = ({isOpen, onSubmit, onClose}: DialogProps) => {
                     onChange={(e) => {
                         setPassword(e.target.value);
                         if (e.target.value.trim().length < 6) {
-                            setPasswordError("Heslo musi obsahovat aspon 6 znakov");
+                            setPasswordError("Heslo musí obsahovať aspoň 6 znakov");
                         } else {
                             setPasswordError(null);
                         }
@@ -147,7 +147,7 @@ export const AddUserDialog = ({isOpen, onSubmit, onClose}: DialogProps) => {
                 }}
                         variant="text"
                         color="warning">
-                    Zrušiť   
+                    Zrušiť
                 </Button>
                 <Button onClick={() => {
                     if (isValid()) {
@@ -156,7 +156,8 @@ export const AddUserDialog = ({isOpen, onSubmit, onClose}: DialogProps) => {
                             fullname: fullName,
                             email: email,
                             password: password,
-                            role: role
+                            role: role,
+                            inactive: false
                         };
                         onSubmit(user);
                         resetValues();

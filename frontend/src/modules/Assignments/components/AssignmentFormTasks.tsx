@@ -27,6 +27,7 @@ import TaskPreview from "../../Tasks/Components/TaskPreview";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import ConfirmDialog from "../../../shared/components/ConfirmDialog";
 import EmptyState from "../../../shared/components/EmptyState.tsx";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   assignmentId: number;
@@ -34,6 +35,7 @@ type Props = {
 };
 
 const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => {
+  const { t } = useTranslation();
   const { showNotification } = useNotification();
   const [rows, setRows] = useState<AssignmentTaskRelSlim[]>([]);
   const [loading, setLoading] = useState(false);
@@ -145,7 +147,7 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
           <TableRow>
             <TableCell>Úloha</TableCell>
             <TableCell>Body</TableCell>
-            {isProject && <TableCell>Limit vyberov</TableCell>}
+            {isProject && <TableCell>{t("Selection Limit")}</TableCell>}
             <TableCell>Bonus</TableCell>
             <TableCell>Interný komentár</TableCell>
             <TableCell align="center">Akcie</TableCell>

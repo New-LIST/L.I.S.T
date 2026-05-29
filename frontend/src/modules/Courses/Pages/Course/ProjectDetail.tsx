@@ -24,20 +24,23 @@ import { useNotification } from "../../../../shared/components/NotificationConte
 import EmptyState from "../../../../shared/components/EmptyState";
 import UploadSolutionForm from "../../../Assignments/components/UploadSolutionForm";
 import type { ProjectDetail as ProjectDetailType, ProjectTopic } from "../../../Assignments/types/Project";
+import { useTranslation } from "react-i18next";
 
-const formatDateTime = (value: string | null) =>
-  value ? new Date(value).toLocaleString("sk-SK") : "Bez terminu";
+const formatDateTime = (value: string | null, emptyText: string, locale: string) =>
+  value ? new Date(value).toLocaleString(locale) : emptyText;
 
-const formatSlots = (topic: ProjectTopic) => {
-  if (topic.selectionLimit == null) return "Bez limitu";
-  return `${topic.freeSlots ?? 0} z ${topic.selectionLimit}`;
+const formatSlots = (topic: ProjectTopic, noLimitText: string, ofText: string) => {
+  if (topic.selectionLimit == null) return noLimitText;
+  return `${topic.freeSlots ?? 0} ${ofText} ${topic.selectionLimit}`;
 };
 
 export default function ProjectDetail() {
+  const { t, i18n } = useTranslation();
   const { id, assignmentId } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const assignmentIdNumber = Number(assignmentId);
+  const dateLocale = i18n.language === "en" ? "en-US" : "sk-SK";
 
   const [detail, setDetail] = useState<ProjectDetailType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +72,7 @@ export default function ProjectDetail() {
       );
     } catch (err) {
       console.error(err);
-      showNotification("Projekt sa nepodarilo nacitat.", "error");
+      showNotification(t("Could not load project"), "error");
     } finally {
       setLoading(false);
     }
@@ -88,9 +91,9 @@ export default function ProjectDetail() {
     try {
       await api.patch(`/projects/${detail.assignmentId}/selection`, { taskId });
       await load();
-      showNotification(taskId ? "Tema projektu bola vybrana." : "Vyber temy bol zruseny.", "success");
+      showNotification(taskId ? t("Topic selected") : t("Topic selection cancelled"), "success");
     } catch (err: any) {
-      showNotification(err.response?.data ?? "Vyber projektu sa nepodarilo ulozit.", "error");
+      showNotification(err.response?.data ?? t("Could not save project selection"), "error");
     } finally {
       setSavingTaskId(null);
     }
@@ -105,7 +108,7 @@ export default function ProjectDetail() {
   }
 
   if (!detail) {
-    return <EmptyState message="Projekt sa nepodarilo nacitat." />;
+    return <EmptyState message={t("Could not load project")} />;
   }
 
   return (
@@ -116,7 +119,7 @@ export default function ProjectDetail() {
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate(`/student/courses/${id}/projects`)}
         >
-          Spat
+          {t("Back")}
         </Button>
         <Typography variant="h5" fontWeight="bold">
           {detail.assignmentName}
@@ -128,30 +131,30 @@ export default function ProjectDetail() {
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between">
             <Box>
               <Typography variant="subtitle2" color="text.secondary">
-                Termin vyberu temy
+                {t("Topic Selection Deadline")}
               </Typography>
-              <Typography>{formatDateTime(detail.projectSelectionDeadline)}</Typography>
+              <Typography>{formatDateTime(detail.projectSelectionDeadline, t("No Deadline"), dateLocale)}</Typography>
             </Box>
             <Box>
               <Typography variant="subtitle2" color="text.secondary">
-                Termin odovzdania
+                {t("Upload Deadline")}
               </Typography>
-              <Typography>{formatDateTime(detail.uploadEndTime)}</Typography>
+              <Typography>{formatDateTime(detail.uploadEndTime, t("No Deadline"), dateLocale)}</Typography>
             </Box>
             <Box>
               <Typography variant="subtitle2" color="text.secondary">
-                Stav
+                {t("Status")}
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 {detail.selectedTaskId ? (
-                  <Chip icon={<CheckCircleIcon />} label="Tema vybrana" color="success" size="small" />
+                  <Chip icon={<CheckCircleIcon />} label={t("Topic Selected")} color="success" size="small" />
                 ) : (
-                  <Chip label="Bez vyberu" size="small" />
+                  <Chip label={t("No Selection")} size="small" />
                 )}
                 {detail.canUpload ? (
-                  <Chip icon={<UploadFileIcon />} label="Odovzdanie otvorene" color="primary" size="small" />
+                  <Chip icon={<UploadFileIcon />} label={t("Upload Open")} color="primary" size="small" />
                 ) : (
-                  <Chip label="Odovzdanie zatvorene" size="small" />
+                  <Chip label={t("Upload Closed")} size="small" />
                 )}
               </Stack>
             </Box>
@@ -161,7 +164,7 @@ export default function ProjectDetail() {
         {detail.instructions && (
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Pravidla projektu
+              {t("Project Rules")}
             </Typography>
             <Box
               sx={{
@@ -176,9 +179,9 @@ export default function ProjectDetail() {
         <Paper sx={{ p: 2 }}>
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1} sx={{ mb: 2 }}>
             <Box>
-              <Typography variant="h6">Vyber temy</Typography>
+              <Typography variant="h6">{t("Topic Selection")}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Zadanie temy si mozes pozriet bez vyberu. Odovzdanie sa otvori az po vybere temy.
+                {t("Topic Preview Before Selection Help")}
               </Typography>
             </Box>
             {detail.selectedTaskId && detail.canSelect && (
@@ -188,33 +191,33 @@ export default function ProjectDetail() {
                 onClick={() => selectTopic(null)}
                 disabled={savingTaskId !== null}
               >
-                Zrusit vyber
+                {t("Cancel Selection")}
               </Button>
             )}
           </Stack>
 
           {!detail.canSelect && !detail.hasSubmittedSolution && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Vyber temy uz nie je otvoreny.
+              {t("Topic Selection Closed")}
             </Alert>
           )}
 
           {detail.hasSubmittedSolution && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Riesenie uz bolo odovzdane, preto sa tema projektu neda menit.
+              {t("Submitted Solution Locks Topic")}
             </Alert>
           )}
 
           {detail.topics.length === 0 ? (
-            <EmptyState message="Projekt nema ziadne temy." />
+            <EmptyState message={t("Project Has No Topics")} />
           ) : (
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#f0f4ff" }}>
-                  <TableCell>Nazov temy</TableCell>
-                  <TableCell>Volne miesta</TableCell>
-                  <TableCell>Studenti</TableCell>
-                  <TableCell align="right">Akcia</TableCell>
+                  <TableCell>{t("Topic Name")}</TableCell>
+                  <TableCell>{t("Free Slots")}</TableCell>
+                  <TableCell>{t("Students")}</TableCell>
+                  <TableCell align="right">{t("Action")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -248,16 +251,16 @@ export default function ProjectDetail() {
                             {topic.name}
                           </Button>
                           <Typography variant="body2" color="text.secondary">
-                            {topic.pointsTotal} bodov
-                            {topic.authorName ? `, autor ${topic.authorName}` : ""}
+                            {topic.pointsTotal} {t("points")}
+                            {topic.authorName ? `, ${t("author")} ${topic.authorName}` : ""}
                           </Typography>
                         </Stack>
                       </TableCell>
-                      <TableCell>{formatSlots(topic)}</TableCell>
+                      <TableCell>{formatSlots(topic, t("No Limit"), t("of"))}</TableCell>
                       <TableCell>
                         {topic.students.length > 0
                           ? topic.students.map((student) => student.fullName).join(", ")
-                          : "Nikto zatial nepracuje na tejto teme."}
+                          : t("Nobody Works On Topic")}
                       </TableCell>
                       <TableCell align="right">
                         <Button
@@ -266,7 +269,7 @@ export default function ProjectDetail() {
                           disabled={disabled}
                           onClick={() => selectTopic(topic.taskId)}
                         >
-                          {selected ? "Vybrana" : topic.isFull ? "Plna" : "Vybrat"}
+                          {selected ? t("Selected") : topic.isFull ? t("Full") : t("Select")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -282,7 +285,7 @@ export default function ProjectDetail() {
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1} sx={{ mb: 1 }}>
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Zadanie projektu
+                  {t("Project Assignment")}
                 </Typography>
                 <Typography variant="h5" fontWeight="bold">
                   {previewTopic.name}
@@ -290,10 +293,10 @@ export default function ProjectDetail() {
               </Box>
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                 {previewTopic.taskId === detail.selectedTaskId && (
-                  <Chip icon={<CheckCircleIcon />} label="Tema vybrana" color="success" size="small" />
+                  <Chip icon={<CheckCircleIcon />} label={t("Topic Selected")} color="success" size="small" />
                 )}
                 {previewTopic.taskId !== detail.selectedTaskId && previewTopic.isFull && (
-                  <Chip label="Tema je plna" size="small" />
+                  <Chip label={t("Topic Is Full")} size="small" />
                 )}
                 {previewTopic.taskId !== detail.selectedTaskId && (
                   <Button
@@ -302,7 +305,7 @@ export default function ProjectDetail() {
                     disabled={!detail.canSelect || previewTopic.isFull || savingTaskId !== null}
                     onClick={() => selectTopic(previewTopic.taskId)}
                   >
-                    Vybrat tuto temu
+                    {t("Select This Topic")}
                   </Button>
                 )}
               </Stack>
@@ -317,25 +320,25 @@ export default function ProjectDetail() {
                 dangerouslySetInnerHTML={{ __html: previewTopic.text }}
               />
             ) : (
-              <Typography color="text.secondary">Tema nema vyplneny text zadania.</Typography>
+              <Typography color="text.secondary">{t("Topic Has No Text")}</Typography>
             )}
             <Divider sx={{ mt: 2, mb: 1 }} />
             <Typography variant="subtitle2" color="text.secondary">
-              Autor: {previewTopic.authorName ?? "Neznamy autor"} | {previewTopic.pointsTotal} bodov
+              {t("author")}: {previewTopic.authorName ?? t("Unknown Author")} | {previewTopic.pointsTotal} {t("points")}
             </Typography>
           </Paper>
         )}
 
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Odovzdanie riesenia
+            {t("Solution Upload")}
           </Typography>
           {!detail.selectedTaskId ? (
-            <Typography color="text.secondary">Pred odovzdanim si najprv vyber temu projektu.</Typography>
+            <Typography color="text.secondary">{t("Select Topic Before Upload")}</Typography>
           ) : detail.canUpload ? (
             <UploadSolutionForm assignmentId={detail.assignmentId} />
           ) : (
-            <Typography color="text.secondary">Tento projekt teraz nie je mozne odovzdat.</Typography>
+            <Typography color="text.secondary">{t("Project Cannot Be Submitted Now")}</Typography>
           )}
         </Paper>
       </Stack>

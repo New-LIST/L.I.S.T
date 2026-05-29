@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -34,6 +34,7 @@ import EditCourseDialog from "../Components/EditCourseDialog";
 import ConfirmDeleteCourseDialog from "../Components/ConfirmDeleteCourseDialog";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import ConfirmDuplicateCourseDialog from "../Components/ConfirmDuplicateCourseDialog";
+import { getStoredUser } from "../../Authentication/utils/auth.ts";
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -71,6 +72,8 @@ const Courses = () => {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const user = getStoredUser();
+  const isAssistant = user?.role?.toLowerCase() === "assistant";
 
 
   useEffect(() => {
@@ -321,7 +324,7 @@ const Courses = () => {
 
   const handleDuplicate = async (courseId: number) => {
     try {
-      const res = await api.post(`/courses/${courseId}/duplicate`);
+      await api.post(`/courses/${courseId}/duplicate`);
       showNotification("Kurz bol duplikovaný.", "success");
       fetchCourses();
     } catch (err) {
@@ -342,6 +345,7 @@ const Courses = () => {
         Kurzy
       </Typography>
 
+      {!isAssistant && (
       <Button
         variant="contained"
         startIcon={<AddIcon />}
@@ -350,6 +354,7 @@ const Courses = () => {
       >
         Pridať kurz
       </Button>
+      )}
 
       <Box display="flex" gap={2} mb={2}>
         <TextField
@@ -402,6 +407,26 @@ const Courses = () => {
                     </TableCell>
                     <TableCell>{course.teacherName}</TableCell>
                     <TableCell align="right">
+                      {isAssistant ? (
+                        <Box>
+                          {course.canManageCourseContent && (
+                            <Tooltip title="Zostavy úloh" placement="top">
+                              <IconButton
+                                  onClick={() =>
+                                      navigate(`/dash/courses/${course.id}/tasksets`, {
+                                        state: {
+                                          courseName: course.name,
+                                          periodName: course.periodName,
+                                        },
+                                      })
+                                  }
+                              >
+                                <AssignmentIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      ) : (
                       <Box>
                         <Tooltip title="Upraviť kurz" placement="top">
                           <IconButton
@@ -508,6 +533,7 @@ const Courses = () => {
                           </IconButton>
                         </Tooltip>
                       </Box>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -517,14 +543,14 @@ const Courses = () => {
                     <TablePagination
                         count={filteredCourses.length}
                         page={page}
-                        onPageChange={(event, newPage) => setPage(newPage)}
+                        onPageChange={(_event, newPage) => setPage(newPage)}
                         rowsPerPage={rowsPerPage}
                         onRowsPerPageChange={(e) => {
                           setRowsPerPage(parseInt(e.target.value, 10));
                           setPage(0);
                         }}
                         rowsPerPageOptions={[5, 10, 25]}
-                        labelRowsPerPage="Úloh na stránku:"
+                        labelRowsPerPage="Kurzov na stránku:"
                     />
                   </TableRow>
                 </TableFooter>

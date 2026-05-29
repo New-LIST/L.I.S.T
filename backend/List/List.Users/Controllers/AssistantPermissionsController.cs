@@ -1,71 +1,124 @@
 using List.Users.Data;
 using List.Users.DTOs;
 using List.Users.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace List.Users.Controllers;
 
 [ApiController]
 [Route("api/assistant-permissions")]
+[Authorize]
 public class AssistantPermissionsController(UsersDbContext context) : ControllerBase
 {
     private readonly UsersDbContext _context = context;
 
     [HttpGet("{userId:int}")]
-    public async Task<ActionResult<AssistantPermissionsDto>> GetPermissions(int userId)
+    [Authorize(Roles = "Teacher")]
+    public async Task<ActionResult<List<AssistantCoursePermissionDto>>> GetPermissions(int userId)
     {
-        var permissions = await _context.AssistantPermissions
+        var permissions = await _context.AssistantCoursePermissions
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.UserId == userId);
+            .Where(p => p.AssistantUserId == userId)
+            .OrderBy(p => p.CourseId)
+            .Select(p => new AssistantCoursePermissionDto
+            {
+                Id = p.Id,
+                UserId = p.AssistantUserId,
+                CourseId = p.CourseId,
+                CanViewCourseContent = p.CanViewCourseContent,
+                CanManageCourseContent = p.CanManageCourseContent,
+                CanGradeCourse = p.CanGradeCourse,
+                CanRunPlagiarismCheck = p.CanRunPlagiarismCheck
+            })
+            .ToListAsync();
 
-        if (permissions == null)
-        {
-            return Ok(new AssistantPermissionsDto { UserId = userId });
-        }
+        return Ok(permissions);
+    }
 
-        return Ok(new AssistantPermissionsDto
-        {
-            UserId = permissions.UserId,
-            CanAddStudents = permissions.CanAddStudents,
-            CanManageStudents = permissions.CanManageStudents,
-            CanManageTaskTypes = permissions.CanManageTaskTypes,
-            CanManagePeriods = permissions.CanManagePeriods,
-            CanManageCategories = permissions.CanManageCategories,
-            CanViewLogs = permissions.CanViewLogs
-        });
+    [HttpGet("me")]
+    public async Task<ActionResult<List<AssistantCoursePermissionDto>>> GetMine()
+    {
+        var userId = GetCurrentUserId();
+        var permissions = await _context.AssistantCoursePermissions
+            .AsNoTracking()
+            .Where(p => p.AssistantUserId == userId)
+            .OrderBy(p => p.CourseId)
+            .Select(p => new AssistantCoursePermissionDto
+            {
+                Id = p.Id,
+                UserId = p.AssistantUserId,
+                CourseId = p.CourseId,
+                CanViewCourseContent = p.CanViewCourseContent,
+                CanManageCourseContent = p.CanManageCourseContent,
+                CanGradeCourse = p.CanGradeCourse,
+                CanRunPlagiarismCheck = p.CanRunPlagiarismCheck
+            })
+            .ToListAsync();
+
+        return Ok(permissions);
     }
 
     [HttpPost]
-    public async Task<IActionResult> SavePermissions([FromBody] AssistantPermissionsDto dto)
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> SavePermissions([FromBody] AssistantCoursePermissionDto dto)
     {
-        var existing = await _context.AssistantPermissions
-            .FirstOrDefaultAsync(p => p.UserId == dto.UserId);
+        if (dto.CanManageCourseContent)
+            dto.CanViewCourseContent = true;
+
+        var assistant = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == dto.UserId && u.Role == UserRole.Assistant);
+
+        if (assistant == null)
+            return BadRequest("Vybrany pouzivatel nie je asistent.");
+
+        var existing = await _context.AssistantCoursePermissions
+            .FirstOrDefaultAsync(p => p.AssistantUserId == dto.UserId && p.CourseId == dto.CourseId);
+
+        if (!dto.HasAnyPermission)
+        {
+            if (existing != null)
+            {
+                _context.AssistantCoursePermissions.Remove(existing);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
+        }
 
         if (existing != null)
         {
-            existing.CanAddStudents = dto.CanAddStudents;
-            existing.CanManageStudents = dto.CanManageStudents;
-            existing.CanManageTaskTypes = dto.CanManageTaskTypes;
-            existing.CanManagePeriods = dto.CanManagePeriods;
-            existing.CanManageCategories = dto.CanManageCategories;
-            existing.CanViewLogs = dto.CanViewLogs;
+            existing.CanViewCourseContent = dto.CanViewCourseContent;
+            existing.CanManageCourseContent = dto.CanManageCourseContent;
+            existing.CanGradeCourse = dto.CanGradeCourse;
+            existing.CanRunPlagiarismCheck = dto.CanRunPlagiarismCheck;
+            existing.Updated = DateTime.UtcNow;
         }
         else
         {
-            _context.AssistantPermissions.Add(new AssistantPermissions
+            _context.AssistantCoursePermissions.Add(new AssistantCoursePermission
             {
-                UserId = dto.UserId,
-                CanAddStudents = dto.CanAddStudents,
-                CanManageStudents = dto.CanManageStudents,
-                CanManageTaskTypes = dto.CanManageTaskTypes,
-                CanManagePeriods = dto.CanManagePeriods,
-                CanManageCategories = dto.CanManageCategories,
-                CanViewLogs = dto.CanViewLogs
+                AssistantUserId = dto.UserId,
+                CourseId = dto.CourseId,
+                CanViewCourseContent = dto.CanViewCourseContent,
+                CanManageCourseContent = dto.CanManageCourseContent,
+                CanGradeCourse = dto.CanGradeCourse,
+                CanRunPlagiarismCheck = dto.CanRunPlagiarismCheck,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
             });
         }
 
         await _context.SaveChangesAsync();
         return Ok();
     }
+
+    private int GetCurrentUserId()
+    {
+        return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    }
+
 }

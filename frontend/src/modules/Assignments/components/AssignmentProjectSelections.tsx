@@ -20,6 +20,7 @@ import {
 import api from "../../../services/api";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import { TeacherProjectSelections } from "../types/Project";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   assignmentId: number;
@@ -34,6 +35,7 @@ type StudentRow = {
 };
 
 export default function AssignmentProjectSelections({ assignmentId }: Props) {
+  const { t } = useTranslation();
   const { showNotification } = useNotification();
   const [data, setData] = useState<TeacherProjectSelections | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
       setData(res.data);
     } catch (err) {
       console.error(err);
-      showNotification("Nepodarilo sa nacitat vybery projektu.", "error");
+      showNotification(t("Could not load project selections"), "error");
     } finally {
       setLoading(false);
     }
@@ -85,11 +87,11 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
         `/projects/assignments/${assignmentId}/students/${studentId}`,
         { taskId }
       );
-      showNotification("Vyber projektu bol nastaveny.", "success");
+      showNotification(t("Project selection was set"), "success");
       await load();
     } catch (err: any) {
       showNotification(
-        err.response?.data ?? "Nepodarilo sa nastavit vyber projektu.",
+        err.response?.data ?? t("Could not set project selection"),
         "error"
       );
     } finally {
@@ -106,19 +108,18 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
   }
 
   if (!data) {
-    return <Alert severity="error">Projektove vybery sa nepodarilo nacitat.</Alert>;
+    return <Alert severity="error">{t("Project selections unavailable")}</Alert>;
   }
 
   return (
     <Stack spacing={2}>
       <Alert severity="info">
-        Studentom bez odovzdaneho riesenia mozes projektovu temu priradit alebo
-        zmenit. Po odovzdani riesenia je vyber uzamknuty.
+        {t("Teacher Project Selection Info")}
       </Alert>
 
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Prehlad tem
+          {t("Project Topics Overview")}
         </Typography>
         <Stack spacing={1}>
           {data.topics.map((topic) => (
@@ -132,7 +133,7 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
               <Typography fontWeight={600}>{topic.name}</Typography>
               <Typography color="text.secondary">
                 {topic.selectedCount}
-                {topic.selectionLimit ? ` / ${topic.selectionLimit}` : " / bez limitu"}
+                {topic.selectionLimit ? ` / ${topic.selectionLimit}` : ` / ${t("No Limit").toLowerCase()}`}
               </Typography>
             </Box>
           ))}
@@ -143,10 +144,10 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Student</TableCell>
+              <TableCell>{t("Student")}</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Projektova tema</TableCell>
-              <TableCell>Stav</TableCell>
+              <TableCell>{t("Project Topic")}</TableCell>
+              <TableCell>{t("Status")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -157,11 +158,11 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
                 <TableCell>
                   <FormControl size="small" sx={{ minWidth: 260 }}>
                     <InputLabel id={`project-selection-${row.studentId}`}>
-                      Tema
+                      {t("Topic")}
                     </InputLabel>
                     <Select
                       labelId={`project-selection-${row.studentId}`}
-                      label="Tema"
+                      label={t("Topic")}
                       value={row.selectedTaskId?.toString() ?? ""}
                       disabled={row.hasSolution || savingStudentId === row.studentId}
                       onChange={(e) =>
@@ -171,7 +172,7 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
                         )
                       }
                     >
-                      <MenuItem value="">Bez projektu</MenuItem>
+                      <MenuItem value="">{t("No Project")}</MenuItem>
                       {data.topics.map((topic) => {
                         const isCurrent = row.selectedTaskId === topic.taskId;
                         const disabled = topic.isFull && !isCurrent;
@@ -193,7 +194,7 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={row.hasSolution ? "Odovzdane riesenie" : "Neodovzdane riesenie"}
+                    label={row.hasSolution ? t("Submitted Solution") : t("No Submitted Solution")}
                     color={row.hasSolution ? "success" : "default"}
                     size="small"
                     variant={row.hasSolution ? "filled" : "outlined"}
@@ -204,7 +205,7 @@ export default function AssignmentProjectSelections({ assignmentId }: Props) {
             {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} align="center">
-                  V kurze nie su schvaleni studenti.
+                  {t("No Approved Students")}
                 </TableCell>
               </TableRow>
             )}

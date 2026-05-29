@@ -18,7 +18,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api.ts';
 import axios from "axios";
 import {removeStoredAuth} from "../utils/auth.ts";
-import AssistantRoleSelector from "../components/AssistantRoleSelector.tsx";
 
 export default function SignIn() {
     const [emailError, setEmailError] = React.useState(false);
@@ -28,7 +27,6 @@ export default function SignIn() {
     const [generalError, setGeneralError] = React.useState('');
     const [isForgotPasswordDialogOpen, setIsForgotPasswordDialogOpen] = React.useState(false);
     const [rememberMe, setRememberMe] = React.useState(false);
-    const [showRoleSelector, setShowRoleSelector] = React.useState(false);
 
     const navigate = useNavigate();
 
@@ -54,9 +52,7 @@ export default function SignIn() {
             storage.setItem('token', token);
             storage.setItem('user', JSON.stringify(user));
 
-            if (user.role === 'Assistant') {
-                setShowRoleSelector(true);
-            } else if (user.role === 'Student') {
+            if (user.role === 'Student') {
                 navigate('/student');
             } else {
                 navigate('/dash');
@@ -169,19 +165,6 @@ export default function SignIn() {
                     </Link>
                 </Box>
             </Card>
-
-            <AssistantRoleSelector
-                open={showRoleSelector}
-                onSelectStudent={() => {
-                    setShowRoleSelector(false);
-                    navigate('/student');
-                }}
-                onSelectTeacher={() => {
-                    setShowRoleSelector(false);
-                    navigate('/dash');
-                }}
-            />
-
             <ForgotPassword
                 open={isForgotPasswordDialogOpen}
                 handleClose={closeForgotPasswordDialog}
