@@ -56,9 +56,9 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
           res.data.map((r) => ({ ...r, isSaving: false, previewOpen: false }))
         )
       )
-      .catch(() => setError("Nepodarilo sa načítať priradené úlohy."))
+      .catch(() => setError(t("Could not load assigned tasks")))
       .finally(() => setLoading(false));
-  }, [assignmentId]);
+  }, [assignmentId, t]);
 
   const updateRow = (idx: number, data: Partial<AssignmentTaskRelSlim>) => {
     setRows((rows) => rows.map((r, i) => (i === idx ? { ...r, ...data } : r)));
@@ -77,9 +77,9 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
         projectSelectionLimit: isProject ? r.projectSelectionLimit ?? null : null,
         internalComment: r.internalComment,
       });
-      showNotification("Zmeny uložené", "success");
+      showNotification(t("Changes saved"), "success");
     } catch {
-      showNotification("Chyba pri ukladaní", "error");
+      showNotification(t("Save failed"), "error");
     } finally {
       updateRow(idx, { isSaving: false });
     }
@@ -100,9 +100,9 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
         `/assignment-task-rel?assignmentId=${r.assignmentId}&taskId=${r.taskId}`
       );
       setRows((rows) => rows.filter((_, i) => i !== toDeleteIdx));
-      showNotification("Úloha odstránená", "success");
+      showNotification(t("Task removed"), "success");
     } catch {
-      showNotification("Chyba pri mazaní", "error");
+      showNotification(t("Delete failed"), "error");
     } finally {
       setDeleteDialogOpen(false);
       setToDeleteIdx(null);
@@ -118,7 +118,7 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
   const togglePreview = (idx: number) =>
     updateRow(idx, { previewOpen: !rows[idx].previewOpen });
 
-  if (loading) return <Typography>Načítavam...</Typography>;
+  if (loading) return <Typography>{t("Loading")}</Typography>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (rows.length === 0)
     return (
@@ -129,13 +129,13 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
             mt={4}
             gap={2} // odsadenie medzi ikonou a tlačidlom
         >
-          <EmptyState message="V tomto zadaní nie sú žiadne úlohy" />
+          <EmptyState message={t("No tasks in assignment")} />
 
           <Button
               variant="contained"
               onClick={() => navigate(`/dash/assignments/${assignmentId}/tasks`)}
           >
-            Pridať ďalšie úlohy
+            {t("Add More Tasks")}
           </Button>
         </Box>
     );
@@ -145,12 +145,12 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
       <Table size = "small">
         <TableHead>
           <TableRow>
-            <TableCell>Úloha</TableCell>
-            <TableCell>Body</TableCell>
+            <TableCell>{t("Task")}</TableCell>
+            <TableCell>{t("Points")}</TableCell>
             {isProject && <TableCell>{t("Selection Limit")}</TableCell>}
-            <TableCell>Bonus</TableCell>
-            <TableCell>Interný komentár</TableCell>
-            <TableCell align="center">Akcie</TableCell>
+            <TableCell>{t("Bonus")}</TableCell>
+            <TableCell>{t("Internal Comment")}</TableCell>
+            <TableCell align="center">{t("Actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -243,13 +243,13 @@ const AssignmentFormTasks: FC<Props> = ({ assignmentId, isProject = false }) => 
           variant="contained"
           onClick={() => navigate(`/dash/assignments/${assignmentId}/tasks`)}
         >
-          Pridať ďalšie úlohy
+          {t("Add More Tasks")}
         </Button>
       </Box>
       <ConfirmDialog
         open={deleteDialogOpen}
-        title="Potvrď vymazanie úlohy"
-        message="Naozaj chceš túto úlohu odstrániť zo zadania?"
+        title={t("Confirm task removal")}
+        message={t("Confirm task removal message")}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />

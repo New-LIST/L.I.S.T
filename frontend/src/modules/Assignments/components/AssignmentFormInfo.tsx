@@ -155,7 +155,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
 
   const handleSubmit = async () => {
     if (!name || !courseId || !taskSetTypeId) {
-      showNotification("Vyplň názov, kurz a typ zostavy", "error");
+      showNotification(t("Assignment required fields"), "error");
       return;
     }
 
@@ -219,7 +219,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
     if (defaultValues?.id) {
       // PUT pre editáciu
       await api.put(`/assignments/${defaultValues.id}`, dto);
-      showNotification("Zostava upravená", "success");
+      showNotification(t("Assignment updated"), "success");
       if (onUpdated) {
         onUpdated();
       }
@@ -227,7 +227,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
     } else {
       // POST pre vytvorenie
       const res = await api.post("/assignments", dto);
-      showNotification("Zostava vytvorená", "success");
+      showNotification(t("Assignment created"), "success");
       onCreated(res.data.id);
     }
   };
@@ -235,18 +235,18 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
   return (
     <Box display="flex" flexDirection="column" gap={2} mx="auto" maxWidth={800}>
       <TextField
-        label="Názov zadania"
+        label={t("Assignment Name")}
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
       />
 
       <FormControl fullWidth required>
-        <InputLabel>Kurz</InputLabel>
+        <InputLabel>{t("Course")}</InputLabel>
         <Select
           value={courseId ?? ""}
           onChange={(e) => setCourseId(Number(e.target.value))}
-          label="Kurz"
+          label={t("Course")}
         >
           {courses.map((c) => (
             <MenuItem key={c.id} value={c.id}>
@@ -257,11 +257,11 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       </FormControl>
 
       <FormControl fullWidth required disabled={!courseId}>
-        <InputLabel>Typ zostavy</InputLabel>
+        <InputLabel>{t("Task Set Type")}</InputLabel>
         <Select
           value={taskSetTypeId ?? ""}
           onChange={(e) => setTaskSetTypeId(Number(e.target.value))}
-          label="Typ zostavy"
+          label={t("Task Set Type")}
         >
           {taskSetTypes.map((t) => (
             <MenuItem key={t.id} value={t.id}>
@@ -278,11 +278,11 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
             onChange={(e) => setPublished(e.target.checked)}
           />
         }
-        label="Zverejniť"
+        label={t("Publish")}
       />
 
       <TextField
-        label="Dátum a čas publikovania"
+        label={t("Publish Date Time")}
         type="datetime-local"
         InputLabelProps={{ shrink: true }}
         value={publishStartTime ?? ""}
@@ -291,7 +291,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       />
 
       <TextField
-        label="Termín na odovzdanie"
+        label={t("Upload Deadline")}
         type="datetime-local"
         InputLabelProps={{ shrink: true }}
         value={uploadEndTime ?? ""}
@@ -313,7 +313,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       {groups.length > 0 && (
         <Box>
           <Box mb={1}>
-            <strong>Skupinové nastavenia</strong>
+            <strong>{t("Group Settings")}</strong>
           </Box>
           <Box display="flex" flexDirection="column" gap={1}>
             {groups.map((group) => {
@@ -338,7 +338,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
                     label={`${group.name} (${group.participantCount}/${group.capacity})`}
                   />
                   <TextField
-                    label="Publikovanie pre skupinu"
+                    label={t("Group Publish Start")}
                     type="datetime-local"
                     size="small"
                     InputLabelProps={{ shrink: true }}
@@ -351,7 +351,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
                     }
                   />
                   <TextField
-                    label="Deadline pre skupinu"
+                    label={t("Group Upload Deadline")}
                     type="datetime-local"
                     size="small"
                     InputLabelProps={{ shrink: true }}
@@ -371,7 +371,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       )}
 
       <TextField
-        label="Počet bodov (voliteľné)"
+        label={t("Points Optional")}
         type="number"
         InputLabelProps={{ shrink: true }}
         value={pointsOverride ?? ""}
@@ -430,7 +430,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       </Box>
 
       <TextField
-        label="Interný komentár"
+        label={t("Internal Comment")}
         value={internalComment}
         onChange={(e) => setInternalComment(e.target.value)}
         multiline
@@ -440,7 +440,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
 
       <Box textAlign="right" mt={2}>
         <Button variant="contained" onClick={handleSubmit}>
-          {defaultValues?.id ? "Uložiť zmeny" : "Vytvoriť zadanie"}
+          {defaultValues?.id ? t("Save Changes") : t("Create Assignment")}
         </Button>
       </Box>
     </Box>

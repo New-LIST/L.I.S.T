@@ -17,7 +17,7 @@ export default function CourseDetail() {
         { label: 'Úlohy', path: 'assignments' },
         { label: 'Prehľad', path: 'overview' },
         { label: t('Projects'), path: 'projects' },
-        { label: 'Skupiny', path: 'groups' },
+        { label: t('Groups'), path: 'groups' },
     ];
 
     return (

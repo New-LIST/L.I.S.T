@@ -29,15 +29,16 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import api from "../../../services/api";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import type { CourseGroup, GroupRoom } from "../Types/CourseGroup";
+import { useTranslation } from "react-i18next";
 
 const days = [
-  { value: 1, label: "Pondelok" },
-  { value: 2, label: "Utorok" },
-  { value: 3, label: "Streda" },
-  { value: 4, label: "Štvrtok" },
-  { value: 5, label: "Piatok" },
-  { value: 6, label: "Sobota" },
-  { value: 7, label: "Nedela" },
+  { value: 1, labelKey: "Monday" },
+  { value: 2, labelKey: "Tuesday" },
+  { value: 3, labelKey: "Wednesday" },
+  { value: 4, labelKey: "Thursday" },
+  { value: 5, labelKey: "Friday" },
+  { value: 6, labelKey: "Saturday" },
+  { value: 7, labelKey: "Sunday" },
 ];
 
 const toTimeValue = (minutes: number) => {
@@ -51,10 +52,11 @@ const fromTimeValue = (value: string) => {
   return hours * 60 + minutes;
 };
 
-const formatTimeRange = (room: GroupRoom) =>
-  `${days.find((d) => d.value === room.timeDay)?.label ?? room.timeDay}, ${toTimeValue(room.timeBegin)} - ${toTimeValue(room.timeEnd)}`;
+const formatTimeRange = (room: GroupRoom, dayLabel: string) =>
+  `${dayLabel}, ${toTimeValue(room.timeBegin)} - ${toTimeValue(room.timeEnd)}`;
 
 export default function CourseGroups() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const courseName = location.state?.courseName ?? "";
@@ -78,6 +80,11 @@ export default function CourseGroups() {
   const [roomCapacity, setRoomCapacity] = useState(0);
   const [teachersPlan, setTeachersPlan] = useState("");
 
+  const getDayLabel = (day: number) => {
+    const key = days.find((d) => d.value === day)?.labelKey;
+    return key ? t(key) : String(day);
+  };
+
   const fetchGroups = async () => {
     if (!id) return;
     setLoading(true);
@@ -86,7 +93,7 @@ export default function CourseGroups() {
       setGroups(res.data);
     } catch (err) {
       console.error(err);
-      showNotification("Nepodarilo sa načítať skupiny.", "error");
+      showNotification(t("Could not load groups"), "error");
     } finally {
       setLoading(false);
     }
@@ -138,26 +145,26 @@ export default function CourseGroups() {
     try {
       if (editingGroup) {
         await api.put(`/groups/${editingGroup.id}`, { name: payload.name });
-        showNotification("Skupina bola upravená.", "success");
+        showNotification(t("Group updated"), "success");
       } else {
         await api.post("/groups", payload);
-        showNotification("Skupina bola vytvorená.", "success");
+        showNotification(t("Group created"), "success");
       }
       resetGroupDialog();
       fetchGroups();
     } catch (err: any) {
-      showNotification(err.response?.data ?? "Skupinu sa nepodarilo uložiť.", "error");
+      showNotification(err.response?.data ?? t("Could not save group"), "error");
     }
   };
 
   const deleteGroup = async (group: CourseGroup) => {
-    if (!window.confirm(`Vymazať skupinu ${group.name}?`)) return;
+    if (!window.confirm(t("Delete Group Confirm", { name: group.name }))) return;
     try {
       await api.delete(`/groups/${group.id}`);
-      showNotification("Skupina bola vymazaná.", "success");
+      showNotification(t("Group deleted"), "success");
       fetchGroups();
     } catch (err: any) {
-      showNotification(err.response?.data ?? "Skupinu sa nepodarilo vymazať.", "error");
+      showNotification(err.response?.data ?? t("Could not delete group"), "error");
     }
   };
 
@@ -175,26 +182,26 @@ export default function CourseGroups() {
     try {
       if (editingRoom) {
         await api.put(`/groups/rooms/${editingRoom.id}`, payload);
-        showNotification("Miestnosť bola upravená.", "success");
+        showNotification(t("Room updated"), "success");
       } else {
         await api.post(`/groups/${roomGroupId}/rooms`, payload);
-        showNotification("Miestnosť bola pridaná.", "success");
+        showNotification(t("Room added"), "success");
       }
       resetRoomDialog();
       fetchGroups();
     } catch (err: any) {
-      showNotification(err.response?.data ?? "Miestnosť sa nepodarilo uložiť.", "error");
+      showNotification(err.response?.data ?? t("Could not save room"), "error");
     }
   };
 
   const deleteRoom = async (room: GroupRoom) => {
-    if (!window.confirm(`Vymazať miestnosť ${room.name}?`)) return;
+    if (!window.confirm(t("Delete Room Confirm", { name: room.name }))) return;
     try {
       await api.delete(`/groups/rooms/${room.id}`);
-      showNotification("Miestnosť bola vymazaná.", "success");
+      showNotification(t("Room deleted"), "success");
       fetchGroups();
     } catch (err: any) {
-      showNotification(err.response?.data ?? "Miestnosť sa nepodarilo vymazať.", "error");
+      showNotification(err.response?.data ?? t("Could not delete room"), "error");
     }
   };
 
@@ -202,13 +209,13 @@ export default function CourseGroups() {
     <Container maxWidth="lg" sx={{ mt: 5 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Box>
-          <Typography variant="h4">Skupiny kurzu</Typography>
+          <Typography variant="h4">{t("Course Groups")}</Typography>
           <Typography color="text.secondary">
             {courseName} {periodName && `(${periodName})`}
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => openGroupDialog()}>
-          Pridať skupinu
+          {t("Add Group")}
         </Button>
       </Stack>
 
@@ -221,10 +228,10 @@ export default function CourseGroups() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Názov</TableCell>
-                <TableCell>Obsadenosť</TableCell>
-                <TableCell>Miestnosti</TableCell>
-                <TableCell align="right">Akcie</TableCell>
+                <TableCell>{t("Name")}</TableCell>
+                <TableCell>{t("Occupancy")}</TableCell>
+                <TableCell>{t("Rooms")}</TableCell>
+                <TableCell align="right">{t("Actions")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -233,27 +240,27 @@ export default function CourseGroups() {
                   <TableCell sx={{ fontWeight: 600 }}>{group.name}</TableCell>
                   <TableCell>
                     {group.participantCount}
-                    {group.capacity > 0 ? ` / ${group.capacity}` : " / bez limitu"}
+                    {group.capacity > 0 ? ` / ${group.capacity}` : ` / ${t("No Limit").toLowerCase()}`}
                   </TableCell>
                   <TableCell>
                     {group.rooms.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
-                        Bez miestnosti
+                        {t("No Rooms")}
                       </Typography>
                     ) : (
                       <Stack spacing={0.5}>
                         {group.rooms.map((room) => (
                           <Box key={room.id} display="flex" alignItems="center" gap={1}>
                             <Typography variant="body2">
-                              {room.name}: {formatTimeRange(room)}, kapacita {room.capacity}
+                              {room.name}: {formatTimeRange(room, getDayLabel(room.timeDay))}, {t("capacity")} {room.capacity}
                               {room.teachersPlan ? `, ${room.teachersPlan}` : ""}
                             </Typography>
-                            <Tooltip title="Upraviť miestnosť">
+                            <Tooltip title={t("Edit Room")}>
                               <IconButton size="small" onClick={() => openRoomDialog(group.id, room)}>
                                 <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Vymazať miestnosť">
+                            <Tooltip title={t("Delete Room")}>
                               <IconButton size="small" onClick={() => deleteRoom(room)}>
                                 <DeleteIcon fontSize="small" color="error" />
                               </IconButton>
@@ -264,17 +271,17 @@ export default function CourseGroups() {
                     )}
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Pridať miestnosť">
+                    <Tooltip title={t("Add Room")}>
                       <IconButton onClick={() => openRoomDialog(group.id)}>
                         <MeetingRoomIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Upraviť skupinu">
+                    <Tooltip title={t("Edit Group")}>
                       <IconButton onClick={() => openGroupDialog(group)}>
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Vymazať skupinu">
+                    <Tooltip title={t("Delete Group")}>
                       <IconButton onClick={() => deleteGroup(group)}>
                         <DeleteIcon color="error" />
                       </IconButton>
@@ -285,7 +292,7 @@ export default function CourseGroups() {
               {groups.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} align="center">
-                    Zatiaľ nie sú vytvorené žiadne skupiny.
+                    {t("No Groups Created")}
                   </TableCell>
                 </TableRow>
               )}
@@ -295,43 +302,43 @@ export default function CourseGroups() {
       </Paper>
 
       <Dialog open={groupDialogOpen} onClose={resetGroupDialog} fullWidth maxWidth="xs">
-        <DialogTitle>{editingGroup ? "Upraviť skupinu" : "Nová skupina"}</DialogTitle>
+        <DialogTitle>{editingGroup ? t("Edit Group") : t("New Group")}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
             margin="dense"
-            label="Názov skupiny"
+            label={t("Group Name")}
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={resetGroupDialog}>Zrušiť</Button>
+          <Button onClick={resetGroupDialog}>{t("Cancel")}</Button>
           <Button variant="contained" onClick={saveGroup} disabled={!groupName.trim()}>
-            Uložiť
+            {t("Save")}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={roomDialogOpen} onClose={resetRoomDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{editingRoom ? "Upraviť miestnosť" : "Nová miestnosť"}</DialogTitle>
+        <DialogTitle>{editingRoom ? t("Edit Room") : t("New Room")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
-              label="Názov miestnosti"
+              label={t("Room Name")}
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
             <TextField
               select
-              label="Deň"
+              label={t("Day")}
               value={timeDay}
               onChange={(e) => setTimeDay(Number(e.target.value))}
             >
               {days.map((day) => (
                 <MenuItem key={day.value} value={day.value}>
-                  {day.label}
+                  {t(day.labelKey)}
                 </MenuItem>
               ))}
             </TextField>
@@ -339,7 +346,7 @@ export default function CourseGroups() {
               <TextField
                 fullWidth
                 type="time"
-                label="Začiatok"
+                label={t("Start")}
                 value={timeBegin}
                 onChange={(e) => setTimeBegin(e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -347,7 +354,7 @@ export default function CourseGroups() {
               <TextField
                 fullWidth
                 type="time"
-                label="Koniec"
+                label={t("End")}
                 value={timeEnd}
                 onChange={(e) => setTimeEnd(e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -355,13 +362,13 @@ export default function CourseGroups() {
             </Stack>
             <TextField
               type="number"
-              label="Kapacita"
+              label={t("Capacity")}
               value={roomCapacity}
               onChange={(e) => setRoomCapacity(Number(e.target.value))}
               inputProps={{ min: 1 }}
             />
             <TextField
-              label="Učitelia / poznámka"
+              label={t("Teachers / Note")}
               value={teachersPlan}
               onChange={(e) => setTeachersPlan(e.target.value)}
               multiline
@@ -370,13 +377,13 @@ export default function CourseGroups() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={resetRoomDialog}>Zrušiť</Button>
+          <Button onClick={resetRoomDialog}>{t("Cancel")}</Button>
           <Button
             variant="contained"
             onClick={saveRoom}
             disabled={!roomName.trim() || roomCapacity <= 0 || fromTimeValue(timeBegin) >= fromTimeValue(timeEnd)}
           >
-            Uložiť
+            {t("Save")}
           </Button>
         </DialogActions>
       </Dialog>

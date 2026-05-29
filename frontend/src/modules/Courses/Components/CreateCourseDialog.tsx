@@ -7,8 +7,8 @@ import {
   MenuItem,
   Button, Typography,
 } from '@mui/material';
-  import React from 'react';
   import { Period } from '../../Periods/Types/Period';
+  import { useTranslation } from 'react-i18next';
   
   type Props = {
     open: boolean;
@@ -66,6 +66,7 @@ import {
     imageFile,
     setImageFile
   }: Props) => {
+    const { t } = useTranslation();
     return (
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
         <DialogTitle>Pridať nový kurz</DialogTitle>
@@ -113,7 +114,7 @@ import {
           />
 
           <TextField
-            label="Termín na zmenu skupiny"
+            label={t("Group Change Deadline")}
             type="date"
             InputLabelProps={{ shrink: true }}
             value={groupChangeDeadline ?? ""}

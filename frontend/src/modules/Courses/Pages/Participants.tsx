@@ -29,6 +29,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import api from '../../../services/api.ts';
 import { useNotification } from '../../../shared/components/NotificationContext';
 import type { CourseGroup } from '../Types/CourseGroup';
+import { useTranslation } from 'react-i18next';
 
 interface Participant {
     userId: number;
@@ -40,6 +41,7 @@ interface Participant {
 }
 
 export default function Participants() {
+    const { t } = useTranslation();
     const { id } = useParams();
     const location = useLocation();
     const courseName = location.state?.courseName ?? '';
@@ -81,7 +83,7 @@ export default function Participants() {
                 setGroups(groupsRes.data);
             } catch (err) {
                 console.error(err);
-                showNotification("Nepodarilo sa načítať účastníkov.", "error");
+                showNotification(t("Could not load participants"), "error");
             } finally {
                 setLoading(false);
             }
@@ -99,9 +101,9 @@ export default function Participants() {
             setParticipants(prev =>
                 prev.map(p => p.userId === userId ? { ...p, allowed: true } : p)
             );
-            showNotification("Účastník bol potvrdený.", "success");
+            showNotification(t("Participant approved"), "success");
         } catch (err: any) {
-            const msg = err.response?.data ?? "Nepodarilo sa potvrdiť účastníka.";
+            const msg = err.response?.data ?? t("Could not approve participant");
             showNotification(msg, "error");
         }
     };
@@ -116,16 +118,16 @@ export default function Participants() {
             });
             setParticipants(prev => prev.filter(p => p.userId !== userId));
             setSelectedParticipantIds(prev => prev.filter(id => id !== userId));
-            showNotification("Účastník bol odstránený.", "success");
+            showNotification(t("Participant removed"), "success");
         } catch (err) {
             console.error(err);
-            showNotification("Nepodarilo sa odstrániť účastníka.", "error");
+            showNotification(t("Could not remove participant"), "error");
         }
     };
 
     const addParticipantManually = async () => {
         if (!manualEmail.trim()) {
-            showNotification("Zadaj email študenta.", "error");
+            showNotification(t("Student email is required"), "error");
             return;
         }
 
@@ -141,9 +143,9 @@ export default function Participants() {
             setManualEmail('');
             setManualGroupId(null);
             setManualAllowed(true);
-            showNotification("Študent bol pridaný do kurzu.", "success");
+            showNotification(t("Student added to course"), "success");
         } catch (err: any) {
-            const msg = err.response?.data ?? "Nepodarilo sa pridať študenta do kurzu.";
+            const msg = err.response?.data ?? t("Could not add student to course");
             showNotification(msg, "error");
         }
     };
@@ -184,12 +186,12 @@ export default function Participants() {
 
     const assignSelectedToGroup = async () => {
         if (selectedParticipantIds.length === 0) {
-            showNotification("Vyber študentov, ktorých chceš priradiť do skupiny.", "error");
+            showNotification(t("Select students for group"), "error");
             return;
         }
 
         if (bulkGroupId === "") {
-            showNotification("Vyber cieľovú skupinu.", "error");
+            showNotification(t("Select target group"), "error");
             return;
         }
 
@@ -216,18 +218,18 @@ export default function Participants() {
                 successCount += 1;
             } catch (err: any) {
                 failedCount += 1;
-                lastError = err.response?.data ?? "Niektorých študentov sa nepodarilo priradiť.";
+                lastError = err.response?.data ?? t("Could not assign some students");
             }
         }
 
         if (successCount > 0) {
-            showNotification(`Do skupiny bolo priradených ${successCount} študentov.`, "success");
+            showNotification(t("Assigned selected students to group", { count: successCount }), "success");
             setSelectedParticipantIds([]);
             api.get<CourseGroup[]>(`/groups/course/${id}`).then(res => setGroups(res.data));
         }
 
         if (failedCount > 0) {
-            showNotification(`${failedCount} študentov sa nepodarilo priradiť. ${lastError}`, "error");
+            showNotification(`${failedCount} ${t("Could not assign some students")} ${lastError}`, "error");
         }
 
         setBulkAssigning(false);
@@ -236,28 +238,28 @@ export default function Participants() {
     return (
         <Container maxWidth="lg" sx={{ mt: 5 }}>
             <Typography variant="h4" gutterBottom>
-                Účastníci kurzu – {courseName} ({periodName})
+                {t("Participants")} – {courseName} ({periodName})
             </Typography>
 
             <Card>
                 <CardContent>
                     <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                         <TextField
-                            label="Email študenta"
+                            label={t("Email Student")}
                             size="small"
                             value={manualEmail}
                             onChange={e => setManualEmail(e.target.value)}
                             sx={{ minWidth: 260 }}
                         />
                         <FormControl size="small" sx={{ minWidth: 180 }}>
-                            <InputLabel id="manual-group-select">Skupina</InputLabel>
+                            <InputLabel id="manual-group-select">{t("Group")}</InputLabel>
                             <Select
                                 labelId="manual-group-select"
-                                label="Skupina"
+                                label={t("Group")}
                                 value={manualGroupId?.toString() ?? ""}
                                 onChange={(e) => setManualGroupId(e.target.value ? Number(e.target.value) : null)}
                             >
-                                <MenuItem value="">Bez skupiny</MenuItem>
+                                <MenuItem value="">{t("No Group")}</MenuItem>
                                 {groups.map(group => (
                                     <MenuItem key={group.id} value={group.id.toString()}>
                                         {group.name}
@@ -272,17 +274,17 @@ export default function Participants() {
                                     onChange={(e) => setManualAllowed(e.target.checked)}
                                 />
                             }
-                            label="Schválený"
+                            label={t("Approved")}
                         />
                         <Button variant="contained" onClick={addParticipantManually}>
-                            Pridať študenta
+                            {t("Add Student")}
                         </Button>
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
                         <TextField
                             fullWidth
-                            label="Vyhľadaj podľa mena"
+                            label={t("Search by name")}
                             variant="outlined"
                             size="small"
                             value={searchQuery}
@@ -292,17 +294,17 @@ export default function Participants() {
 
                     <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                         <FormControl size="small" sx={{ minWidth: 220 }}>
-                            <InputLabel id="bulk-group-select">Cieľová skupina</InputLabel>
+                            <InputLabel id="bulk-group-select">{t("Target Group")}</InputLabel>
                             <Select
                                 labelId="bulk-group-select"
-                                label="Cieľová skupina"
+                                label={t("Target Group")}
                                 value={bulkGroupId}
                                 onChange={(e) => {
                                     const value = e.target.value as number | "";
                                     setBulkGroupId(value === "" ? "" : Number(value));
                                 }}
                             >
-                                <MenuItem value="">Vyber skupinu</MenuItem>
+                                <MenuItem value="">{t("Select Group")}</MenuItem>
                                 {groups.map(group => (
                                     <MenuItem key={group.id} value={group.id}>
                                         {group.name} ({group.participantCount}/{group.capacity})
@@ -315,10 +317,10 @@ export default function Participants() {
                             onClick={assignSelectedToGroup}
                             disabled={bulkAssigning || selectedParticipantIds.length === 0 || bulkGroupId === ""}
                         >
-                            Pridať vybraných do skupiny
+                            {t("Add Selected To Group")}
                         </Button>
                         <Typography variant="body2" color="text.secondary">
-                            Vybraných: {selectedParticipantIds.length}
+                            {t("Selected Count")}: {selectedParticipantIds.length}
                         </Typography>
                     </Box>
 
@@ -335,11 +337,11 @@ export default function Participants() {
                                             onChange={(e) => togglePageSelection(e.target.checked)}
                                         />
                                     </TableCell>
-                                    <TableCell>Meno</TableCell>
+                                    <TableCell>{t("Name")}</TableCell>
                                     <TableCell>Email</TableCell>
-                                    <TableCell>Skupina</TableCell>
-                                    <TableCell>Stav</TableCell>
-                                    <TableCell align="right">Akcie</TableCell>
+                                    <TableCell>{t("Group")}</TableCell>
+                                    <TableCell>{t("Status")}</TableCell>
+                                    <TableCell align="right">{t("Actions")}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -353,9 +355,9 @@ export default function Participants() {
                                         </TableCell>
                                         <TableCell>{p.userName}</TableCell>
                                         <TableCell>{p.email}</TableCell>
-                                        <TableCell>{p.groupName ?? "Bez skupiny"}</TableCell>
+                                        <TableCell>{p.groupName ?? t("No Group")}</TableCell>
                                         <TableCell>
-                                            {p.allowed ? 'Potvrdený' : 'Čaká na schválenie'}
+                                            {p.allowed ? t("Confirmed") : t("Waiting Approval")}
                                         </TableCell>
                                         <TableCell align="right">
                                             <Box>
@@ -384,7 +386,7 @@ export default function Participants() {
                                             setPage(0);
                                         }}
                                         rowsPerPageOptions={[5, 15, 25]}
-                                        labelRowsPerPage="Účastníkov na stránku:"
+                                        labelRowsPerPage={t("Participants per page")}
                                     />
                                 </TableRow>
                             </TableFooter>

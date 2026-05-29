@@ -11,6 +11,7 @@ import {
 import api from "../../../services/api.ts";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import { useTranslation } from "react-i18next";
 
 
 
@@ -21,6 +22,7 @@ type UploadSolutionFormProps = {
 const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
   assignmentId,
 }) => {
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [comment, setComment] = useState<string>("");  // komentár
   const [uploading, setUploading] = useState<boolean>(false);
@@ -41,10 +43,11 @@ const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
   // Odoslanie ZIP + komentár na backend
   const handleSubmit = async () => {
     if (!selectedFile) {
-      showNotification("Vyberte súbor pred odoslaním.", "error");
+      showNotification(t("Select file before submit"), "error");
       return;
     }
 
+    setUploading(true);
 
     try {
       // Vytvoríme FormData a pripojíme "file" + "comment"
@@ -64,12 +67,12 @@ const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
         }
       );
 
-      showNotification("Riešenie bolo úspešne odovzdané", "success");
+      showNotification(t("Solution submitted"), "success");
       setSelectedFile(null);
       setComment("");
     } catch (e) {
       console.error("Chyba pri odoslaní riešenia:", e);
-      showNotification("Nastala chyba pri odoslaní riešenia", "error");
+      showNotification(t("Solution upload failed"), "error");
     } finally {
       setUploading(false);
     }
@@ -94,7 +97,7 @@ const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
               startIcon={<UploadFileIcon />}
               disabled={uploading}
             >
-              Vybrať súbor
+              {t("Choose File")}
             </Button>
           </label>
           {selectedFile && (
@@ -114,7 +117,7 @@ const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
 
         {/* Textové pole pre komentár */}
         <TextField
-          label="Komentár k riešeniu"
+          label={t("Solution Comment")}
           value={comment}
           onChange={handleCommentChange}
           fullWidth
@@ -131,7 +134,7 @@ const UploadSolutionForm: React.FC<UploadSolutionFormProps> = ({
             onClick={handleSubmit}
             disabled={uploading || !selectedFile}
           >
-            {uploading ? "Odosielam..." : "Odoslať riešenie"}
+            {uploading ? t("Uploading") : t("Submit Solution")}
           </Button>
         </Box>
       </Stack>

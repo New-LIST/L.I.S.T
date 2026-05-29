@@ -35,8 +35,10 @@ import ConfirmDeleteCourseDialog from "../Components/ConfirmDeleteCourseDialog";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import ConfirmDuplicateCourseDialog from "../Components/ConfirmDuplicateCourseDialog";
 import { getStoredUser } from "../../Authentication/utils/auth.ts";
+import { useTranslation } from "react-i18next";
 
 const Courses = () => {
+  const { t } = useTranslation();
   const [courses, setCourses] = useState<Course[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +182,7 @@ const Courses = () => {
     const now = new Date();
 
     if (groupChangeDeadline && new Date(groupChangeDeadline) < now) {
-      setGChangeError("Termín na zmenu skupiny musí byť v budúcnosti.");
+      setGChangeError(t("Group change deadline must be future"));
       hasError = true;
     }
 
@@ -265,7 +267,7 @@ const Courses = () => {
     const now = new Date();
 
     if (groupChangeDeadline && new Date(groupChangeDeadline) < now) {
-      setGChangeError("Termín na zmenu skupiny musí byť v budúcnosti.");
+      setGChangeError(t("Group change deadline must be future"));
       hasError = true;
     }
 
@@ -470,7 +472,7 @@ const Courses = () => {
                           <EditNoteIcon/>
                         </IconButton>
                         </Tooltip>
-                        <Tooltip title="Skupiny" placement="top">
+                        <Tooltip title={t("Groups")} placement="top">
                           <IconButton
                               onClick={() =>
                                   navigate(`/dash/courses/${course.id}/groups`, {
