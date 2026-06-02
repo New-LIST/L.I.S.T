@@ -11,7 +11,7 @@ namespace List.Tests.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(ITestService testService, IPrepareScriptService prepareScriptService) : ControllerBase
+public class TestsController(ITestService testService) : ControllerBase
 {
     [HttpGet]
     public async Task<PagedResult<Test>> GetTestsPageAsync(int page = 0, int pageSize = 100)
@@ -29,9 +29,7 @@ public class TestsController(ITestService testService, IPrepareScriptService pre
             return BadRequest();
         }
         
-        var testResult = await prepareScriptService.PrepareScriptAsync(test);
-        
-        return testResult;
+        return Ok();
     }
 
     [Authorize(Roles = "Teacher")]
