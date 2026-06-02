@@ -20,7 +20,7 @@ public class Test
     [Required]
     [Column("task_id")]
     public int TaskId { get; set; }
-
+    
     [ForeignKey(nameof(TaskId))]
     public TaskModel Task { get; set; }
     

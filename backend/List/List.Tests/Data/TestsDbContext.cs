@@ -9,6 +9,7 @@ namespace List.Tests.Data;
 public class TestsDbContext(DbContextOptions<TestsDbContext> options) : DbContext(options)
 {
     public DbSet<Test> Tests { get; set; }
+    public DbSet<TestRun> TestRuns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
