@@ -154,9 +154,7 @@ export const AssistantScopeDialog = ({ open, onClose, user }: Props) => {
                     Asistent: <b>{user?.fullname}</b>
                 </Typography>
 
-                <Alert severity="info">
-                    Práva sa nastavujú samostatne pre každý kurz.
-                </Alert>
+
 
                 <FormControl fullWidth size="small" disabled={loading || courses.length === 0}>
                     <InputLabel id="assistant-course-label">Kurz</InputLabel>
