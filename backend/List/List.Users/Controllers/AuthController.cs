@@ -31,13 +31,13 @@ namespace List.Users.Controllers
             [Required, EmailAddress]
             public string Email { get; set; }
         }
-        
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
+
             var requestId = Guid.NewGuid();
 
             await context.AddAsync(new PasswordChange
@@ -46,15 +46,16 @@ namespace List.Users.Controllers
                 UserEmail = request.Email
             });
             await context.SaveChangesAsync();
-            
+
             if (await context.Users.AnyAsync(u => u.Email == request.Email))
             {
+                var frontendBaseUrl = configuration["Frontend:BaseUrl"]?.TrimEnd('/');
                 await emailService.SendEmailAsync(
-                    request.Email, 
-                    "Password Reset For LIST Account", 
-                     $"<a href='http://localhost:5173/password-change/{requestId}'>Change password here</a>");
+                    request.Email,
+                    "Password Reset For LIST Account",
+                    $"<a href='{frontendBaseUrl}/password-change/{requestId}'>Change password here</a>");
             }
-            
+
             return Ok();
         }
 
@@ -74,21 +75,21 @@ namespace List.Users.Controllers
 
             var changeRequest =
                 await context.PasswordChanges.FirstOrDefaultAsync(entity => entity.Id == request.RequestId);
-            
+
             if (changeRequest is null)
                 return BadRequest("Invalid request.");
-            
+
             var user = await context.Users.FirstOrDefaultAsync(entity => entity.Email == changeRequest.UserEmail);
             if (user is null)
                 return BadRequest("Invalid user.");
 
             user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            
+
             var result = await userService.UpdateUserAsync(user);
 
             context.PasswordChanges.Remove(changeRequest);
             await context.SaveChangesAsync();
-            
+
             return Ok();
         }
 

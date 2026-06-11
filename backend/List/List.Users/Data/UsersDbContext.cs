@@ -7,10 +7,8 @@ namespace List.Users.Data;
 public class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
-    public DbSet<AssistantPermissions> AssistantPermissions { get; set; }
+    public DbSet<AssistantCoursePermission> AssistantCoursePermissions { get; set; }
     public DbSet<PasswordChange> PasswordChanges { get; set; }
-
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,6 +16,10 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContex
 
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<AssistantCoursePermission>()
+            .HasIndex(p => new { p.AssistantUserId, p.CourseId })
             .IsUnique();
     }
 }

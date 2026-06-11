@@ -1,9 +1,8 @@
 using List.Assignments.Data;
-using List.Assignments.Models;
 using List.Assignments.DTOs;
+using List.Assignments.Models;
 using List.Common.Models;
-
-using List.Logs.Services;
+using List.Courses.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace List.Assignments.Services;
@@ -11,18 +10,29 @@ namespace List.Assignments.Services;
 public class AssignmentService : IAssignmentService
 {
     private readonly AssignmentsDbContext _dbContext;
+    private readonly CoursesDbContext _coursesDbContext;
 
-    public AssignmentService(AssignmentsDbContext dbContext)
+    public AssignmentService(AssignmentsDbContext dbContext, CoursesDbContext coursesDbContext)
     {
         _dbContext = dbContext;
+        _coursesDbContext = coursesDbContext;
     }
 
-    public async Task<List<AssignmentModel>> GetAllAsync()
+    public async Task<List<AssignmentModel>> GetAllAsync(IEnumerable<int>? allowedCourseIds = null)
     {
-        return await _dbContext.Assignments
+        var query = _dbContext.Assignments
             .Include(a => a.TaskSetType)
             .Include(a => a.Course)
-            .ToListAsync();
+            .Include(a => a.GroupSettings)
+            .AsQueryable();
+
+        var courseIds = allowedCourseIds?.ToList();
+        if (courseIds is { Count: > 0 })
+            query = query.Where(a => courseIds.Contains(a.CourseId));
+        else if (allowedCourseIds != null)
+            return new List<AssignmentModel>();
+
+        return await query.ToListAsync();
     }
 
     public async Task<AssignmentModel?> GetByIdAsync(int id)
@@ -30,6 +40,7 @@ public class AssignmentService : IAssignmentService
         return await _dbContext.Assignments
             .Include(a => a.TaskSetType)
             .Include(a => a.Course)
+            .Include(a => a.GroupSettings)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -46,13 +57,24 @@ public class AssignmentService : IAssignmentService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter)
+    public async Task<PagedResult<AssignmentModel>> GetFilteredAsync(AssignmentFilterDto filter, IEnumerable<int>? allowedCourseIds = null)
     {
         var query = _dbContext.Assignments
             .Include(a => a.Course)
             .Include(a => a.TaskSetType)
             .Include(a => a.Teacher)
+            .Include(a => a.GroupSettings)
             .AsQueryable();
+
+        var courseIds = allowedCourseIds?.ToList();
+        if (courseIds is { Count: > 0 })
+            query = query.Where(a => courseIds.Contains(a.CourseId));
+        else if (allowedCourseIds != null)
+            return new PagedResult<AssignmentModel>
+            {
+                Items = new List<AssignmentModel>(),
+                TotalCount = 0
+            };
 
         if (filter.UserId.HasValue)
             query = query.Where(a => a.TeacherId == filter.UserId);
@@ -63,10 +85,8 @@ public class AssignmentService : IAssignmentService
         if (filter.CourseId.HasValue)
             query = query.Where(a => a.CourseId == filter.CourseId);
 
-        // Count before pagination
         var totalCount = await query.CountAsync();
 
-        // Sorting
         query = filter.Sort?.ToLower() switch
         {
             "id" => filter.Desc ? query.OrderByDescending(a => a.Id) : query.OrderBy(a => a.Id),
@@ -77,7 +97,6 @@ public class AssignmentService : IAssignmentService
             _ => query.OrderByDescending(a => a.Created)
         };
 
-        // Pagination
         var skip = (filter.Page - 1) * filter.PageSize;
         var items = await query.Skip(skip).Take(filter.PageSize).ToListAsync();
 
@@ -87,8 +106,6 @@ public class AssignmentService : IAssignmentService
             TotalCount = totalCount
         };
     }
-
-
 
     public async Task<AssignmentModel> CreateAsync(CreateAssignmentDto assignmentDto, int teacherId)
     {
@@ -102,14 +119,16 @@ public class AssignmentService : IAssignmentService
             Published = assignmentDto.Published,
             PublishStartTime = assignmentDto.PublishStartTime?.ToUniversalTime(),
             UploadEndTime = assignmentDto.UploadEndTime?.ToUniversalTime(),
+            ProjectSelectionDeadline = assignmentDto.ProjectSelectionDeadline?.ToUniversalTime(),
             Instructions = assignmentDto.Instructions,
             PointsOverride = assignmentDto.PointsOverride,
             InternalComment = assignmentDto.InternalComment,
             TeacherId = teacherId,
         };
+
         _dbContext.Assignments.Add(assignment);
         await _dbContext.SaveChangesAsync();
-
+        await ReplaceGroupSettingsAsync(assignment, assignmentDto.GroupSettings);
 
         return assignment;
     }
@@ -118,19 +137,69 @@ public class AssignmentService : IAssignmentService
     {
         return await _dbContext.Assignments
             .Where(a => a.CourseId == courseId)
-           .Include(a => a.TaskSetType)
-           .ToListAsync();
+            .Include(a => a.TaskSetType)
+            .Include(a => a.GroupSettings)
+            .ToListAsync();
+    }
+
+    public async Task<List<AssignmentCourseViewDto>> GetVisibleByCourseForStudentAsync(int courseId, int studentId)
+    {
+        var participant = await _coursesDbContext.Participants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.CourseId == courseId && p.UserId == studentId && p.Allowed);
+
+        if (participant == null)
+            return new List<AssignmentCourseViewDto>();
+
+        var now = DateTime.UtcNow;
+        var assignments = await _dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.CourseId == courseId)
+            .Include(a => a.TaskSetType)
+            .Include(a => a.GroupSettings)
+            .ToListAsync();
+
+        return assignments
+            .Where(a => !IsProjectAssignment(a))
+            .Select(a =>
+            {
+                var activeSettings = a.GroupSettings.Where(s => s.Active).ToList();
+                if (activeSettings.Count == 0)
+                {
+                    if (!a.Published || (a.PublishStartTime.HasValue && a.PublishStartTime.Value > now))
+                        return null;
+
+                    return MapCourseView(a, null, a.PublishStartTime, a.UploadEndTime);
+                }
+
+                if (!participant.GroupId.HasValue)
+                    return null;
+
+                var setting = activeSettings.FirstOrDefault(s => s.GroupId == participant.GroupId.Value);
+                if (setting == null)
+                    return null;
+
+                var publishStart = setting.PublishStartTime ?? a.PublishStartTime;
+                if (!a.Published || (publishStart.HasValue && publishStart.Value > now))
+                    return null;
+
+                return MapCourseView(a, setting.GroupId, publishStart, setting.UploadEndTime ?? a.UploadEndTime);
+            })
+            .Where(a => a != null)
+            .Cast<AssignmentCourseViewDto>()
+            .OrderBy(a => a.UploadEndTime ?? DateTime.MaxValue)
+            .ToList();
     }
 
     public async Task<AssignmentModel> CloneAsync(int id)
     {
-        // 1) Načítať pôvodné zadanie
         var original = await _dbContext.Assignments
+            .Include(a => a.GroupSettings)
             .FirstOrDefaultAsync(a => a.Id == id);
+
         if (original == null)
             throw new KeyNotFoundException($"Assignment {id} not found");
 
-        // 2) Vytvoriť nový AssignmentModel s rovnakými poľami (okrem Id, Created/Updated)
         var clone = new AssignmentModel
         {
             Name = original.Name,
@@ -139,6 +208,7 @@ public class AssignmentService : IAssignmentService
             Published = original.Published,
             PublishStartTime = original.PublishStartTime,
             UploadEndTime = original.UploadEndTime,
+            ProjectSelectionDeadline = original.ProjectSelectionDeadline,
             Instructions = original.Instructions,
             PointsOverride = original.PointsOverride,
             InternalComment = original.InternalComment,
@@ -146,28 +216,40 @@ public class AssignmentService : IAssignmentService
             Created = DateTime.UtcNow,
             Updated = DateTime.UtcNow
         };
+
         _dbContext.Assignments.Add(clone);
         await _dbContext.SaveChangesAsync();
 
-        // 3) Naklonovať väzby úloh (AssignmentTaskRels)
+        foreach (var setting in original.GroupSettings)
+        {
+            _dbContext.AssignmentGroupSettings.Add(new AssignmentGroupSetting
+            {
+                AssignmentId = clone.Id,
+                GroupId = setting.GroupId,
+                PublishStartTime = setting.PublishStartTime,
+                UploadEndTime = setting.UploadEndTime,
+                Active = setting.Active
+            });
+        }
+
         var rels = await _dbContext.AssignmentTaskRels
             .Where(r => r.AssignmentId == id)
             .ToListAsync();
 
         foreach (var r in rels)
         {
-            var newRel = new AssignmentTaskRelModel
+            _dbContext.AssignmentTaskRels.Add(new AssignmentTaskRelModel
             {
                 AssignmentId = clone.Id,
                 TaskId = r.TaskId,
                 PointsTotal = r.PointsTotal,
                 BonusTask = r.BonusTask,
+                ProjectSelectionLimit = r.ProjectSelectionLimit,
                 InternalComment = r.InternalComment
-            };
-            _dbContext.AssignmentTaskRels.Add(newRel);
+            });
         }
-        await _dbContext.SaveChangesAsync();
 
+        await _dbContext.SaveChangesAsync();
         return clone;
     }
 
@@ -175,9 +257,7 @@ public class AssignmentService : IAssignmentService
     {
         var existingAssignment = await _dbContext.Assignments.FindAsync(id);
         if (existingAssignment == null)
-        {
             return null;
-        }
 
         existingAssignment.Updated = DateTime.UtcNow;
         existingAssignment.Name = updatedAssignmentDto.Name;
@@ -186,13 +266,13 @@ public class AssignmentService : IAssignmentService
         existingAssignment.Published = updatedAssignmentDto.Published;
         existingAssignment.PublishStartTime = updatedAssignmentDto.PublishStartTime?.ToUniversalTime();
         existingAssignment.UploadEndTime = updatedAssignmentDto.UploadEndTime?.ToUniversalTime();
+        existingAssignment.ProjectSelectionDeadline = updatedAssignmentDto.ProjectSelectionDeadline?.ToUniversalTime();
         existingAssignment.Instructions = updatedAssignmentDto.Instructions;
         existingAssignment.PointsOverride = updatedAssignmentDto.PointsOverride;
         existingAssignment.InternalComment = updatedAssignmentDto.InternalComment;
 
         await _dbContext.SaveChangesAsync();
-
-
+        await ReplaceGroupSettingsAsync(existingAssignment, updatedAssignmentDto.GroupSettings);
 
         return existingAssignment;
     }
@@ -201,68 +281,144 @@ public class AssignmentService : IAssignmentService
     {
         var assignment = await _dbContext.Assignments.FindAsync(id);
         if (assignment == null)
-        {
             return null;
-        }
 
         _dbContext.Assignments.Remove(assignment);
         await _dbContext.SaveChangesAsync();
 
-
-
         return assignment;
     }
 
-    public async Task<bool> CanUploadSolutionAsync(int assignmentId)
+    public async Task<bool> CanUploadSolutionAsync(int assignmentId, int studentId)
     {
         var assignment = await _dbContext.Assignments
             .AsNoTracking()
             .Where(a => a.Id == assignmentId)
             .Include(a => a.CourseTaskSetRel)
-            .Select(a => new
-            {
-                a.Id,
-                a.UploadEndTime,
-                UploadSolution = a.CourseTaskSetRel.UploadSolution
-            })
+            .Include(a => a.GroupSettings)
             .FirstOrDefaultAsync();
 
         if (assignment == null)
             return false;
 
+        var participant = await _coursesDbContext.Participants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.CourseId == assignment.CourseId && p.UserId == studentId && p.Allowed);
+
+        if (participant == null)
+            return false;
+
         var now = DateTime.UtcNow;
+        var activeSettings = assignment.GroupSettings.Where(s => s.Active).ToList();
+        DateTime? publishStart = assignment.PublishStartTime;
+        DateTime? uploadEnd = assignment.UploadEndTime;
 
-        return assignment.UploadSolution && (assignment.UploadEndTime == null || assignment.UploadEndTime > now);
+        if (activeSettings.Count > 0)
+        {
+            if (!participant.GroupId.HasValue)
+                return false;
+
+            var setting = activeSettings.FirstOrDefault(s => s.GroupId == participant.GroupId.Value);
+            if (setting == null)
+                return false;
+
+            publishStart = setting.PublishStartTime ?? assignment.PublishStartTime;
+            uploadEnd = setting.UploadEndTime ?? assignment.UploadEndTime;
+        }
+
+        return assignment.CourseTaskSetRel.UploadSolution &&
+            assignment.Published &&
+            (!publishStart.HasValue || publishStart.Value <= now) &&
+            (!uploadEnd.HasValue || uploadEnd.Value > now);
     }
-
 
     public async Task<double?> CalculateMaxPoints(int assignmentId)
     {
         var assignment = await _dbContext.Assignments
-                .AsNoTracking()
-                .Where(a => a.Id == assignmentId)
-                .Select(a => new
-                {
-                    a.PointsOverride
-                })
-                .FirstOrDefaultAsync();
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Select(a => new
+            {
+                a.PointsOverride
+            })
+            .FirstOrDefaultAsync();
 
         if (assignment == null)
-        {
             return null;
-        }
 
         if (assignment.PointsOverride.HasValue)
-        {
             return assignment.PointsOverride.Value;
+
+        return await _dbContext.AssignmentTaskRels
+            .AsNoTracking()
+            .Where(r => r.AssignmentId == assignmentId && !r.BonusTask)
+            .Select(r => (double?)r.PointsTotal)
+            .SumAsync();
+    }
+
+    private async Task ReplaceGroupSettingsAsync(AssignmentModel assignment, List<AssignmentGroupSettingDto> settings)
+    {
+        var existing = await _dbContext.AssignmentGroupSettings
+            .Where(s => s.AssignmentId == assignment.Id)
+            .ToListAsync();
+
+        _dbContext.AssignmentGroupSettings.RemoveRange(existing);
+
+        var validSettings = new List<AssignmentGroupSetting>();
+        foreach (var setting in settings.Where(s => s.GroupId > 0))
+        {
+            var groupBelongsToCourse = await _coursesDbContext.Groups
+                .AnyAsync(g => g.Id == setting.GroupId && g.CourseId == assignment.CourseId);
+
+            if (!groupBelongsToCourse)
+                throw new InvalidOperationException("Skupina nepatri do kurzu zadania.");
+
+            if (validSettings.Any(s => s.GroupId == setting.GroupId))
+                continue;
+
+            validSettings.Add(new AssignmentGroupSetting
+            {
+                AssignmentId = assignment.Id,
+                GroupId = setting.GroupId,
+                PublishStartTime = setting.PublishStartTime?.ToUniversalTime(),
+                UploadEndTime = setting.UploadEndTime?.ToUniversalTime(),
+                Active = setting.Active
+            });
         }
 
-        var sumPointsNullable = await _dbContext.AssignmentTaskRels
-                .AsNoTracking()
-                .Where(r => r.AssignmentId == assignmentId && !r.BonusTask)
-                .Select(r => (double?)r.PointsTotal)
-                .SumAsync();
+        _dbContext.AssignmentGroupSettings.AddRange(validSettings);
+        await _dbContext.SaveChangesAsync();
+    }
 
-        return sumPointsNullable;
+    private static AssignmentCourseViewDto MapCourseView(
+        AssignmentModel assignment,
+        int? groupId,
+        DateTime? publishStartTime,
+        DateTime? uploadEndTime)
+    {
+        return new AssignmentCourseViewDto
+        {
+            Id = assignment.Id,
+            Name = assignment.Name,
+            TaskSetTypeId = assignment.TaskSetTypeId,
+            TaskSetTypeName = assignment.TaskSetType.Name,
+            TaskSetTypeIdentifier = assignment.TaskSetType.Identifier,
+            PublishStartTime = publishStartTime,
+            UploadEndTime = uploadEndTime,
+            PointsOverride = assignment.PointsOverride,
+            Published = assignment.Published,
+            GroupId = groupId
+        };
+    }
+
+    private static bool IsProjectAssignment(AssignmentModel assignment)
+    {
+        var identifier = assignment.TaskSetType.Identifier?.ToLowerInvariant() ?? string.Empty;
+        var name = assignment.TaskSetType.Name.ToLowerInvariant();
+
+        return identifier.Contains("project") ||
+            identifier.Contains("projekt") ||
+            name.Contains("project") ||
+            name.Contains("projekt");
     }
 }

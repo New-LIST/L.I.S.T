@@ -12,10 +12,9 @@ import {
 import {useNavigate, useParams} from 'react-router-dom';
 import api from '../../../services/api.ts';
 import { useNotification } from "../../../shared/components/NotificationContext"
-import { v4 as uuidv4 } from 'uuid';
 
 export default function PasswordChange() {
-    const { id } = useParams<{ id: uuidv4 }>();
+    const { id } = useParams<{ id: string }>();
     
     const [passwordError, setPasswordError] = React.useState(false);
     const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');

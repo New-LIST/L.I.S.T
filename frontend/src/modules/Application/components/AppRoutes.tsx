@@ -14,6 +14,7 @@ import CourseDescription from "../../Courses/Pages/Course/CourseDescription.tsx"
 import Assignments from "../../Courses/Pages/Course/Assignments";
 import Overview from "../../Courses/Pages/Course/Overview/Overview.tsx";
 import Projects from "../../Courses/Pages/Course/Projects";
+import ProjectDetail from "../../Courses/Pages/Course/ProjectDetail.tsx";
 import RootRedirect from "./RootRedirect";
 import Tasks from "../../Tasks/Pages/Tasks.tsx";
 import TaskEditor from "../../Tasks/Pages/TaskEditor.tsx";
@@ -32,6 +33,8 @@ import GradeTable from "../../Grading/pages/GradeTable.tsx";
 import CourseDescriptionEditor from "../../Courses/Pages/CourseDescriptionEditor.tsx";
 import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer.tsx";
 import Tests from "../../Tests/Pages/Tests.tsx";
+import CourseGroups from "../../Courses/Pages/CourseGroups.tsx";
+import Groups from "../../Courses/Pages/Course/Groups.tsx";
 import PasswordChange from "../../Authentication/pages/PasswordChange.tsx";
 
 const AppRoutes = () => {
@@ -48,6 +51,8 @@ const AppRoutes = () => {
                 <Route path="assignments/:assignmentId/tasks" element={<AssignmentTasksViewer />} />
                 <Route path="overview" element={<Overview />} />
                 <Route path="projects" element={<Projects />} />
+                <Route path="projects/:assignmentId" element={<ProjectDetail />} />
+                <Route path="groups" element={<Groups />} />
         </Route>
       </Route>
         <Route path="/password-change/:id" element={<PasswordChange />} />
@@ -63,8 +68,8 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="courses" replace />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
+        <Route path="courses/:id/groups" element={<CourseGroups />} />
         <Route path="courses/:id/participants" element={<Participants />} />
-          <Route path="courses/:id/participants" element={<Participants />} />
           <Route path="courses/:id/description" element={<CourseDescriptionEditor />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />

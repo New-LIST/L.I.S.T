@@ -17,8 +17,19 @@ export type Assignment = {
   published: boolean;
   publishStartTime: string | null;
   uploadEndTime: string | null;
+  projectSelectionDeadline: string | null;
   instructions: string | null;
   pointsOverride: number | null;
   internalComment: string | null;
+  groupSettings: AssignmentGroupSetting[];
   courseTaskSetRel: CourseTaskSetRel;
+};
+
+export type AssignmentGroupSetting = {
+  id: number;
+  assignmentId: number;
+  groupId: number;
+  publishStartTime: string | null;
+  uploadEndTime: string | null;
+  active: boolean;
 };

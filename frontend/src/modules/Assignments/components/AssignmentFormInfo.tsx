@@ -12,10 +12,13 @@ import {
 import { useEffect, useState } from "react";
 import api from "../../../services/api";
 import { Course } from "../../Courses/Types/Course";
+import type { CourseGroup } from "../../Courses/Types/CourseGroup";
 import { TaskSetType } from "../../TaskSets/Types/TaskSetType";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import { Assignment } from "../types/Assignment";
+import { isProjectTaskSetType } from "../utils/isProjectAssignment";
 import { Editor } from "@tinymce/tinymce-react";
+import { getStoredUser } from "../../Authentication/utils/auth";
 import "tinymce/tinymce";
 import "tinymce/themes/silver/theme";
 import "tinymce/icons/default/icons";
@@ -26,6 +29,14 @@ import "tinymce/plugins/lists";
 import "tinymce/plugins/code";
 import "tinymce/plugins/image";
 import "tinymce/plugins/table";
+import { useTranslation } from "react-i18next";
+
+type GroupSettingState = {
+  groupId: number;
+  active: boolean;
+  publishStartTime: string | null;
+  uploadEndTime: string | null;
+};
 
 type Props = {
   onCreated: (id: number) => void;
@@ -34,6 +45,7 @@ type Props = {
 };
 
 const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
+  const { t } = useTranslation();
   // inicializácia stavu z defaultValues alebo prázdne
   const [name, setName] = useState(defaultValues?.name ?? "");
   const [courseId, setCourseId] = useState<number | "">("");
@@ -49,6 +61,11 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       ? defaultValues.uploadEndTime.slice(0, 16)
       : null
   );
+  const [projectSelectionDeadline, setProjectSelectionDeadline] = useState<string | null>(
+    defaultValues?.projectSelectionDeadline
+      ? defaultValues.projectSelectionDeadline.slice(0, 16)
+      : null
+  );
   const [pointsOverride, setPointsOverride] = useState<number | null>(
     defaultValues?.pointsOverride ?? null
   );
@@ -61,10 +78,19 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [taskSetTypes, setTaskSetTypes] = useState<TaskSetType[]>([]);
+  const [groups, setGroups] = useState<CourseGroup[]>([]);
+  const [groupSettings, setGroupSettings] = useState<GroupSettingState[]>([]);
   const { showNotification } = useNotification();
 
   useEffect(() => {
-    api.get<Course[]>("/courses").then((res) => setCourses(res.data));
+    const user = getStoredUser();
+    const isAssistant = user?.role?.toLowerCase() === "assistant";
+
+    api.get<Course[]>("/courses").then((res) => {
+      setCourses(isAssistant
+        ? res.data.filter((course) => course.canManageCourseContent)
+        : res.data);
+    });
   }, []);
 
   useEffect(() => {
@@ -78,10 +104,33 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       api
         .get<TaskSetType[]>(`/course-task-set-rel/${courseId}/types`)
         .then((res) => setTaskSetTypes(res.data));
+      api
+        .get<CourseGroup[]>(`/groups/course/${courseId}`)
+        .then((res) => {
+          setGroups(res.data);
+          setGroupSettings((prev) =>
+            res.data.map((group) => {
+              const existing = prev.find((item) => item.groupId === group.id);
+              const defaultSetting = defaultValues?.groupSettings?.find((item) => item.groupId === group.id);
+              return existing ?? {
+                groupId: group.id,
+                active: defaultSetting?.active ?? false,
+                publishStartTime: defaultSetting?.publishStartTime
+                  ? defaultSetting.publishStartTime.slice(0, 16)
+                  : null,
+                uploadEndTime: defaultSetting?.uploadEndTime
+                  ? defaultSetting.uploadEndTime.slice(0, 16)
+                  : null,
+              };
+            })
+          );
+        });
     } else {
       setTaskSetTypes([]);
+      setGroups([]);
+      setGroupSettings([]);
     }
-  }, [courseId]);
+  }, [courseId, defaultValues?.groupSettings]);
 
   useEffect(() => {
     if (taskSetTypes.length > 0 && defaultValues?.taskSetTypeId) {
@@ -89,9 +138,24 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
     }
   }, [taskSetTypes, defaultValues?.taskSetTypeId]);
 
+  const updateGroupSetting = (
+    groupId: number,
+    patch: Partial<GroupSettingState>
+  ) => {
+    setGroupSettings((prev) =>
+      prev.map((item) =>
+        item.groupId === groupId ? { ...item, ...patch } : item
+      )
+    );
+  };
+
+  const selectedTaskSetType =
+    taskSetTypes.find((type) => type.id === taskSetTypeId) ?? null;
+  const isProject = isProjectTaskSetType(selectedTaskSetType);
+
   const handleSubmit = async () => {
     if (!name || !courseId || !taskSetTypeId) {
-      showNotification("Vyplň názov, kurz a typ zostavy", "error");
+      showNotification(t("Assignment required fields"), "error");
       return;
     }
 
@@ -132,15 +196,30 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       uploadEndTime: uploadEndTime
         ? new Date(uploadEndTime).toISOString()
         : null,
+      projectSelectionDeadline: isProject && projectSelectionDeadline
+        ? new Date(projectSelectionDeadline).toISOString()
+        : null,
       pointsOverride,
       instructions: instructions.trim() ? instructions : null,
       internalComment: internalComment.trim() ? internalComment : null,
+      groupSettings: groupSettings
+        .filter((setting) => setting.active)
+        .map((setting) => ({
+          groupId: setting.groupId,
+          active: true,
+          publishStartTime: setting.publishStartTime
+            ? new Date(setting.publishStartTime).toISOString()
+            : null,
+          uploadEndTime: setting.uploadEndTime
+            ? new Date(setting.uploadEndTime).toISOString()
+            : null,
+        })),
     };
     console.log(defaultValues?.id);
     if (defaultValues?.id) {
       // PUT pre editáciu
       await api.put(`/assignments/${defaultValues.id}`, dto);
-      showNotification("Zostava upravená", "success");
+      showNotification(t("Assignment updated"), "success");
       if (onUpdated) {
         onUpdated();
       }
@@ -148,7 +227,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
     } else {
       // POST pre vytvorenie
       const res = await api.post("/assignments", dto);
-      showNotification("Zostava vytvorená", "success");
+      showNotification(t("Assignment created"), "success");
       onCreated(res.data.id);
     }
   };
@@ -156,18 +235,18 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
   return (
     <Box display="flex" flexDirection="column" gap={2} mx="auto" maxWidth={800}>
       <TextField
-        label="Názov zadania"
+        label={t("Assignment Name")}
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
       />
 
       <FormControl fullWidth required>
-        <InputLabel>Kurz</InputLabel>
+        <InputLabel>{t("Course")}</InputLabel>
         <Select
           value={courseId ?? ""}
           onChange={(e) => setCourseId(Number(e.target.value))}
-          label="Kurz"
+          label={t("Course")}
         >
           {courses.map((c) => (
             <MenuItem key={c.id} value={c.id}>
@@ -178,11 +257,11 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       </FormControl>
 
       <FormControl fullWidth required disabled={!courseId}>
-        <InputLabel>Typ zostavy</InputLabel>
+        <InputLabel>{t("Task Set Type")}</InputLabel>
         <Select
           value={taskSetTypeId ?? ""}
           onChange={(e) => setTaskSetTypeId(Number(e.target.value))}
-          label="Typ zostavy"
+          label={t("Task Set Type")}
         >
           {taskSetTypes.map((t) => (
             <MenuItem key={t.id} value={t.id}>
@@ -199,11 +278,11 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
             onChange={(e) => setPublished(e.target.checked)}
           />
         }
-        label="Zverejniť"
+        label={t("Publish")}
       />
 
       <TextField
-        label="Dátum a čas publikovania"
+        label={t("Publish Date Time")}
         type="datetime-local"
         InputLabelProps={{ shrink: true }}
         value={publishStartTime ?? ""}
@@ -212,7 +291,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       />
 
       <TextField
-        label="Termín na odovzdanie"
+        label={t("Upload Deadline")}
         type="datetime-local"
         InputLabelProps={{ shrink: true }}
         value={uploadEndTime ?? ""}
@@ -220,8 +299,79 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
         fullWidth
       />
 
+      {isProject && (
+        <TextField
+          label={t("Project Selection Deadline")}
+          type="datetime-local"
+          InputLabelProps={{ shrink: true }}
+          value={projectSelectionDeadline ?? ""}
+          onChange={(e) => setProjectSelectionDeadline(e.target.value || null)}
+          fullWidth
+        />
+      )}
+
+      {groups.length > 0 && (
+        <Box>
+          <Box mb={1}>
+            <strong>{t("Group Settings")}</strong>
+          </Box>
+          <Box display="flex" flexDirection="column" gap={1}>
+            {groups.map((group) => {
+              const setting = groupSettings.find((item) => item.groupId === group.id);
+              return (
+                <Box
+                  key={group.id}
+                  display="grid"
+                  gridTemplateColumns={{ xs: "1fr", md: "220px 1fr 1fr" }}
+                  gap={1}
+                  alignItems="center"
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={setting?.active ?? false}
+                        onChange={(e) =>
+                          updateGroupSetting(group.id, { active: e.target.checked })
+                        }
+                      />
+                    }
+                    label={`${group.name} (${group.participantCount}/${group.capacity})`}
+                  />
+                  <TextField
+                    label={t("Group Publish Start")}
+                    type="datetime-local"
+                    size="small"
+                    InputLabelProps={{ shrink: true }}
+                    value={setting?.publishStartTime ?? ""}
+                    disabled={!setting?.active}
+                    onChange={(e) =>
+                      updateGroupSetting(group.id, {
+                        publishStartTime: e.target.value || null,
+                      })
+                    }
+                  />
+                  <TextField
+                    label={t("Group Upload Deadline")}
+                    type="datetime-local"
+                    size="small"
+                    InputLabelProps={{ shrink: true }}
+                    value={setting?.uploadEndTime ?? ""}
+                    disabled={!setting?.active}
+                    onChange={(e) =>
+                      updateGroupSetting(group.id, {
+                        uploadEndTime: e.target.value || null,
+                      })
+                    }
+                  />
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
       <TextField
-        label="Počet bodov (voliteľné)"
+        label={t("Points Optional")}
         type="number"
         InputLabelProps={{ shrink: true }}
         value={pointsOverride ?? ""}
@@ -237,6 +387,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
         <Editor
           value={instructions}
           onEditorChange={(content) => setInstructions(content)}
+          licenseKey="gpl"
           init={{
             height: 400,
             menubar: false,
@@ -250,11 +401,10 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
               "body { font-family:Roboto,Arial,sans-serif; font-size:14px }",
             skin_url: "/tinymce/skins/ui/oxide",
             content_css: "/tinymce/skins/content/default/content.css",
-            license_key: "gpl",
             model: "dom",
 
             file_picker_types: "image",
-            file_picker_callback: (callback, value, meta) => {
+            file_picker_callback: (callback, _value, meta) => {
               if (meta.filetype === "image") {
                 const input = document.createElement("input");
                 input.setAttribute("type", "file");
@@ -280,7 +430,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
       </Box>
 
       <TextField
-        label="Interný komentár"
+        label={t("Internal Comment")}
         value={internalComment}
         onChange={(e) => setInternalComment(e.target.value)}
         multiline
@@ -290,7 +440,7 @@ const AssignmentFormInfo = ({ onCreated, defaultValues, onUpdated }: Props) => {
 
       <Box textAlign="right" mt={2}>
         <Button variant="contained" onClick={handleSubmit}>
-          {defaultValues?.id ? "Uložiť zmeny" : "Vytvoriť zadanie"}
+          {defaultValues?.id ? t("Save Changes") : t("Create Assignment")}
         </Button>
       </Box>
     </Box>

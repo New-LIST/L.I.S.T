@@ -1,6 +1,7 @@
 using List.Assignments.Models;
 using List.Assignments.Services;
 using List.Assignments.DTOs;
+using List.Assignments.Data;
 using List.Common.Models;
 using List.Common.Utils;
 using System.Security.Claims;
@@ -8,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
 using List.Logs.Services;
+using List.Users.Services;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace List.Assignments.Controllers;
@@ -18,11 +21,19 @@ public class EvaluationController : ControllerBase
 {
     private readonly IEvaluationService _svc;
     private readonly ILogService _log;
+    private readonly AssignmentsDbContext _db;
+    private readonly IAssistantPermissionService _assistantPermissions;
 
-    public EvaluationController(IEvaluationService svc, ILogService log)
+    public EvaluationController(
+        IEvaluationService svc,
+        ILogService log,
+        AssignmentsDbContext db,
+        IAssistantPermissionService assistantPermissions)
     {
         _svc = svc;
         _log = log;
+        _db = db;
+        _assistantPermissions = assistantPermissions;
     }
 
     [HttpPost("versions")]
@@ -40,14 +51,25 @@ public class EvaluationController : ControllerBase
         var studentId = int.Parse(claim.Value);
         var remoteIp = HttpContext.GetClientIpAddress();
 
-
-        var version = await _svc.AddVersionAsync(
-            assignmentId,
-            studentId,
-            file,
-            remoteIp,
-            comment
-        );
+        SolutionVersionDto version;
+        try
+        {
+            version = await _svc.AddVersionAsync(
+                assignmentId,
+                studentId,
+                file,
+                remoteIp,
+                comment
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
         var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "neznámy";
         await _log.LogAsync(
     userName,
@@ -68,6 +90,8 @@ public class EvaluationController : ControllerBase
             [FromForm] IFormFile file
         )
     {
+        if (!await CanGradeSolutionAsync(solutionId))
+            return Forbid();
 
         var dto = await _svc.AddVersionToSolutionAsync(
             solutionId,
@@ -90,6 +114,9 @@ public class EvaluationController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetSummaries(int assignmentId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var list = await _svc.GetSolutionSummariesAsync(assignmentId);
         return Ok(list);
     }
@@ -99,6 +126,9 @@ public class EvaluationController : ControllerBase
     public async Task<IActionResult> GetVersionsBySolutionId(
         int solutionId)
     {
+        if (!await CanGradeSolutionAsync(solutionId))
+            return Forbid();
+
         // voliteľne overenie: riešenie patrí pod assignment
         var versions = await _svc.GetVersionsBySolutionIdAsync(solutionId);
         return Ok(versions);
@@ -107,6 +137,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("download-all")]
     public async Task<IActionResult> DownloadAll(int assignmentId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var zipStream = await _svc.DownloadAllSolutionsAsync(assignmentId);
         var fileName = $"assignment_{assignmentId}_all_solutions.zip";
         return File(zipStream, "application/zip", fileName);
@@ -115,6 +148,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("~/api/solutions/{solutionId}/download-all-versions")]
     public async Task<IActionResult> DownloadAllVersions(int solutionId)
     {
+        if (!await CanGradeSolutionAsync(solutionId))
+            return Forbid();
+
         var ms = await _svc.DownloadAllVersionsAsync(solutionId);
         return File(
             ms,
@@ -126,6 +162,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("bulk")]
     public async Task<IActionResult> GetBulkGrades(int assignmentId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         // vrátí seznam { studentId, fullName, email, points }
         var items = await _svc.GetBulkGradeItemsAsync(assignmentId);
         return Ok(items);
@@ -136,6 +175,9 @@ public class EvaluationController : ControllerBase
         int assignmentId,
         [FromBody] List<BulkGradeSaveDto> items)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         // uloží nebo aktualizuje points pro každý item
         await _svc.SaveBulkGradesAsync(assignmentId, items);
         return Ok();
@@ -146,6 +188,9 @@ public class EvaluationController : ControllerBase
             int assignmentId,
             [FromBody] ManualSolutionRequest req)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var summary = await _svc.CreateManualSolutionAsync(
             assignmentId,
             req.StudentId
@@ -158,6 +203,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("grade")]
     public async Task<IActionResult> GetSolutionsForGrading(int assignmentId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var list = await _svc.GetEvaluationOverviewsAsync(assignmentId);
         return Ok(list);
     }
@@ -166,6 +214,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("{solutionId}/header")]
     public async Task<IActionResult> GetInfo(int assignmentId, int solutionId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var header = await _svc.GetEvaluationHeaderAsync(assignmentId, solutionId);
         return Ok(header);
     }
@@ -174,6 +225,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("{solutionId}/evaluate")]
     public async Task<IActionResult> GetEvaluate(int assignmentId, int solutionId)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         var info = await _svc.GetSolutionInfoAsync(assignmentId, solutionId);
         return Ok(info);
     }
@@ -184,6 +238,9 @@ public class EvaluationController : ControllerBase
             int solutionId,
             [FromBody] SolutionInfoDto dto)
     {
+        if (!await CanGradeAssignmentAsync(assignmentId))
+            return Forbid();
+
         await _svc.UpdateSolutionInfoAsync(assignmentId, solutionId, dto);
         return Ok();
     }
@@ -191,6 +248,9 @@ public class EvaluationController : ControllerBase
     [HttpGet("~/api/solutions/{solutionId}/versions/{version}/files")]
     public async Task<IActionResult> ListFiles(int solutionId, int version)
     {
+        if (!await CanGradeSolutionAsync(solutionId))
+            return Forbid();
+
         var names = await _svc.GetFilesListAsync(solutionId, version);
         if (names == null) return NotFound();
         return Ok(names);
@@ -200,6 +260,9 @@ public class EvaluationController : ControllerBase
     public async Task<IActionResult> GetFile(
         int assignmentId, int solutionId, int version, string filePath)
     {
+        if (!await CanGradeSolutionAsync(solutionId))
+            return Forbid();
+
         var content = await _svc.GetFileContentAsync(solutionId, version, filePath);
         if (content == null) return NotFound();
         var provider = new FileExtensionContentTypeProvider();
@@ -226,5 +289,40 @@ public class EvaluationController : ControllerBase
 
         // 3) Vrátime výsledok (môže byť aj prázdny zoznam, ak nemá riešenie)
         return Ok(list);
+    }
+
+    private async Task<bool> CanGradeAssignmentAsync(int assignmentId)
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
+
+        var courseId = await _db.Assignments
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Select(a => (int?)a.CourseId)
+            .FirstOrDefaultAsync();
+
+        return courseId.HasValue &&
+            await _assistantPermissions.CanGradeCourseAsync(GetCurrentUserId(), courseId.Value);
+    }
+
+    private async Task<bool> CanGradeSolutionAsync(int solutionId)
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
+
+        var courseId = await _db.Solutions
+            .AsNoTracking()
+            .Where(s => s.Id == solutionId)
+            .Select(s => (int?)s.Assignment.CourseId)
+            .FirstOrDefaultAsync();
+
+        return courseId.HasValue &&
+            await _assistantPermissions.CanGradeCourseAsync(GetCurrentUserId(), courseId.Value);
+    }
+
+    private int GetCurrentUserId()
+    {
+        return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
     }
 }

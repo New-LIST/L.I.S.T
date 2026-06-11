@@ -1,7 +1,6 @@
 import {
     Box,
     Container,
-    Grid,
     TextField,
     Typography,
     InputAdornment,
@@ -18,6 +17,11 @@ import EmptyState from "../../../shared/components/EmptyState.tsx";
 import api from "../../../services/api.ts";
 import { useNotification } from "../../../shared/components/NotificationContext.tsx";
 
+type MyCourseInfo = {
+    courseId: number;
+    allowed: boolean;
+    groupId?: number | null;
+};
 
 export default function StudentCourses() {
     const [selectedPeriod, setSelectedPeriod] = useState('');
@@ -49,7 +53,7 @@ export default function StudentCourses() {
             try {
                 const [coursesRes, myCourseIdsRes] = await Promise.all([
                     api.get<Course[]>('/courses/student-visible'),
-                    api.get<number[]>('/participants/mine')
+                    api.get<MyCourseInfo[]>('/participants/mine')
                 ]);
 
                 const myCourseInfos = myCourseIdsRes.data;
@@ -61,14 +65,6 @@ export default function StudentCourses() {
                     isMine: myCourseMap.has(course.id),
                     allowed: myCourseMap.get(course.id),
                 }));
-                console.table(coursesWithOwnership.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    isMine: c.isMine,
-                    allowed: c.allowed,
-                })));
-
-
                 setCourses(coursesWithOwnership);
             } catch (error) {
                 console.error("Chyba pri načítaní kurzov alebo participantov", error);
@@ -101,26 +97,7 @@ export default function StudentCourses() {
     };
 
     const filteredYourCourses = filterCourses(courses.filter((c) => c.isMine && c.allowed === true));
-    const filteredOtherCourses = filterCourses(
-        courses
-            .filter((c) => !c.allowed || !c.isMine)
-            .sort((a, b) => {
-                const aPending = a.isMine && a.allowed === false ? 1 : 0;
-                const bPending = b.isMine && b.allowed === false ? 1 : 0;
-                return bPending - aPending;
-            })
-    );
-
-
-    const handleJoinUpdate = (courseId: number) => {
-        setCourses(prev =>
-            prev.map(c =>
-                c.id === courseId
-                    ? { ...c, isMine: true, allowed: false }
-                    : c
-            )
-        );
-    };
+    const filteredPendingCourses = filterCourses(courses.filter((c) => c.isMine && c.allowed === false));
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -178,39 +155,40 @@ export default function StudentCourses() {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Tvoje kurzy
             </Typography>
-            {filteredYourCourses.length > 0 ? (
-                <Grid container spacing={3} mb={6}>
+            {loadingCourses ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                    <Typography>Nacitavam kurzy...</Typography>
+                </Box>
+            ) : filteredYourCourses.length > 0 ? (
+                <Box display="flex" flexWrap="wrap" gap={3} mb={6}>
                     {filteredYourCourses.map((course) => (
-                        <Grid item key={course.id}>
+                        <Box key={course.id}>
                             <CourseCard {...course} />
-                        </Grid>
+                        </Box>
                     ))}
-                </Grid>
-            ) : (
+                </Box>
+            ) : filteredPendingCourses.length === 0 ? (
                 <EmptyState
                     message="Nemáš žiadne kurzy."
-                    subtext="Pridaj sa k niektorému z dostupných kurzov nižšie."
+                    subtext="Ak ti kurz chyba, kontaktuj vyucujuceho."
                 />
-            )}
+            ) : null}
 
 
             {}
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Ostatné kurzy
-            </Typography>
-            {filteredOtherCourses.length > 0 ? (
-                <Grid container spacing={3}>
-                    {filteredOtherCourses.map((course) => (
-                        <Grid item key={course.id}>
-                            <CourseCard {...course} onJoined={handleJoinUpdate}/>
-                        </Grid>
-                    ))}
-                </Grid>
-            ) : (
-                <EmptyState
-                    message="Žiadne ďalšie kurzy nie sú dostupné."
-                    subtext="Skús zmeniť filtre alebo sa spýtaj vyučujúceho."
-                />
+            {filteredPendingCourses.length > 0 && (
+                <>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        Cakajuce ziadosti
+                    </Typography>
+                    <Box display="flex" flexWrap="wrap" gap={3}>
+                        {filteredPendingCourses.map((course) => (
+                            <Box key={course.id}>
+                                <CourseCard {...course} />
+                            </Box>
+                        ))}
+                    </Box>
+                </>
             )}
         </Container>
     );

@@ -8,6 +8,7 @@ using System.Security.Claims;
 using List.Common.Files;
 using List.Logs.Services;
 using Microsoft.AspNetCore.Http;
+using List.Users.Services;
 
 namespace List.Courses.Controllers
 {
@@ -16,15 +17,69 @@ namespace List.Courses.Controllers
     public class CourseController : ControllerBase
     {
         private readonly CoursesDbContext _context;
+        private readonly IAssistantPermissionService _assistantPermissions;
 
-        public CourseController(CoursesDbContext context)
+        public CourseController(CoursesDbContext context, IAssistantPermissionService assistantPermissions)
         {
             _context = context;
+            _assistantPermissions = assistantPermissions;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            if (User.Identity?.IsAuthenticated == true && User.IsInRole("Assistant"))
+            {
+                var assistantId = GetCurrentUserId();
+                var viewIds = (await _assistantPermissions.GetViewCourseIdsAsync(assistantId)).ToHashSet();
+                var manageIds = (await _assistantPermissions.GetManageCourseIdsAsync(assistantId)).ToHashSet();
+                var gradeIds = (await _assistantPermissions.GetGradeCourseIdsAsync(assistantId)).ToHashSet();
+                var plagiarismIds = (await _assistantPermissions.GetPlagiarismCourseIdsAsync(assistantId)).ToHashSet();
+                var directIds = viewIds
+                    .Concat(manageIds)
+                    .Concat(gradeIds)
+                    .Concat(plagiarismIds)
+                    .ToHashSet();
+
+                if (directIds.Count == 0)
+                    return Ok(new List<CourseReadDto>());
+
+                var viewCourseNames = await _context.Courses
+                    .AsNoTracking()
+                    .Where(c => viewIds.Contains(c.Id))
+                    .Select(c => c.Name)
+                    .Distinct()
+                    .ToListAsync();
+
+                var assistantCourses = await _context.Courses
+                    .Include(c => c.Period)
+                    .Include(c => c.Teacher)
+                    .Where(c => directIds.Contains(c.Id) || viewCourseNames.Contains(c.Name))
+                    .Select(c => new CourseReadDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        PeriodName = c.Period != null ? c.Period.Name : "â€”",
+                        Capacity = c.Capacity,
+                        GroupChangeDeadline = c.GroupChangeDeadline,
+                        EnrollmentLimit = c.EnrollmentLimit,
+                        HiddenInList = c.HiddenInList,
+                        AutoAcceptStudents = c.AutoAcceptStudents,
+                        TeacherName = c.Teacher.Fullname,
+                        ImageUrl = c.ImageUrl != null ? $"{Request.Scheme}://{Request.Host}/{c.ImageUrl}" : null,
+                        Description = c.Description,
+                        CanViewCourseContent = viewIds.Contains(c.Id) || viewCourseNames.Contains(c.Name),
+                        CanManageCourseContent = manageIds.Contains(c.Id),
+                        CanGradeCourse = gradeIds.Contains(c.Id),
+                        CanRunPlagiarismCheck = plagiarismIds.Contains(c.Id),
+                        AssistantHistoricalAccess = !directIds.Contains(c.Id) && viewCourseNames.Contains(c.Name)
+                    })
+                    .ToListAsync();
+
+                NormalizeDates(assistantCourses);
+                return Ok(assistantCourses);
+            }
+
             var rawCourses = await _context.Courses
                 .Include(c => c.Period)
                 .Include(c => c.Teacher)
@@ -44,23 +99,19 @@ namespace List.Courses.Controllers
                 })
                 .ToListAsync();
 
-            foreach (var c in rawCourses)
-            {
-                if (c.GroupChangeDeadline.HasValue)
-                    c.GroupChangeDeadline = DateTime.SpecifyKind(c.GroupChangeDeadline.Value, DateTimeKind.Utc);
-
-                if (c.EnrollmentLimit.HasValue)
-                    c.EnrollmentLimit = DateTime.SpecifyKind(c.EnrollmentLimit.Value, DateTimeKind.Utc);
-            }
+            NormalizeDates(rawCourses);
 
             return Ok(rawCourses);
         }
 
         [HttpGet("student-visible")]
+        [Authorize]
         public async Task<IActionResult> GetVisibleToStudents()
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
             var visibleCourses = await _context.Courses
-                .Where(c => !c.HiddenInList)
+                .Where(c => c.Participants.Any(p => p.UserId == userId))
                 .Include(c => c.Period)
                 .Include(c => c.Teacher)
                 .Select(c => new CourseReadDto
@@ -80,25 +131,34 @@ namespace List.Courses.Controllers
                 })
                 .ToListAsync();
 
-            foreach (var c in visibleCourses)
-            {
-                if (c.GroupChangeDeadline.HasValue)
-                    c.GroupChangeDeadline = DateTime.SpecifyKind(c.GroupChangeDeadline.Value, DateTimeKind.Utc);
-
-                if (c.EnrollmentLimit.HasValue)
-                    c.EnrollmentLimit = DateTime.SpecifyKind(c.EnrollmentLimit.Value, DateTimeKind.Utc);
-            }
+            NormalizeDates(visibleCourses);
 
             return Ok(visibleCourses);
         }
 
         [HttpGet("teacherId")]
+        [Authorize]
         public async Task<IActionResult> GetCoursesByTeacherId()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
             if (claim == null)
                 return Unauthorized("Chýba identifikátor používateľa.");
             var teacherId = int.Parse(claim.Value);
+
+            if (User.IsInRole("Assistant"))
+            {
+                var gradeCourseIds = await _assistantPermissions.GetGradeCourseIdsAsync(teacherId);
+                var assistantCourses = await _context.Courses
+                    .Where(c => gradeCourseIds.Contains(c.Id))
+                    .Select(c => new {
+                        c.Id,
+                        c.Name,
+                    })
+                    .ToListAsync();
+
+                return Ok(assistantCourses);
+            }
+
             var courses = await _context.Courses
                 .Where(c => c.TeacherId == teacherId)
                 .Select(c => new {
@@ -294,8 +354,22 @@ namespace List.Courses.Controllers
             return Ok(new { id = newCourse.Id });
         }
 
+        private int GetCurrentUserId()
+        {
+            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        }
 
+        private static void NormalizeDates(IEnumerable<CourseReadDto> courses)
+        {
+            foreach (var c in courses)
+            {
+                if (c.GroupChangeDeadline.HasValue)
+                    c.GroupChangeDeadline = DateTime.SpecifyKind(c.GroupChangeDeadline.Value, DateTimeKind.Utc);
 
+                if (c.EnrollmentLimit.HasValue)
+                    c.EnrollmentLimit = DateTime.SpecifyKind(c.EnrollmentLimit.Value, DateTimeKind.Utc);
+            }
+        }
 
     }
 }

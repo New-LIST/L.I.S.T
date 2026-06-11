@@ -1,9 +1,12 @@
 using List.Assignments.DTOs;
+using List.Assignments.Data;
 using List.Assignments.Models;
 using List.Assignments.Services;
+using List.Users.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;  // pre DbUpdateException
 using Npgsql;
+using System.Security.Claims;
 
 namespace List.Assignments.Controllers;
 
@@ -12,15 +15,25 @@ namespace List.Assignments.Controllers;
 public class AssignmentTaskRelController : ControllerBase
 {
     private readonly IAssignmentTaskRelService _service;
+    private readonly AssignmentsDbContext _db;
+    private readonly IAssistantPermissionService _assistantPermissions;
 
-    public AssignmentTaskRelController(IAssignmentTaskRelService service)
+    public AssignmentTaskRelController(
+        IAssignmentTaskRelService service,
+        AssignmentsDbContext db,
+        IAssistantPermissionService assistantPermissions)
     {
         _service = service;
+        _db = db;
+        _assistantPermissions = assistantPermissions;
     }
 
     [HttpPost]
     public async Task<ActionResult<AssignmentTaskRelModel>> Create(CreateAssignmentTaskRelDto dto)
     {
+        if (!await CanManageAssignmentAsync(dto.AssignmentId))
+            return Forbid();
+
         try
         {
             var created = await _service.CreateAsync(dto);
@@ -38,6 +51,9 @@ public class AssignmentTaskRelController : ControllerBase
     [HttpPut]
         public async Task<ActionResult<AssignmentTaskRelModel>> Update(CreateAssignmentTaskRelDto dto)
         {
+            if (!await CanManageAssignmentAsync(dto.AssignmentId))
+                return Forbid();
+
             var updated = await _service.UpdateAsync(dto);
             if (updated == null)
                 return NotFound($"Vzťah assignment={dto.AssignmentId} + task={dto.TaskId} neexistuje.");
@@ -47,6 +63,9 @@ public class AssignmentTaskRelController : ControllerBase
     [HttpDelete]
     public async Task<ActionResult> Delete([FromQuery] int assignmentId, [FromQuery] int taskId)
     {
+        if (!await CanManageAssignmentAsync(assignmentId))
+            return Forbid();
+
         var deleted = await _service.DeleteAsync(taskId, assignmentId);
         if (!deleted)
             return NotFound();
@@ -80,5 +99,24 @@ public class AssignmentTaskRelController : ControllerBase
     {
         var rels = await _service.GetByTaskIdAsync(taskId);
         return Ok(rels);
+    }
+
+    private async Task<bool> CanManageAssignmentAsync(int assignmentId)
+    {
+        if (!User.IsInRole("Assistant"))
+            return true;
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null)
+            return false;
+
+        var courseId = await _db.Assignments
+            .AsNoTracking()
+            .Where(a => a.Id == assignmentId)
+            .Select(a => (int?)a.CourseId)
+            .FirstOrDefaultAsync();
+
+        return courseId.HasValue &&
+            await _assistantPermissions.CanManageCourseContentAsync(int.Parse(userIdClaim), courseId.Value);
     }
 }

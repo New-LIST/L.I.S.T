@@ -52,7 +52,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        var frontendBaseUrl = builder.Configuration["Frontend:BaseUrl"]
+            ?? throw new InvalidOperationException("Frontend:BaseUrl is not configured.");
+
+        policy.WithOrigins(frontendBaseUrl)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -85,12 +88,15 @@ builder.Services.AddModule<List.Tests.Module>(builder.Configuration);
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "List API");
     });
+}
 
 app.UseModule<List.Users.Module>();
 app.UseModule<List.Courses.Module>();
@@ -108,6 +114,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();

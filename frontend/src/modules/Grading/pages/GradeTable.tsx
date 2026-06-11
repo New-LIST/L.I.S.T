@@ -1,420 +1,720 @@
-// src/modules/assignments/pages/GradeTable.tsx
-
-import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
+  Alert,
   Box,
-  TableContainer,
+  Button,
+  Chip,
+  CircularProgress,
+  Paper,
+  Popover,
+  Stack,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-  CircularProgress,
-  Button,
-  Checkbox,
   TableSortLabel,
-  SxProps,
-  Theme,
-  FormControlLabel,
-  Popover,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
 } from "@mui/material";
+import { SxProps, Theme } from "@mui/material/styles";
+import {
+  ArrowBack as ArrowBackIcon,
+  MoreVert as MoreVertIcon,
+} from "@mui/icons-material";
+import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
+import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import api from "../../../services/api";
 import {
   GradeMatrixDto,
   GradeMatrixType,
   StudentGrade,
 } from "../types/gradeMatrix";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import { MoreVert as MoreVertIcon } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 interface SolutionDto {
   id: number;
   studentId: number;
 }
 
+type ViewMode = "detailed" | "simple";
+type SortDirection = "asc" | "desc";
+type GradeColumnType = "section" | "assignment" | "grand";
+
+interface GradeColumn {
+  id: string;
+  label: string;
+  type: GradeColumnType;
+  relId?: number;
+  assignmentId?: number;
+  includeInTotal?: boolean;
+}
+
+const stickyStudentColumnSx: SxProps<Theme> = {
+  position: "sticky",
+  left: 0,
+  zIndex: 3,
+  minWidth: 220,
+  maxWidth: 260,
+  bgcolor: "background.paper",
+  boxShadow: "1px 0 0 rgba(0, 0, 0, 0.08)",
+};
+
+const compactCellSx: SxProps<Theme> = {
+  px: 1,
+  py: 0.45,
+  fontSize: 13,
+  lineHeight: 1.2,
+  borderColor: "divider",
+  whiteSpace: "nowrap",
+};
+
 const GradeTable: React.FC = () => {
+  const { t } = useTranslation();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
   const [matrix, setMatrix] = useState<GradeMatrixDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [solutionsMap, setSolutionsMap] = useState<
     Record<number, Record<number, number>>
   >({});
-
-  // stavy pre voliteľné stĺpce
   const [visibleCols, setVisibleCols] = useState<string[]>([]);
-  // stavy pre triedenie
   const [sortBy, setSortBy] = useState<string>("fullName");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sortDir, setSortDir] = useState<SortDirection>("asc");
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("detailed");
+
   const openTree = Boolean(anchorEl);
-  const handleOpenTree = (e: React.MouseEvent<HTMLElement>) =>
-    setAnchorEl(e.currentTarget);
-  const handleCloseTree = () => setAnchorEl(null);
-  const [simplified, setSimplified] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
+
+    setLoading(true);
+    setError(null);
     api
       .get<GradeMatrixDto>(`gradetable/course/${courseId}`)
       .then((res) => setMatrix(res.data))
-      .catch((err) => console.error(err));
-  }, [courseId]);
+      .catch((err) => {
+        console.error(err);
+        setError(t("Could not load grade table"));
+      })
+      .finally(() => setLoading(false));
+  }, [courseId, t]);
+
+  const allColumns = useMemo<GradeColumn[]>(() => {
+    if (!matrix) return [];
+
+    const cols: GradeColumn[] = [];
+    matrix.types.forEach((type) => {
+      cols.push({
+        id: `sec_${type.relId}`,
+        label: type.taskSetTypeName,
+        type: "section",
+        relId: type.relId,
+        includeInTotal: type.includeInTotal,
+      });
+
+      type.assignments.forEach((assignment) => {
+        cols.push({
+          id: `assg_${assignment.assignmentId}`,
+          label: assignment.assignmentName,
+          type: "assignment",
+          assignmentId: assignment.assignmentId,
+        });
+      });
+    });
+
+    cols.push({ id: "grand", label: t("Total"), type: "grand" });
+    return cols;
+  }, [matrix, t]);
 
   useEffect(() => {
     if (!matrix) return;
-    // defaultné viditeľné stĺpce po načítaní matrixu
-    const defaultCols = matrix.types
-      .flatMap((t) => [
-        `sec_${t.relId}`,
-        ...t.assignments.map((a) => `assg_${a.assignmentId}`),
-      ])
-      .concat(["grand"]);
-    setVisibleCols(defaultCols);
 
-    // načítanie riešení
-    const allAssignIds = matrix.types
-      .flatMap((t) => t.assignments.map((a) => a.assignmentId))
-      .filter((v, i, self) => self.indexOf(v) === i);
+    setVisibleCols(allColumns.map((column) => column.id));
+
+    const allAssignmentIds = matrix.types
+      .flatMap((type) =>
+        type.assignments.map((assignment) => assignment.assignmentId)
+      )
+      .filter((id, index, self) => self.indexOf(id) === index);
 
     Promise.all(
-      allAssignIds.map((id) =>
+      allAssignmentIds.map((id) =>
         api
           .get<SolutionDto[]>(`/assignments/${id}/solutions`)
-          .then((res) => ({ id, sols: res.data }))
+          .then((res) => ({ id, solutions: res.data }))
       )
     )
       .then((results) => {
-        const map: typeof solutionsMap = {};
-        results.forEach(({ id, sols }) => {
-          map[id] = {};
-          sols.forEach((s) => {
-            map[id][s.studentId] = s.id;
+        const nextMap: Record<number, Record<number, number>> = {};
+        results.forEach(({ id, solutions }) => {
+          nextMap[id] = {};
+          solutions.forEach((solution) => {
+            nextMap[id][solution.studentId] = solution.id;
           });
         });
-        setSolutionsMap(map);
+        setSolutionsMap(nextMap);
       })
       .catch((err) => console.error(err));
-  }, [matrix]);
+  }, [matrix, allColumns]);
 
-  // pomocné funkcie
+  const hasGroups = useMemo(
+    () => Boolean(matrix?.students.some((student) => student.group)),
+    [matrix]
+  );
+
+  const colsToRender = useMemo(() => {
+    if (viewMode === "simple") {
+      return allColumns.filter(
+        (column) => column.type === "section" || column.type === "grand"
+      );
+    }
+
+    return allColumns.filter((column) => visibleCols.includes(column.id));
+  }, [allColumns, viewMode, visibleCols]);
+
   const formatNum = (num?: number | null) =>
     num != null
-      ? num.toLocaleString(undefined, { maximumFractionDigits: 2 })
-      : "–";
+      ? num.toLocaleString("sk-SK", { maximumFractionDigits: 2 })
+      : "-";
 
-  const abbreviate = (name: string, maxLength = 10): string => {
-    if (name.length <= maxLength) return name;
-    const acronym = name
-      .split(/\s+/)
-      .map((w) => w[0].toUpperCase())
-      .join("");
-    return acronym.length <= maxLength ? acronym : acronym.slice(0, maxLength);
+  const formatCount = (
+    count: number,
+    singular: string,
+    few: string,
+    many: string
+  ) => {
+    const key = count === 1 ? singular : count >= 2 && count <= 4 ? few : many;
+    return `${count} ${t(key)}`;
   };
 
-  const calcGrandTotal = (s: StudentGrade, types: GradeMatrixType[]) =>
-    types
-      .filter((t) => t.includeInTotal)
-      .reduce((sum, t) => sum + (s.sectionTotals[t.relId] || 0), 0);
+  const abbreviate = (name: string, maxLength = 14): string => {
+    if (name.length <= maxLength) return name;
 
-  const meetsMin = (total: number, t: GradeMatrixType): boolean => {
-    if (t.minPoints == null) return true;
-    const threshold = t.minPointsInPercentage
-      ? (t.minPoints / 100) * t.maxPoints
-      : t.minPoints;
+    const acronym = name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0].toUpperCase())
+      .join("");
+
+    return acronym.length > 1 && acronym.length <= maxLength
+      ? acronym
+      : `${name.slice(0, maxLength - 1)}...`;
+  };
+
+  const calcGrandTotal = (student: StudentGrade, types: GradeMatrixType[]) =>
+    types
+      .filter((type) => type.includeInTotal)
+      .reduce(
+        (sum, type) => sum + (student.sectionTotals[type.relId] ?? 0),
+        0
+      );
+
+  const meetsMin = (total: number, type: GradeMatrixType): boolean => {
+    if (type.minPoints == null) return true;
+
+    const threshold = type.minPointsInPercentage
+      ? (type.minPoints / 100) * type.maxPoints
+      : type.minPoints;
+
     return total >= threshold;
   };
 
-  const meetsAllMin = (s: StudentGrade, types: GradeMatrixType[]): boolean =>
+  const meetsAllMin = (student: StudentGrade, types: GradeMatrixType[]) =>
     types
-      .filter((t) => t.includeInTotal && t.minPoints != null)
-      .every((t) => meetsMin(s.sectionTotals[t.relId] ?? 0, t));
+      .filter((type) => type.includeInTotal && type.minPoints != null)
+      .every((type) => meetsMin(student.sectionTotals[type.relId] ?? 0, type));
 
-  // definícia všetkých stĺpcov
-  const allColumns = useMemo(() => {
-    if (!matrix) return [];
-    const cols: {
-      id: string;
-      label: string;
-      type: "section" | "assignment" | "grand";
-      relId?: number;
-      assignmentId?: number;
-    }[] = [];
-    matrix.types.forEach((t) => {
-      cols.push({
-        id: `sec_${t.relId}`,
-        label: t.taskSetTypeName,
-        type: "section",
-        relId: t.relId,
-      });
-      t.assignments.forEach((a) => {
-        cols.push({
-          id: `assg_${a.assignmentId}`,
-          label: a.assignmentName,
-          type: "assignment",
-          assignmentId: a.assignmentId,
-        });
-      });
-    });
-    cols.push({ id: "grand", label: "Spolu", type: "grand" });
-    return cols;
+  const failedMinimumCount = useMemo(() => {
+    if (!matrix) return 0;
+    return matrix.students.filter((student) => !meetsAllMin(student, matrix.types))
+      .length;
   }, [matrix]);
 
-  // zoradenie študentov podľa sortBy a sortDir
+  const getSortValue = (student: StudentGrade, columnId: string) => {
+    if (!matrix) return "";
+
+    if (columnId === "fullName") return student.fullName.toLowerCase();
+    if (columnId === "group") return (student.group ?? "").toLowerCase();
+    if (columnId === "grand") return calcGrandTotal(student, matrix.types);
+
+    const column = allColumns.find((item) => item.id === columnId);
+    if (column?.type === "assignment" && column.assignmentId != null) {
+      return student.points[column.assignmentId] ?? null;
+    }
+
+    if (column?.type === "section" && column.relId != null) {
+      return student.sectionTotals[column.relId] ?? null;
+    }
+
+    return "";
+  };
+
   const displayedStudents = useMemo(() => {
     if (!matrix) return [];
-    return [...matrix.students].sort((a, b) => {
-      const accessor =
-        allColumns.find((c) => c.id === sortBy)?.type === "assignment"
-          ? (s: StudentGrade) => s.points[Number(sortBy.split("_")[1])] ?? 0
-          : allColumns.find((c) => c.id === sortBy)?.type === "section"
-          ? (s: StudentGrade) =>
-              s.sectionTotals[Number(sortBy.split("_")[1])] ?? 0
-          : (s: StudentGrade) =>
-              sortBy === "fullName"
-                ? s.fullName.toLowerCase()
-                : calcGrandTotal(s, matrix.types);
 
-      const va = accessor(a) as number | string;
-      const vb = accessor(b) as number | string;
-      if (va < vb) return sortDir === "asc" ? -1 : 1;
-      if (va > vb) return sortDir === "asc" ? 1 : -1;
-      return 0;
+    return [...matrix.students].sort((left, right) => {
+      const leftValue = getSortValue(left, sortBy);
+      const rightValue = getSortValue(right, sortBy);
+
+      if (leftValue == null && rightValue == null) {
+        return left.fullName.localeCompare(right.fullName);
+      }
+      if (leftValue == null) return 1;
+      if (rightValue == null) return -1;
+
+      let result = 0;
+      if (typeof leftValue === "number" && typeof rightValue === "number") {
+        result = leftValue - rightValue;
+      } else {
+        result = String(leftValue).localeCompare(String(rightValue), "sk-SK");
+      }
+
+      if (result === 0) {
+        result = left.fullName.localeCompare(right.fullName, "sk-SK");
+      }
+
+      return sortDir === "asc" ? result : -result;
     });
-  }, [matrix?.students, sortBy, sortDir, allColumns]);
+  }, [matrix, sortBy, sortDir, allColumns]);
 
-  const colsToRender = simplified
-    ? allColumns.filter((c) => c.type === "section" || c.type === "grand")
-    : allColumns.filter((c) => visibleCols.includes(c.id));
+  const handleSort = (columnId: string) => {
+    if (sortBy === columnId) {
+      setSortDir((direction) => (direction === "asc" ? "desc" : "asc"));
+      return;
+    }
 
-  if (!matrix) {
+    setSortBy(columnId);
+    setSortDir(columnId === "fullName" || columnId === "group" ? "asc" : "desc");
+  };
+
+  const handleToggleSection = (itemId: string, selected: boolean) => {
+    if (!matrix) return;
+
+    const relId = Number(itemId.split("_")[1]);
+    const section = matrix.types.find((type) => type.relId === relId);
+    if (!section) return;
+
+    const childIds = section.assignments.map(
+      (assignment) => `assg_${assignment.assignmentId}`
+    );
+
+    setVisibleCols((cols) =>
+      selected
+        ? Array.from(new Set([...cols, itemId, ...childIds]))
+        : cols.filter((id) => id !== itemId && !childIds.includes(id))
+    );
+  };
+
+  const handleToggleColumn = (itemId: string, selected: boolean) => {
+    if (itemId.startsWith("sec_")) {
+      handleToggleSection(itemId, selected);
+      return;
+    }
+
+    setVisibleCols((cols) =>
+      selected
+        ? Array.from(new Set([...cols, itemId]))
+        : cols.filter((id) => id !== itemId)
+    );
+  };
+
+  const getColumnHeaderSx = (column: GradeColumn): SxProps<Theme> => {
+    const base: SxProps<Theme> = {
+      ...compactCellSx,
+      top: 0,
+      zIndex: 2,
+      textAlign: "center",
+      fontWeight: 700,
+      bgcolor: "#f5f7fb",
+      maxWidth: 150,
+    };
+
+    if (column.type === "section") {
+      return {
+        ...base,
+        bgcolor: column.includeInTotal ? "#d8f5d1" : "#fff3c4",
+      };
+    }
+
+    if (column.type === "grand") {
+      return {
+        ...base,
+        bgcolor: "#bff2b2",
+        borderLeft: "2px solid rgba(46, 125, 50, 0.35)",
+      };
+    }
+
+    return base;
+  };
+
+  const getCellSx = (
+    column: GradeColumn,
+    student: StudentGrade
+  ): SxProps<Theme> => {
+    const base: SxProps<Theme> = {
+      ...compactCellSx,
+      textAlign: "center",
+      minWidth: column.type === "assignment" ? 86 : 96,
+      maxWidth: 140,
+    };
+
+    if (!matrix) return base;
+
+    if (column.type === "section" && column.relId != null) {
+      const type = matrix.types.find((item) => item.relId === column.relId);
+      const total = student.sectionTotals[column.relId] ?? 0;
+
+      return {
+        ...base,
+        fontWeight: 700,
+        bgcolor: !type?.includeInTotal
+          ? "#fff3c4"
+          : meetsMin(total, type)
+          ? "#e2f7dc"
+          : "#ffe2a8",
+      };
+    }
+
+    if (column.type === "grand") {
+      return {
+        ...base,
+        fontWeight: 700,
+        bgcolor: meetsAllMin(student, matrix.types) ? "#d8f5d1" : "#ffe2a8",
+        borderLeft: "2px solid rgba(46, 125, 50, 0.35)",
+      };
+    }
+
+    return base;
+  };
+
+  const renderSortableHeader = (
+    id: string,
+    label: string,
+    sx?: SxProps<Theme>,
+    title?: string
+  ) => (
+    <TableCell sortDirection={sortBy === id ? sortDir : false} sx={sx}>
+      <Tooltip title={title ?? label}>
+        <TableSortLabel
+          active={sortBy === id}
+          direction={sortBy === id ? sortDir : "asc"}
+          onClick={() => handleSort(id)}
+        >
+          {label}
+        </TableSortLabel>
+      </Tooltip>
+    </TableCell>
+  );
+
+  if (loading) {
     return (
-      <Box textAlign="center" mt={4}>
+      <Box display="flex" justifyContent="center" mt={6}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error || !matrix) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error ?? t("Grade table unavailable")}</Alert>
       </Box>
     );
   }
 
   return (
     <Box p={3}>
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box component="h2">
-            {matrix.courseName} — {matrix.periodName}
-          </Box>
+      <Stack spacing={2}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="flex-start"
+          gap={2}
+          flexWrap="wrap"
+        >
           <Box>
-            <Button variant="outlined" onClick={() => navigate(-1)}>
-              Späť
-            </Button>
+            <Typography variant="h5" fontWeight={700}>
+              {t("Grade Table")}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {matrix.courseName} / {matrix.periodName}
+            </Typography>
           </Box>
-        </Box>
-      </Paper>
-      <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={simplified}
-              onChange={(e) => setSimplified(e.target.checked)}
+
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            <Chip
+              size="small"
+              label={formatCount(
+                matrix.students.length,
+                "student count singular",
+                "student count few",
+                "student count many"
+              )}
+              variant="outlined"
             />
-          }
-          label="Zjednodušená"
-        />
-        <Button
-          startIcon={<MoreVertIcon />}
-          variant="outlined"
-          onClick={handleOpenTree}
-        >
-          Stĺpce
-        </Button>
-      </Box>
-      <Popover
-        open={openTree}
-        anchorEl={anchorEl}
-        onClose={handleCloseTree}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        PaperProps={{ sx: { p: 1, minWidth: 200 } }}
-      >
-        <SimpleTreeView
-          checkboxSelection
-          multiSelect
-          selectedItems={visibleCols}
-          onItemSelectionToggle={(_, id, isSel) =>
-            id.startsWith("sec_")
-              ? (() => {
-                  const rel = Number(id.split("_")[1]);
-                  const t = matrix.types.find((x) => x.relId === rel)!;
-                  const children = t.assignments.map(
-                    (a) => `assg_${a.assignmentId}`
-                  );
-                  setVisibleCols((cols) =>
-                    isSel
-                      ? Array.from(new Set([...cols, id, ...children]))
-                      : cols.filter((x) => x !== id && !children.includes(x))
-                  );
-                })()
-              : id.startsWith("assg_")
-              ? setVisibleCols((cols) =>
-                  isSel ? [...cols, id] : cols.filter((x) => x !== id)
-                )
-              : id === "grand"
-              ? setVisibleCols((cols) =>
-                  isSel ? [...cols, "grand"] : cols.filter((x) => x !== "grand")
-                )
-              : null
-          }
-        >
-          {matrix.types.map((t) => (
-            <TreeItem
-              key={`sec_${t.relId}`}
-              itemId={`sec_${t.relId}`}
-              label={t.taskSetTypeName}
+            <Chip
+              size="small"
+              label={formatCount(
+                allColumns.filter((c) => c.type === "assignment").length,
+                "assignment count singular",
+                "assignment count few",
+                "assignment count many"
+              )}
+              variant="outlined"
+            />
+            {failedMinimumCount > 0 && (
+              <Chip
+                size="small"
+                label={formatCount(
+                  failedMinimumCount,
+                  "failed minimum count singular",
+                  "failed minimum count few",
+                  "failed minimum count many"
+                )}
+                color="warning"
+                variant="outlined"
+              />
+            )}
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate(-1)}
             >
-              {t.assignments.map((a) => (
-                <TreeItem
-                  key={`assg_${a.assignmentId}`}
-                  itemId={`assg_${a.assignmentId}`}
-                  label={a.assignmentName}
-                />
-              ))}
-            </TreeItem>
-          ))}
-          <TreeItem itemId="grand" label="Spolu" />
-        </SimpleTreeView>
-      </Popover>
+              {t("Back")}
+            </Button>
+          </Stack>
+        </Box>
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortBy === "fullName"}
-                  direction={sortBy === "fullName" ? sortDir : "asc"}
-                  onClick={() => {
-                    if (sortBy === "fullName")
-                      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-                    else {
-                      setSortBy("fullName");
-                      setSortDir("asc");
-                    }
-                  }}
-                >
-                  Študent
-                </TableSortLabel>
-              </TableCell>
-              {colsToRender
-                .filter((c) => visibleCols.includes(c.id))
-                .map((c) => {
-                  // farebne oznacime hlavicku pre sekcie
-                  const cellSx: SxProps<Theme> = {
-                    textAlign: "center",
-                  };
-                  if (c.type === "section" && c.relId != null) {
-                    const t = matrix.types.find((x) => x.relId === c.relId)!;
-                    cellSx.fontWeight = "bold";
-                    cellSx.bgcolor = t.includeInTotal ? "#ABF88F" : "#fcdb44";
-                  }
-                  if (c.type === "grand") {
-                    cellSx.fontWeight = "bold";
-                    cellSx.bgcolor = "#ABF88F";
-                  }
-                  return (
-                    <TableCell
-                      key={c.id}
-                      sortDirection={sortBy === c.id ? sortDir : false}
-                      sx={cellSx}
-                    >
-                      <TableSortLabel
-                        active={sortBy === c.id}
-                        direction={sortBy === c.id ? sortDir : "asc"}
-                        onClick={() => {
-                          if (sortBy === c.id)
-                            setSortDir((dir) =>
-                              dir === "asc" ? "desc" : "asc"
-                            );
-                          else {
-                            setSortBy(c.id);
-                            setSortDir("asc");
-                          }
-                        }}
-                        title={c.label}
-                      >
-                        {abbreviate(c.label)}
-                      </TableSortLabel>
-                    </TableCell>
-                  );
+        <Paper
+          variant="outlined"
+          sx={{
+            px: 1.5,
+            py: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={viewMode}
+              onChange={(_, nextMode: ViewMode | null) => {
+                if (nextMode) setViewMode(nextMode);
+              }}
+            >
+              <ToggleButton value="detailed">{t("Detailed")}</ToggleButton>
+              <ToggleButton value="simple">{t("Simplified")}</ToggleButton>
+            </ToggleButtonGroup>
+
+            {viewMode === "detailed" && (
+              <Button
+                size="small"
+                startIcon={<MoreVertIcon />}
+                variant="outlined"
+                onClick={(event) => setAnchorEl(event.currentTarget)}
+              >
+                {t("Columns")}
+              </Button>
+            )}
+          </Stack>
+
+          <Box />
+        </Paper>
+
+        <Popover
+          open={openTree}
+          anchorEl={anchorEl}
+          onClose={() => setAnchorEl(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          PaperProps={{ sx: { p: 1, minWidth: 260, maxHeight: 420 } }}
+        >
+          <SimpleTreeView
+            checkboxSelection
+            multiSelect
+            selectedItems={visibleCols}
+            onItemSelectionToggle={(_, itemId, selected) =>
+              handleToggleColumn(itemId, selected)
+            }
+          >
+            {matrix.types.map((type) => (
+              <TreeItem
+                key={`sec_${type.relId}`}
+                itemId={`sec_${type.relId}`}
+                label={type.taskSetTypeName}
+              >
+                {type.assignments.map((assignment) => (
+                  <TreeItem
+                    key={`assg_${assignment.assignmentId}`}
+                    itemId={`assg_${assignment.assignmentId}`}
+                    label={assignment.assignmentName}
+                  />
+                ))}
+              </TreeItem>
+            ))}
+            <TreeItem itemId="grand" label={t("Total")} />
+          </SimpleTreeView>
+        </Popover>
+
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{
+            maxHeight: "calc(100vh - 230px)",
+            minHeight: 220,
+            overflow: "auto",
+          }}
+        >
+          <Table
+            stickyHeader
+            size="small"
+            sx={{
+              borderCollapse: "separate",
+              borderSpacing: 0,
+              "& tbody tr:nth-of-type(even) td": {
+                bgcolor: "rgba(0, 0, 0, 0.015)",
+              },
+              "& tbody tr:hover td": {
+                bgcolor: "rgba(25, 118, 210, 0.07)",
+              },
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                {renderSortableHeader("fullName", t("Student"), {
+                  ...compactCellSx,
+                  ...stickyStudentColumnSx,
+                  top: 0,
+                  zIndex: 5,
+                  fontWeight: 700,
+                  bgcolor: "#eef3ff",
                 })}
-            </TableRow>
-          </TableHead>
 
-          <TableBody>
-            {displayedStudents.map((s) => (
-              <TableRow key={s.studentId}>
-                <TableCell>{s.fullName}</TableCell>
-                {colsToRender
-                  .filter((c) => visibleCols.includes(c.id))
-                  .map((c) => {
+                {hasGroups &&
+                  renderSortableHeader("group", t("Group"), {
+                    ...compactCellSx,
+                    top: 0,
+                    zIndex: 2,
+                    fontWeight: 700,
+                    bgcolor: "#eef3ff",
+                    minWidth: 120,
+                  })}
+
+                {colsToRender.map((column) =>
+                  renderSortableHeader(
+                    column.id,
+                    abbreviate(column.label),
+                    getColumnHeaderSx(column),
+                    column.label
+                  )
+                )}
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {displayedStudents.map((student) => (
+                <TableRow key={student.studentId} hover>
+                  <TableCell
+                    component="th"
+                    scope="row"
+                    sx={{
+                      ...compactCellSx,
+                      ...stickyStudentColumnSx,
+                      fontWeight: 600,
+                    }}
+                    title={student.fullName}
+                  >
+                    {student.fullName}
+                  </TableCell>
+
+                  {hasGroups && (
+                    <TableCell
+                      sx={{
+                        ...compactCellSx,
+                        color: student.group ? "text.primary" : "text.disabled",
+                      }}
+                    >
+                      {student.group ?? t("No Group")}
+                    </TableCell>
+                  )}
+
+                  {colsToRender.map((column) => {
                     let content: React.ReactNode = null;
-                    const cellSx: SxProps<Theme> = { textAlign: "left" };
-                    if (c.type === "section" && c.relId != null) {
-                      const total = s.sectionTotals[c.relId] ?? 0;
-                      const t = matrix.types.find((x) => x.relId === c.relId)!;
-                      cellSx.fontWeight = "bold";
-                      cellSx.bgcolor = !t.includeInTotal
-                        ? "#fcdb44"
-                        : meetsMin(total, t)
-                        ? "#ABF88F"
-                        : "#ffd22d";
-                      content = formatNum(total);
-                    } else if (
-                      c.type === "assignment" &&
-                      c.assignmentId != null
+
+                    if (column.type === "section" && column.relId != null) {
+                      content = formatNum(student.sectionTotals[column.relId] ?? 0);
+                    }
+
+                    if (
+                      column.type === "assignment" &&
+                      column.assignmentId != null
                     ) {
-                      const pts = s.points[c.assignmentId];
-                      const solId = solutionsMap[c.assignmentId]?.[s.studentId];
-                      if (solId != null) {
-                        // CHANGED: zobraziť tlačidlo, ak existuje riešenie
-                        content = (
+                      const points = student.points[column.assignmentId];
+                      const solutionId =
+                        solutionsMap[column.assignmentId]?.[student.studentId];
+
+                      content =
+                        solutionId != null ? (
                           <Button
                             size="small"
-                            style={{ justifyContent: "flex-start" }}
+                            variant="text"
+                            sx={{
+                              minWidth: 0,
+                              p: 0,
+                              lineHeight: 1.1,
+                              fontSize: 13,
+                              textTransform: "none",
+                            }}
                             onClick={() =>
                               navigate(
-                                `/dash/grade/course/${courseId}/assignments/${c.assignmentId}/solutions/${solId}/evaluate`
+                                `/dash/grade/course/${courseId}/assignments/${column.assignmentId}/solutions/${solutionId}/evaluate`
                               )
                             }
                           >
-                            {pts == null // CHANGED: ak sú pts null, zobrazím pomlčku
-                              ? "–"
-                              : formatNum(pts)}
+                            {formatNum(points)}
                           </Button>
+                        ) : (
+                          <Tooltip title={t("No Solution")}>
+                            <Box component="span" color="text.disabled">
+                              -
+                            </Box>
+                          </Tooltip>
                         );
-                      } else {
-                        content = "–"; // CHANGED: ak riešenie neexistuje, ostáva pomlčka
-                      }
-                    } else if (c.type === "grand") {
-                      const total = calcGrandTotal(s, matrix.types);
-                      cellSx.fontWeight = "bold";
-                      cellSx.bgcolor = meetsAllMin(s, matrix.types)
-                        ? "#ABF88F"
-                        : "#ffd22d";
-                      content = formatNum(total);
+                    }
+
+                    if (column.type === "grand") {
+                      content = formatNum(calcGrandTotal(student, matrix.types));
                     }
 
                     return (
-                      <TableCell key={c.id} sx={cellSx} title={c.label}>
+                      <TableCell
+                        key={column.id}
+                        sx={getCellSx(column, student)}
+                        title={column.label}
+                      >
                         {content}
                       </TableCell>
                     );
                   })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+      </Stack>
     </Box>
   );
 };

@@ -1,25 +1,23 @@
-// src/modules/assignments/pages/GradeAssignments.tsx
-
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-  Typography,
   Box,
   CircularProgress,
-  Tooltip,
   IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
 } from "@mui/material";
-import api from "../../../services/api";
 import DownloadingIcon from "@mui/icons-material/Downloading";
 import GradingIcon from "@mui/icons-material/Grading";
 import GroupWorkIcon from "@mui/icons-material/GroupWork";
+import api from "../../../services/api";
 
 interface AssignmentItem {
   id: number;
@@ -31,57 +29,51 @@ interface AssignmentItem {
 
 const GradeAssignments: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [assignments, setAssignments] = useState<AssignmentItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
   const [courseName, setCourseName] = useState<string>();
+
   useEffect(() => {
-    api.get<{ name: string }>(`/courses/${courseId}/courseName`)
-      .then(r => setCourseName(r.data.name));
+    if (!courseId) return;
+
+    api
+      .get<{ name: string }>(`/courses/${courseId}/courseName`)
+      .then((res) => setCourseName(res.data.name))
+      .catch((err) => console.error("Chyba načítania názvu kurzu:", err));
   }, [courseId]);
 
   useEffect(() => {
-    console.log(courseId);
     if (!courseId) return;
+
     setLoading(true);
-    (async () => {
-      try {
-        const res = await api.get<AssignmentItem[]>(
-          `/assignments/course/${courseId}`
-        );
-        console.log("STRASNE SUPEEER");
-        setAssignments(res.data);
-      } catch (err) {
-        console.error("Chyba načítania zadaní:", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    api
+      .get<AssignmentItem[]>(`/assignments/course/${courseId}`)
+      .then((res) => setAssignments(res.data))
+      .catch((err) => console.error("Chyba načítania zadaní:", err))
+      .finally(() => setLoading(false));
   }, [courseId]);
 
   const downloadAll = async (assignmentId: number) => {
     try {
-      // responseType: 'blob' ensures we get binary data
       const res = await api.get<Blob>(
         `/assignments/${assignmentId}/solutions/download-all`,
-        { responseType: 'blob' }
+        { responseType: "blob" }
       );
-      // create a blob URL
-      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/zip' }));
-      // create a temporary <a> to trigger download
-      const link = document.createElement('a');
+      const blobUrl = window.URL.createObjectURL(
+        new Blob([res.data], { type: "application/zip" })
+      );
+      const link = document.createElement("a");
       link.href = blobUrl;
-      link.setAttribute('download', `assignment_${assignmentId}_solutions.zip`);
+      link.setAttribute("download", `assignment_${assignmentId}_solutions.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error('Download error:', err);
+      console.error("Download error:", err);
     }
   };
-
 
   return (
     <Box p={3}>
@@ -89,7 +81,7 @@ const GradeAssignments: React.FC = () => {
         Zadania pre kurz {courseName ?? courseId}
       </Typography>
       <TableContainer component={Paper}>
-        <Table size = "small">
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Názov zadania</TableCell>
@@ -101,25 +93,27 @@ const GradeAssignments: React.FC = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} align="center">
+                <TableCell colSpan={4} align="center">
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
             ) : assignments.length > 0 ? (
-              assignments.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell>{a.name}</TableCell>
-                  <TableCell>{a.taskSetTypeName}</TableCell>
+              assignments.map((assignment) => (
+                <TableRow key={assignment.id}>
+                  <TableCell>{assignment.name}</TableCell>
+                  <TableCell>{assignment.taskSetTypeName}</TableCell>
                   <TableCell>
-                    {a.uploadEndTime
-                      ? new Date(a.uploadEndTime).toLocaleString("sk-SK")
-                      : "—"}
+                    {assignment.uploadEndTime
+                      ? new Date(assignment.uploadEndTime).toLocaleString(
+                          "sk-SK"
+                        )
+                      : "-"}
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="Stiahnuť riešenia">
                       <IconButton
                         size="small"
-                        onClick={() => downloadAll(a.id)}
+                        onClick={() => downloadAll(assignment.id)}
                       >
                         <DownloadingIcon />
                       </IconButton>
@@ -128,7 +122,9 @@ const GradeAssignments: React.FC = () => {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigate(`/dash/grade/course/${courseId}/assignments/${a.id}/grade-solutions`)
+                          navigate(
+                            `/dash/grade/course/${courseId}/assignments/${assignment.id}/grade-solutions`
+                          )
                         }
                       >
                         <GradingIcon />
@@ -138,7 +134,9 @@ const GradeAssignments: React.FC = () => {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigate(`/dash/grade/course/${courseId}/assignments/${a.id}/bulk-grade`)
+                          navigate(
+                            `/dash/grade/course/${courseId}/assignments/${assignment.id}/bulk-grade`
+                          )
                         }
                       >
                         <GroupWorkIcon />
@@ -149,7 +147,7 @@ const GradeAssignments: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} align="center">
+                <TableCell colSpan={4} align="center">
                   Žiadne zadania
                 </TableCell>
               </TableRow>

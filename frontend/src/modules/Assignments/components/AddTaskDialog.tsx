@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,33 +12,43 @@ import {
 } from "@mui/material";
 import TaskPreview from "../../Tasks/Components/TaskPreview";
 import { TaskPreviewData } from "../../Tasks/Types/TaskPreviewData";
+import { useTranslation } from "react-i18next";
 type AddTaskDialogProps = {
   open: boolean;
   onClose: () => void;
   onConfirm: (data: {
     pointsTotal: number;
     bonusTask: boolean;
+    projectSelectionLimit?: number | null;
     internalComment: string;
   }) => void;
   data: TaskPreviewData | null;
+  isProject?: boolean;
 };
 
-const AddTaskDialog = ({ open, onClose, onConfirm, data }: AddTaskDialogProps) => {
+const AddTaskDialog = ({ open, onClose, onConfirm, data, isProject = false }: AddTaskDialogProps) => {
+  const { t } = useTranslation();
   const [pointsTotal, setPointsTotal] = useState(0);
   const [bonusTask, setBonusTask] = useState(false);
+  const [projectSelectionLimit, setProjectSelectionLimit] = useState<number | null>(3);
   const [internalComment, setInternalComment] = useState("");
 
   const handleConfirm = () => {
-    onConfirm({ pointsTotal, bonusTask, internalComment });
+    onConfirm({
+      pointsTotal,
+      bonusTask,
+      projectSelectionLimit: isProject ? projectSelectionLimit : null,
+      internalComment,
+    });
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Pridať úlohu do zostavy</DialogTitle>
+      <DialogTitle>{t("Add Task To Assignment")}</DialogTitle>
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" gap={2} mt={1}>
           <TextField
-            label="Body za túto úlohu"
+            label={t("Points For This Task")}
             type="number"
             value={pointsTotal}
             onChange={(e) => setPointsTotal(Number(e.target.value))}
@@ -51,10 +61,24 @@ const AddTaskDialog = ({ open, onClose, onConfirm, data }: AddTaskDialogProps) =
                 onChange={(e) => setBonusTask(e.target.checked)}
               />
             }
-            label="Je to bonusová úloha?"
+            label={t("Bonus Task Question")}
           />
+          {isProject && (
+            <TextField
+              label={t("Maximum Students For Topic")}
+              type="number"
+              value={projectSelectionLimit ?? ""}
+              onChange={(e) =>
+                setProjectSelectionLimit(
+                  e.target.value === "" ? null : Number(e.target.value)
+                )
+              }
+              inputProps={{ min: 1 }}
+              fullWidth
+            />
+          )}
           <TextField
-            label="Interný komentár"
+            label={t("Internal Comment")}
             value={internalComment}
             onChange={(e) => setInternalComment(e.target.value)}
             multiline
@@ -63,9 +87,9 @@ const AddTaskDialog = ({ open, onClose, onConfirm, data }: AddTaskDialogProps) =
           />
         </Box>
       <DialogActions>
-        <Button onClick={onClose}>Zrušiť</Button>
+        <Button onClick={onClose}>{t("Cancel")}</Button>
         <Button variant="contained" onClick={handleConfirm}>
-          Pridať
+          {t("Add")}
         </Button>
       </DialogActions>
       {data && (

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, logout } from '../modules/Authentication/utils/auth.ts';
 
 const api = axios.create({
-    baseURL: 'https://localhost:5000/api', // <--- musí byť HTTPS!
+    baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },

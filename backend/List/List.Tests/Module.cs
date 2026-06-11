@@ -1,7 +1,5 @@
 ﻿using List.Common.Integrations;
-using List.Tests.BackgroundServices;
 using List.Tests.Data;
-using List.Tests.Models;
 using List.Tests.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +15,7 @@ public class Module : IModule
         services.AddDbContext<TestsDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddSingleton<TestQueue>(); 
-        
         services.AddScoped<ITestService, TestService>();
-        services.AddScoped<ITestRunService, TestRunService>();
-        services.AddScoped<ITestQueueService, TestQueueService>();
-        
-        services.AddHostedService<TestHostService>();
     }
 
     public void UseServices(IApplicationBuilder app)

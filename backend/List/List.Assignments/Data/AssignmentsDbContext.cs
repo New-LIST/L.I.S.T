@@ -11,6 +11,8 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
 {
     public DbSet<AssignmentModel> Assignments { get; set; }
     public DbSet<AssignmentTaskRelModel> AssignmentTaskRels { get; set; }
+    public DbSet<AssignmentGroupSetting> AssignmentGroupSettings { get; set; }
+    public DbSet<ProjectSelection> ProjectSelections { get; set; }
     public DbSet<SolutionModel> Solutions { get; set; }
     public DbSet<SolutionVersionModel> SolutionVersions { get; set; }
 
@@ -42,12 +44,17 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
         modelBuilder.Entity<Course>(entity =>
         {
             entity.ToTable("Courses", t => t.ExcludeFromMigrations());
+            entity.Ignore(e => e.Groups);
         });
 
         modelBuilder.Entity<Participant>(entity =>
         {
             entity.ToTable("participants", t => t.ExcludeFromMigrations());
+            entity.Ignore(e => e.Group);
         });
+
+        modelBuilder.Ignore<CourseGroup>();
+        modelBuilder.Ignore<GroupRoom>();
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -83,6 +90,10 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
         modelBuilder.Entity<AssignmentTaskRelModel>()
             .HasKey(r => new { r.TaskId, r.AssignmentId });
 
+        modelBuilder.Entity<AssignmentTaskRelModel>()
+            .Property(r => r.ProjectSelectionLimit)
+            .HasColumnName("project_selection_limit");
+
         // Relacia Assignment ↔ TaskSetType
         modelBuilder.Entity<AssignmentModel>()
             .HasOne(a => a.TaskSetType)
@@ -109,6 +120,57 @@ public class AssignmentsDbContext(DbContextOptions<AssignmentsDbContext> options
             .HasForeignKey(a => new { a.CourseId, a.TaskSetTypeId })
             .HasPrincipalKey(c => new { c.CourseId, c.TaskSetTypeId })
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AssignmentModel>()
+            .Property(a => a.ProjectSelectionDeadline)
+            .HasColumnName("project_selection_deadline");
+
+        modelBuilder.Entity<AssignmentGroupSetting>(entity =>
+        {
+            entity.ToTable("assignment_group_settings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AssignmentId).HasColumnName("assignment_id").IsRequired();
+            entity.Property(e => e.GroupId).HasColumnName("group_id").IsRequired();
+            entity.Property(e => e.PublishStartTime).HasColumnName("publish_start_time");
+            entity.Property(e => e.UploadEndTime).HasColumnName("upload_end_time");
+            entity.Property(e => e.Active).HasColumnName("active").IsRequired();
+
+            entity.HasOne(e => e.Assignment)
+                .WithMany(a => a.GroupSettings)
+                .HasForeignKey(e => e.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.AssignmentId, e.GroupId }).IsUnique();
+        });
+
+        modelBuilder.Entity<ProjectSelection>(entity =>
+        {
+            entity.ToTable("project_selections");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AssignmentId).HasColumnName("assignment_id").IsRequired();
+            entity.Property(e => e.TaskId).HasColumnName("task_id").IsRequired();
+            entity.Property(e => e.StudentId).HasColumnName("student_id").IsRequired();
+            entity.Property(e => e.Created).HasColumnName("created").IsRequired();
+            entity.Property(e => e.Updated).HasColumnName("updated").IsRequired();
+
+            entity.HasOne(e => e.Assignment)
+                .WithMany(a => a.ProjectSelections)
+                .HasForeignKey(e => e.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Task)
+                .WithMany()
+                .HasForeignKey(e => e.TaskId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.AssignmentId, e.StudentId }).IsUnique();
+            entity.HasIndex(e => new { e.AssignmentId, e.TaskId });
+        });
 
         modelBuilder.Entity<SolutionModel>()
             .HasOne(s => s.Assignment)

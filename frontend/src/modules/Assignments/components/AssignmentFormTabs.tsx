@@ -4,9 +4,12 @@ import { Tabs, Tab, Box } from "@mui/material";
 import AssignmentFormInfo from "./AssignmentFormInfo";
 import AssignmentFormTasks from "./AssignmentFormTasks";
 import AssignmentPreview from "./AssignmentPreview";
+import AssignmentProjectSelections from "./AssignmentProjectSelections";
 import { Assignment } from "../types/Assignment";
 import { useNotification } from "../../../shared/components/NotificationContext";
 import api from "../../../services/api";
+import { isProjectAssignment } from "../utils/isProjectAssignment";
+import { useTranslation } from "react-i18next";
 
 
 
@@ -15,6 +18,7 @@ type Props = {
 };
 
 const AssignmentFormTabs = ({ assignment }: Props) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState(0);
@@ -44,9 +48,9 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
     try {
       const res = await api.get<Assignment>(`/assignments/${assignmentData.id}`);
       setAssignmentData(res.data);
-      showNotification("Zadanie sa načítalo po úprave", "success");
+      showNotification(t("Assignment refreshed"), "success");
     } catch {
-      showNotification("Nepodarilo sa načítať aktualizované zadanie.", "error");
+      showNotification(t("Could not refresh assignment"), "error");
     }
   };
 
@@ -59,18 +63,21 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     if (assignmentId === null && newValue > 0) {
-      showNotification("Najprv ulož základné informácie", "warning");
+      showNotification(t("Assignment required fields"), "warning");
       return;
     }
     setActiveTab(newValue);
   };
 
+  const isProject = isProjectAssignment(assignmentData);
+
   return (
     <Box>
       <Tabs value={activeTab} onChange={handleTabChange} centered>
-        <Tab label="Info" />
-        <Tab label="Úlohy" />
-        <Tab label="Prehľad" />
+        <Tab label={t("Info")} />
+        <Tab label={t("Tasks")} />
+        {isProject && <Tab label={t("Project Selections")} />}
+        <Tab label={t("Overview")} />
       </Tabs>
 
       <Box mt={3}>
@@ -82,9 +89,12 @@ const AssignmentFormTabs = ({ assignment }: Props) => {
           />
         )}
         {activeTab === 1 && assignmentId !== null && (
-          <AssignmentFormTasks assignmentId={assignmentId} />
+          <AssignmentFormTasks assignmentId={assignmentId} isProject={isProject} />
         )}
-        {activeTab === 2 && assignmentId !== null && (
+        {isProject && activeTab === 2 && assignmentId !== null && (
+          <AssignmentProjectSelections assignmentId={assignmentId} />
+        )}
+        {activeTab === (isProject ? 3 : 2) && assignmentId !== null && (
           <AssignmentPreview assignmentId={assignmentId} />
         )}
       </Box>

@@ -17,4 +17,9 @@ public class CourseReadDto
 
     public int CurrentEnrollment { get; set; }
     public string? Description { get; set; }
+    public bool CanViewCourseContent { get; set; }
+    public bool CanManageCourseContent { get; set; }
+    public bool CanGradeCourse { get; set; }
+    public bool CanRunPlagiarismCheck { get; set; }
+    public bool AssistantHistoricalAccess { get; set; }
 }

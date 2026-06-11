@@ -22,7 +22,7 @@ namespace List.Users.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("List.Users.Models.AssistantPermissions", b =>
+            modelBuilder.Entity("List.Users.Models.AssistantCoursePermission", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,39 +30,44 @@ namespace List.Users.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("CanAddStudents")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_add_students");
-
-                    b.Property<bool>("CanManageCategories")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_categories");
-
-                    b.Property<bool>("CanManagePeriods")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_periods");
-
-                    b.Property<bool>("CanManageStudents")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_students");
-
-                    b.Property<bool>("CanManageTaskTypes")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_task_types");
-
-                    b.Property<bool>("CanViewLogs")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_view_logs");
-
-                    b.Property<int>("UserId")
+                    b.Property<int>("AssistantUserId")
                         .HasColumnType("integer")
-                        .HasColumnName("user_id");
+                        .HasColumnName("assistant_user_id");
+
+                    b.Property<bool>("CanGradeCourse")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_grade_course");
+
+                    b.Property<bool>("CanManageCourseContent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_course_content");
+
+                    b.Property<bool>("CanRunPlagiarismCheck")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_run_plagiarism_check");
+
+                    b.Property<bool>("CanViewCourseContent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_view_course_content");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("AssistantUserId", "CourseId")
+                        .IsUnique();
 
-                    b.ToTable("assistant_permissions");
+                    b.ToTable("assistant_course_permissions");
                 });
 
             modelBuilder.Entity("List.Users.Models.PasswordChange", b =>
@@ -131,15 +136,15 @@ namespace List.Users.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("List.Users.Models.AssistantPermissions", b =>
+            modelBuilder.Entity("List.Users.Models.AssistantCoursePermission", b =>
                 {
-                    b.HasOne("List.Users.Models.User", "User")
+                    b.HasOne("List.Users.Models.User", "AssistantUser")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("AssistantUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("AssistantUser");
                 });
 #pragma warning restore 612, 618
         }
