@@ -69,8 +69,6 @@ export default function SignIn() {
                     setGeneralError(serverMessage.message || 'Prihlásenie zlyhalo.');
                 }
             }
-
-
         }
     };
 

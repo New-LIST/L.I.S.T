@@ -6,6 +6,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import api from "../../../services/api.ts";
+import { useNotification } from "../../../shared/components/NotificationContext"
 
 interface ForgotPasswordProps {
     open: boolean;
@@ -13,6 +15,20 @@ interface ForgotPasswordProps {
 }
 
 export default function ForgotPassword({ open, handleClose }: ForgotPasswordProps) {
+    const { showNotification } = useNotification();
+    
+    const handlePasswordRequest = async (email: string) => {
+        try {
+            await api.post(`/auth/forgot-password`, {
+                email: email,
+            });
+            showNotification("Email bol poslany", "success");
+
+        } catch (error) {
+            showNotification("Nepodarilo sa poslat email", "error");
+        }
+    }
+    
     return (
         <Dialog
             open={open}
@@ -22,6 +38,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
                     component: 'form',
                     onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
                         event.preventDefault();
+                        handlePasswordRequest((event.target as HTMLFormElement).email.value);
                         handleClose();
                     },
                     sx: { backgroundImage: 'none' },

@@ -35,6 +35,7 @@ import AssignmentTasksViewer from "../../Assignments/pages/AssignmentTasksViewer
 import Tests from "../../Tests/Pages/Tests.tsx";
 import CourseGroups from "../../Courses/Pages/CourseGroups.tsx";
 import Groups from "../../Courses/Pages/Course/Groups.tsx";
+import PasswordChange from "../../Authentication/pages/PasswordChange.tsx";
 
 const AppRoutes = () => {
   return (
@@ -54,6 +55,7 @@ const AppRoutes = () => {
                 <Route path="groups" element={<Groups />} />
         </Route>
       </Route>
+        <Route path="/password-change/:id" element={<PasswordChange />} />
       <Route
         path="/dash"
         element={
@@ -68,7 +70,6 @@ const AppRoutes = () => {
         <Route path="courses/:id/tasksets" element={<TaskSets />} />
         <Route path="courses/:id/groups" element={<CourseGroups />} />
         <Route path="courses/:id/participants" element={<Participants />} />
-          <Route path="courses/:id/participants" element={<Participants />} />
           <Route path="courses/:id/description" element={<CourseDescriptionEditor />} />
         <Route path="task set types" element={<TaskSetTypes />} />
         <Route path="periods" element={<Periods />} />

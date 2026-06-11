@@ -9,11 +9,14 @@ namespace List.Tests.Data;
 public class TestsDbContext(DbContextOptions<TestsDbContext> options) : DbContext(options)
 {
     public DbSet<Test> Tests { get; set; }
+    public DbSet<TestRun> TestRuns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
+        // Funkcionalita testov nie je dokoncena, preto sa nezaraduje do EF.
+        modelBuilder.Ignore<TestRun>();
         
         modelBuilder.Entity<TaskModel>(entity =>
         {

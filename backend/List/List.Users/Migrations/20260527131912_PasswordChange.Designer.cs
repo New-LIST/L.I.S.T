@@ -3,6 +3,7 @@ using System;
 using List.Users.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace List.Users.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    partial class UsersDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527131912_PasswordChange")]
+    partial class PasswordChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace List.Users.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("List.Users.Models.AssistantCoursePermission", b =>
+            modelBuilder.Entity("List.Users.Models.AssistantPermissions", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,44 +33,39 @@ namespace List.Users.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssistantUserId")
+                    b.Property<bool>("CanAddStudents")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_add_students");
+
+                    b.Property<bool>("CanManageCategories")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_categories");
+
+                    b.Property<bool>("CanManagePeriods")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_periods");
+
+                    b.Property<bool>("CanManageStudents")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_students");
+
+                    b.Property<bool>("CanManageTaskTypes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_task_types");
+
+                    b.Property<bool>("CanViewLogs")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_view_logs");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("integer")
-                        .HasColumnName("assistant_user_id");
-
-                    b.Property<bool>("CanGradeCourse")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_grade_course");
-
-                    b.Property<bool>("CanManageCourseContent")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_course_content");
-
-                    b.Property<bool>("CanRunPlagiarismCheck")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_run_plagiarism_check");
-
-                    b.Property<bool>("CanViewCourseContent")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_view_course_content");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("integer")
-                        .HasColumnName("course_id");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created");
-
-                    b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated");
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssistantUserId", "CourseId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.ToTable("assistant_course_permissions");
+                    b.ToTable("assistant_permissions");
                 });
 
             modelBuilder.Entity("List.Users.Models.PasswordChange", b =>
@@ -136,15 +134,15 @@ namespace List.Users.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("List.Users.Models.AssistantCoursePermission", b =>
+            modelBuilder.Entity("List.Users.Models.AssistantPermissions", b =>
                 {
-                    b.HasOne("List.Users.Models.User", "AssistantUser")
+                    b.HasOne("List.Users.Models.User", "User")
                         .WithMany()
-                        .HasForeignKey("AssistantUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AssistantUser");
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

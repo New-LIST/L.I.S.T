@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.Tasks", "List.Tasks\Li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.TaskSets", "List.TaskSets\List.TaskSets.csproj", "{7C718DA0-2366-411C-8D27-E73DA49FADAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.BackgroundTasks", "List.BackgroundTasks\List.BackgroundTasks.csproj", "{37EC16A2-F7AC-413C-AFA2-661733535692}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.Emails", "List.Emails\List.Emails.csproj", "{37EC16A2-F7AC-413C-AFA2-661733535692}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "List.Tests", "List.Tests\List.Tests.csproj", "{83932A5D-1C3C-41D4-B031-DB6EF69E982D}"
 EndProject

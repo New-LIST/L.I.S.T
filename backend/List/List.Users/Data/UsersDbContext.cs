@@ -8,8 +8,7 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContex
 {
     public DbSet<User> Users { get; set; }
     public DbSet<AssistantCoursePermission> AssistantCoursePermissions { get; set; }
-
-
+    public DbSet<PasswordChange> PasswordChanges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,4 +1,4 @@
-namespace List.BackgroundTasks.Models;
+namespace List.Emails.Models;
 
 public class EmailOptions
 {
@@ -6,4 +6,6 @@ public class EmailOptions
     public string SenderEmail { get; set; }
     public string SmtpServerAddress { get; set; }
     public int SmtpServerPort { get; set; }
+    public string SmtpServerUsername { get; set; }
+    public string SmtpServerPassword { get; set; }
 }
